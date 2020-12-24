@@ -5,6 +5,7 @@ from reportlab.graphics import renderPM #pour convertir le svg en png
 from svglib.svglib import svg2rlg #pour convertir le svg en png
 import requests #récupérer le fichier ics de l'agenda
 import recurring_ical_events
+import os, sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constantes import GROUPES_DISCORD
