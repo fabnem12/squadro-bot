@@ -5,7 +5,10 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from constantes import prefixeBot, TOKEN
+from utils import stockePID
 from libvote import Votant, Election
+
+stockePID()
 
 ELECTIONS = dict() #associe à un identifiant d'élection un tuple : l'objet Election correspondant, et l'id discord de la personne qui l'a lancée
 MSG2DUEL = dict() #associe un message à un duel (objet votant + duel)
