@@ -1,0 +1,145 @@
+from arrow import utcnow #récupérer la date du jour
+from datetime import datetime
+from icalendar import Calendar
+from reportlab.graphics import renderPM #pour convertir le svg en png
+from svglib.svglib import svg2rlg #pour convertir le svg en png
+import requests #récupérer le fichier ics de l'agenda
+import recurring_ical_events
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from constantes import GROUPES_DISCORD
+
+COULEURS_GROUPES = {"8A":"#1E7FCB", "8B":"#FF866A", "9A":"#357AB7", "9B":"#ED7F10"}
+COULEUR_PRESENTIEL = "#00AA00"
+COULEUR_DISTANCIEL = "#AA8800"
+COULEUR_PARTIEL    = "#F4511E"
+NOMS_JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
+
+HAUTEUR = 2000
+LARGEUR = 1300
+HAUTEUR_COURS = (HAUTEUR - 100) / 12
+
+def chargeAgenda(url): #récupère l'agenda depuis le lien .ics
+    icsAgenda = requests.get(url).text
+    return Calendar.from_ical(icsAgenda)
+
+def lectureEventsJournee(calendar, shift = 0):
+    now = utcnow().to("Europe/Paris").shift(days = shift)
+
+    #on récupère la liste des évènements du jour
+    events = recurring_ical_events.of(calendar).at((now.year, now.month, now.day))
+    #events = recurring_ical_events.of(calendar).between((2020, 9, 29), (2020, 9, 30)) #pour voir les évènements d'un jour en particulier (en phase de tests)
+
+    TOUTE_JOURNEE = [] #liste des évènements qui durent tte la journée. l'agenda est maintenu de sorte à ce que ça ne corresponde qu'à "cours en présentiel/distanciel"
+    EVENTS = [] #les cours
+    for event in events:
+        if not isinstance(event["DTSTART"].dt, datetime): #c'est un truc qui dure toute la journée
+            TOUTE_JOURNEE.append(event)
+        else:
+            EVENTS.append(event)
+
+    return TOUTE_JOURNEE, EVENTS
+
+def dessine(groupeId, toute_journee, liste_cours):
+    lignesSvg = [""]
+    def printF(*args): #fonction pour écrire facilement dans le str du code svg
+        lignesSvg[0] += " ".join(str(x) for x in args) + "\n"
+
+    #header du svg
+    printF('<?xml version="1.0" standalone="no"?>')
+    printF('<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}">'.format(LARGEUR, HAUTEUR))
+    printF('<rect width="100%" height="100%" fill="white" />') #pour le fond blanc
+
+    #l'évènement toute la journée (présentiel/distanciel)
+    txtPresentiel = toute_journee[0]["SUMMARY"]
+    presentiel = False #"PRÉSENTIEL" in txtPresentiel - pendant le confinement la question ne se pose pas
+    couleur = COULEUR_PRESENTIEL if presentiel else COULEUR_DISTANCIEL
+
+    dateJour = liste_cours[0]["DTSTART"].dt if len(liste_cours) > 0 else None
+
+    printF("<rect x='0' y='0' width='{}' height='100' fill='{}' />".format(LARGEUR, couleur))
+    if dateJour:
+        titre = "Cours du {} {}".format(NOMS_JOURS[dateJour.isoweekday() - 1], dateJour.strftime("%d/%m"))
+    else:
+        titre = "Pas de cours demain !"
+    printF("<text x='{}' y='50' font-size='50' fill='white' text-anchor='middle'>{}</text>".format(LARGEUR / 2, titre))
+
+    #affichage des heures
+    offsetY = 100
+    for heure in range(8, 20):
+        printF("<text x='10' y='{}' font-size='30'>{}:00</text>".format(offsetY + 35 + (heure - 8) * HAUTEUR_COURS, str(heure).zfill(2)))
+        printF("<line x1='0' y1='{y}' x2='{largeur}' y2='{y}' style='stroke: #000; stroke-width: 1;' />".format(y = offsetY + (heure - 8) * HAUTEUR_COURS, largeur = LARGEUR))
+
+    offsetX = 100
+    printF("<line x1='{x}' y1='{y1}' x2='{x}' y2='{y2}' style='stroke: #000; stroke-width: 1;' />".format(x = offsetX, y1 = offsetY, y2 = HAUTEUR))
+
+    #affichage des cours
+    for cours in liste_cours:
+        heure_debut_dt = cours["DTSTART"].dt
+        heure_fin_dt = cours["DTEND"].dt
+
+        #il y des évènements qui n'ont pas de timezone enregistrée dans le .ics (les évènements "non récurrents")
+        #ils sont enregistrés en utc, donc il faut le remettre à l'heure de Paris
+        if "TZID" not in cours["DTSTART"].params:
+            import pytz
+
+            timezone_Paris = pytz.timezone("Europe/Paris")
+            heure_debut_dt, heure_fin_dt = map(lambda x: x.astimezone(timezone_Paris), (heure_debut_dt, heure_fin_dt))
+
+        heure_debut_str = "{}:{}".format(*map(lambda x: str(x).zfill(2), (heure_debut_dt.hour, heure_debut_dt.minute)))
+        heure_fin_str = "{}:{}".format(*map(lambda x: str(x).zfill(2), (heure_fin_dt.hour, heure_fin_dt.minute)))
+        titre = cours["SUMMARY"].replace("&","&amp;")
+        lieu = cours["LOCATION"]
+
+        heure_debut = heure_debut_dt.hour + heure_debut_dt.minute / 60 #conversion de l'heure en float
+        heure_fin = heure_fin_dt.hour + heure_fin_dt.minute / 60
+        duree = heure_fin - heure_debut #durée en heure
+
+        if titre.startswith("PRÉSENTIEL"):
+            couleur = COULEUR_PRESENTIEL
+            presentielCours = True
+        elif titre.startswith("DISTANCIEL"):
+            couleur = COULEUR_DISTANCIEL
+            presentielCours = False
+        elif titre.startswith("EXAMEN"):
+            couleur = COULEUR_PARTIEL
+            presentielCours = True
+        else:
+            couleur = COULEURS_GROUPES[groupeId]
+            presentielCours = presentiel
+
+        yRect = offsetY + (heure_debut - 8) * HAUTEUR_COURS
+        xText = offsetX + 20
+        printF("<rect x='{}' y='{}' width='{}' height='{}' fill='{}' />".format(offsetX, yRect, LARGEUR - offsetX, HAUTEUR_COURS * duree, couleur))
+
+        #affichage du titre du cours et du lieu et de l'heure
+        printF("<text x='{}' y='{}' font-size='52' fill='white' text-decoration='underline'>{}</text>".format(xText, yRect + 50, titre))
+        printF("<text x='{}' y='{}' font-size='40' fill='white' font-weight='bold'>{}</text>".format(xText, yRect + 105, "{} à {}".format(heure_debut_str, heure_fin_str)))
+
+        if lieu != "":
+            if not presentielCours: lieu = "chez toi ;)" if groupeId != "8A" else "chez toi ;) (sauf Julien bien sûr ;))"
+            printF("<text x='{}' y='{}' font-size='40' fill='white'>Lieu : {}</text>".format(xText, yRect + 150, lieu))
+
+    #fin du svg
+    printF("</svg>")
+
+    #enregistrement dans un fichier svg
+    with open("outputs/edt.svg", "w") as f:
+        f.write(lignesSvg[0])
+
+    #conversion du svg en png
+    from cairosvg import svg2png
+    svg2png(open("outputs/edt.svg", 'rb').read(), write_to=open("outputs/edt.png", 'wb'))
+
+    return "outputs/edt.png" #on envoie le lien du fichier pour usage futur
+
+def genereEDT(groupeId, shift = 0):
+    #on télécharge l'agenda
+    urlAgenda = GROUPES_DISCORD[groupeId][1]
+    agenda = chargeAgenda(urlAgenda)
+    #on récupère les évènements
+    toute_journee, cours = lectureEventsJournee(agenda, shift)
+    #dessin du svg et conversion en png du même coup
+    lienImage = dessine(groupeId, toute_journee, cours)
+
+    return lienImage
