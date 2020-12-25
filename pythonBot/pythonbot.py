@@ -417,7 +417,7 @@ def main(idsTraites = set(range(10))):
     async def on_message(msg):
         if "noël" in msg.content.lower() or "noel" in msg.content.lower(): await ctx.send("Joyeux Noël :christmas_tree:")
         
-        await bot.process_commands(message)
+        await bot.process_commands(msg)
         
     @bot.event
     async def on_message_delete(message):
