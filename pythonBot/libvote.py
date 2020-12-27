@@ -312,7 +312,7 @@ def resume(election):
             if clsVotant not in classements:
                 classements[clsVotant] = 1
             else:
-                classement[clsVotant] += 1
+                classements[clsVotant] += 1
 
         with open("resume.txt", "w") as f:
             for classement, nbVotants in classements.items():

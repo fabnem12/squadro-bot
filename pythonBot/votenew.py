@@ -115,7 +115,7 @@ def main():
 
             ELECTIONS[idElection] = (election, ctx.author.id)
 
-            await ctx.send("L'élection est enregistrée sous l'identifiant {id}.\nPour la configurer, utilisez les commandes `{cmd}.vote_addopt {id} nomOption` pour ajouter une option, `{cmd}.vote_remopt {id} nomOption` pour la retirer…\nUne fois configurée, il faut lancer le vote avec la commande `{cmd}.vote_start {id}` et `{cmd}.vote_end {id}` pour lancer le dépouillement".format(id = idElection, cmd = prefixeBot))
+            await ctx.send("L'élection est enregistrée sous l'identifiant {id}.\nPour la configurer, utilisez les commandes `{cmd}vote_addopt {id} nomOption` pour ajouter une option, `{cmd}vote_remopt {id} nomOption` pour la retirer…\nUne fois configurée, il faut lancer le vote avec la commande `{cmd}vote_start {id}` et `{cmd}vote_end {id}` pour lancer le dépouillement".format(id = idElection, cmd = prefixeBot))
 
     @bot.command(name="vote_addopt") #pour ajouter une option de vote à une élection (seulement avant le début du vote...)
     async def addopt(ctx, idElection, nomOption):
@@ -155,7 +155,7 @@ def main():
             if auteurId != ctx.author.id:
                 return
 
-            if election.candidats > 2: #on peut commencer le vote, il y a plusieurs candidats
+            if len(election.candidats) >= 2: #on peut commencer le vote, il y a plusieurs candidats
                 election.commence = True
 
                 try:
