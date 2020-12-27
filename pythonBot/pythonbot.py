@@ -416,9 +416,9 @@ def main(idsTraites = set(range(10))):
     @bot.event
     async def on_message(msg):
         if "noël" in msg.content.lower() or "noel" in msg.content.lower(): await ctx.send("Joyeux Noël :christmas_tree:")
-        
+
         await bot.process_commands(msg)
-        
+
     @bot.event
     async def on_message_delete(message):
         if nonConcerne(message.author): return
@@ -631,6 +631,18 @@ def main(idsTraites = set(range(10))):
         if matiere:
             await ctx.send("=wolf tell a {} joke".format(matiere))
 
+
+    @bot.command(name="fibotibo")
+    async def fibotibo(ctx):
+        from time import sleep
+        a = 1
+        b = 1
+        for _ in range(10):
+            await ctx.send("<:tibovener:684027734103818253>" * a)
+            b += a
+            a = b - a
+
+            time.sleep(0.4)
     ################################################################################
     #RÉCUPÉRATION DU NOTEBOOK SOUS FORME D'UN FICHIER ##############################
     ################################################################################
