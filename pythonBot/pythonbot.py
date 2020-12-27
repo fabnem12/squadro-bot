@@ -429,7 +429,7 @@ def main(idsTraites = set(range(10))):
 
     @bot.event
     async def on_ready(): #to show "TranslateBot Joue à T.help"
-        await bot.change_presence(activity=discord.Game(name="Joyeux Noël !"))
+        await bot.change_presence(activity=discord.Game(name="Bonnes fêtes de fin d'année !"))
 
         if 0 in idsTraites:
             try:
