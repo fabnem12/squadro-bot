@@ -46,18 +46,21 @@ def main():
         if user.id == bot.user.id: return
 
         message = reaction.message
-        channel = message.channel
         emoji = reaction.emoji
         userId = user.id
+        channel = await dmChannelUser(user)
 
         if message.id in MSG2VOTE: #on est là après avoir cliqué sur la réaction pour voter
+            if userId not in {619574125622722560, 476163854858977309, 495283249493442570, 257924378795180032, 356510267833712645, 646480116884570162, 690496497476960256, 235694387248627712, 519205599548801034}:
+                await channel.send("Tu n'as le droit de voter que si t'es dans le groupe 9B…")
+                return
+            
             election = MSG2VOTE[message.id]
             if election.fini():
                 await channel.send("Désolé, le dépouillement a déjà eu lieu")
                 return
 
             votant = election.getVotant(userId)
-            channel = await dmChannelUser(user)
 
             opt1, opt2 = votant.duelAFaire(start = True)
             if len(election.candidats) > 2:
