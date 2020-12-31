@@ -415,11 +415,6 @@ def main(idsTraites = set(range(10))):
 
     @bot.event
     async def on_message(msg):
-        if "noël" in msg.content.lower() or "noel" in msg.content.lower(): await ctx.send("Joyeux Noël :christmas_tree:")
-            
-        if "année" in msg.content:
-            await ctx.send("Bonne année ! :tada:")
-
         await bot.process_commands(msg)
 
     @bot.event
@@ -904,6 +899,10 @@ def main(idsTraites = set(range(10))):
         compteurTB[0] += 1 if moins != "sub" else -1
         await ctx.send("On en est à {} 'tout :bath:' <:VictorExposito_thuglife:777883106630828032>".format(compteurTB[0]))
 
+    @bot.command(name = "ba")
+    async def ba(ctx):
+        await ctx.send("Bonnée année ! :tada:")
+        
     @bot.command(name="màj")
     async def maj(ctx):
         if estAdmin(ctx.author):
