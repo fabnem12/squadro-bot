@@ -594,18 +594,16 @@ def main(idsTraites = set(range(10))):
     @tasks.loop(minutes = 10.0)
     async def envoiEDT():
         now = utcnow().to("Europe/Brussels")
-        #if now.weekday() in {4, 5}: return #on n'envoie pas l'edt le week-end
+        if now.weekday() in {4, 5}: return #on n'envoie pas l'edt le week-end
 
-        #if now.hour == 21 and now.minute >= 40 and now.minute < 50:
-        if now.hour == 9 and now.minute >= 30 and now.minute < 40:
+        if now.hour == 21 and now.minute >= 40 and now.minute < 50:
             gagnants = {"8A":"<@295281431532404746>", "8B":"<@239774298221314049>", "9A":"<@171661926848397312>"}
             for groupeId, (channelId, _) in GROUPES_DISCORD.items():
                 channel = bot.get_channel(channelId)
-                if groupeId in gagnants: await channel.send("{} a gagné le vote à l'unanimité des 0 votes.".format(gagnants[groupeId]))
-                #lienImage = genereEDT(groupeId, 1)
+                lienImage = genereEDT(groupeId, 1)
 
-                #await channel.send("Voici l'agenda de demain pour le groupe {} :".format(groupeId))
-                #await channel.send(file = discord.File(lienImage))
+                await channel.send("Voici l'agenda de demain pour le groupe {} :".format(groupeId))
+                await channel.send(file = discord.File(lienImage))
 
     ################################################################################
     #EASTER-EGGS ###################################################################
@@ -901,7 +899,7 @@ def main(idsTraites = set(range(10))):
 
     @bot.command(name = "ba")
     async def ba(ctx):
-        await ctx.send("Bonnée année ! :tada:")
+        await ctx.send("Bonne année ! :tada:")
         
     @bot.command(name="màj")
     async def maj(ctx):
