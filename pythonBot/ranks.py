@@ -40,7 +40,7 @@ def ajoutMsg(guild, author, minute):
         nbPoints = randint(15, 25)
         infosGuild[author] = (nbPoints, 1, minute)
         
-    if randint(0, 9) < 5:
+    if randint(0, 9) < 1:
         save()
     
 def affiRank(author, guild):
