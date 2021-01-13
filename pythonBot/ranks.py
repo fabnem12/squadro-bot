@@ -23,7 +23,7 @@ def save():
 
 def ajoutMsg(guild, author, minute):
     if guild: guild = guild.id #si guild est None, c'est un message privé, sinon c'est un vrai serveur donc on garde récupère son id
-    
+
     if guild in infos: infosGuild = infos[guild]
     else:
         infos[guild] = dict()
@@ -34,35 +34,36 @@ def ajoutMsg(guild, author, minute):
 
         if minuteDernier != minute:
             nbPoints += randint(15, 25)
-        
+
         infosGuild[author] = (nbPoints, nbMessages + 1, minute)
     else:
         nbPoints = randint(15, 25)
         infosGuild[author] = (nbPoints, 1, minute)
-        
+
     if randint(0, 9) < 1:
         save()
-    
+
 def affiRank(author, guild):
     if guild: guild = guild.id
-    
+
     if guild in infos:
         infosGuild = infos[guild]
-        
+
         if author in infosGuild:
             classements = sorted(infosGuild, key = lambda x: infosGuild[x][0], reverse = True)
             rang = classements.index(author)
             nbPoints, nbMessages, _ = infosGuild[author]
-            
+
             return "<@{}> est {}{} sur ce serveur. {} XPs, {} messages".format(author, rang+1, "e" if rang else "er", nbPoints, nbMessages)
         else:
             return "<@{}> n'as pas envoyé de message sur ce serveur jusque là…".format(author)
     else:
       return "Aucun message n'a été compté sur ce serveur…"
-    
+
 def estAdmin(authorId):
     print(ADMINS, authorId)
     return authorId in ADMINS
+
 
 def main():
     from discord.ext import commands, tasks
@@ -73,16 +74,32 @@ def main():
         if isinstance(error, commands.CommandNotFound):
             return
         raise error
-    
+
+    async def affi_stats(guild):
+        guildId = guild.id
+
+        infosGuild = infos[guildId]
+        classement = sorted(infosGuild, key = lambda x: infosGuild[x][0])
+
+        txt = "**Personnes les plus actives sur le serveur :**\n"
+        for index, usrId in enumerate(classement):
+            usr = await guild.fetch_member(usrId)
+            nbPoints, nbMessages, _ = infosGuild[usrId]
+
+            txt += "**{}** {} avec {} XP ({} messages)\n".format(index+1, usr.nick or usr.name, nbPoints, nbMessages)
+            if index == 19: break
+
+        return txt
+
     @bot.event
     async def on_message(msg):
         author = msg.author.id
         minute = msg.created_at.timestamp() // 60
         guild = msg.guild
         ajoutMsg(guild, author, minute)
-        
+
         await bot.process_commands(msg)
-        
+
     @bot.command(name="prerank")
     async def prerank(ctx):
         #if not estAdmin(ctx.author.id): return
@@ -100,15 +117,19 @@ def main():
 
         await msgAnnonce.edit(content = "**Calculs finis !**")
         save()
-    
+
     @bot.command(name = "rank")
     async def rank(ctx, someone = None):
         if someone is None: someone = ctx.author.id
         else:
             someone = int(someone[3:21])
-        
+
         await ctx.send(affiRank(someone, ctx.guild))
-            
+
+    @bot.command(name = "stats")
+    async def stats(ctx):
+        await ctx.send(await affi_stats(ctx.guild))
+
     return bot, TOKEN
 
 if __name__ == "__main__": #pour lancer le bot
