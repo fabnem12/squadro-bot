@@ -79,7 +79,7 @@ def main():
         guildId = guild.id
 
         infosGuild = infos[guildId]
-        classement = sorted(infosGuild, key = lambda x: infosGuild[x][0])
+        classement = sorted(infosGuild, key = lambda x: infosGuild[x][0], reverse = True)
 
         txt = "**Personnes les plus actives sur le serveur :**\n"
         for index, usrId in enumerate(classement):
@@ -128,7 +128,8 @@ def main():
 
     @bot.command(name = "stats-new")
     async def stats(ctx):
-        await ctx.send(await affi_stats(ctx.guild))
+        res = await affi_stats(ctx.guild)
+        await ctx.send(res)
 
     return bot, TOKEN
 
