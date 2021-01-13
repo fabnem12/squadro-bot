@@ -9,11 +9,12 @@ import os, sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constantes import GROUPES_DISCORD
+from utils import cheminOutputs
 
-COULEURS_GROUPES = {"8A":"#1E7FCB", "8B":"#FF866A", "9A":"#357AB7", "9B":"#ED7F10"}
-COULEUR_PRESENTIEL = "#00AA00"
-COULEUR_DISTANCIEL = "#AA8800"
-COULEUR_PARTIEL    = "#F4511E"
+import pickle
+
+nomFichierEDT = os.path.join(cheminOutputs, "edt-info.p")
+
 NOMS_JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 
 HAUTEUR = 2000
@@ -135,6 +136,21 @@ def dessine(groupeId, toute_journee, liste_cours):
     return "outputs/edt.png" #on envoie le lien du fichier pour usage futur
 
 def genereEDT(groupeId, shift = 0):
+    if os.path.exists(nomFichierEDT):
+        GROUPES, COULEUR_PRESENTIEL, COULEUR_DISTANCIEL, COULEUR_PARTIEL = pickle.load(open(nomFichierEDT, "rb"))
+    else:
+        GROUPES = {
+            "8A":("#1E7FCB", "https://calendar.google.com/calendar/ical/1c5jnhnhjgqsnl028fjjrbrdgs%40group.calendar.google.com/private-7ccc201c4de3ce2e89fe10195ce1da73/basic.ics"),
+            "8B":("#FF866A", "https://calendar.google.com/calendar/ical/ab2h8bi3kgra0c1tjloihdec8c%40group.calendar.google.com/private-4f5453dabff64790fc0d2caa6f453cbe/basic.ics"),
+            "9A":("#357AB7", "https://calendar.google.com/calendar/ical/euqulah1cshf788g67g1hqi454%40group.calendar.google.com/private-a6bdd67de7357b8e6265f6e5695d8d4e/basic.ics"),
+            "9B":("#ED7F10", "https://calendar.google.com/calendar/ical/rbhvris59e710laq9uccgp3bmk%40group.calendar.google.com/private-39800ae6a811d9c397bea82916319a8b/basic.ics")
+        }
+        COULEUR_PRESENTIEL = "#00AA00"
+        COULEUR_DISTANCIEL = "#AA8800"
+        COULEUR_PARTIEL    = "#F4511E"
+
+        pickle.dump((COULEURS_GROUPES, COULEUR_PRESENTIEL, COULEUR_DISTANCIEL, COULEUR_PARTIEL), open(nomFichierEDT, "wb"))
+
     #on télécharge l'agenda
     urlAgenda = GROUPES_DISCORD[groupeId][1]
     agenda = chargeAgenda(urlAgenda)
