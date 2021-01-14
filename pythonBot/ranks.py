@@ -126,7 +126,7 @@ def main():
 
         await ctx.send(affiRank(someone, ctx.guild))
 
-    @bot.command(name = "stats-new")
+    @bot.command(name = "stats")
     async def stats(ctx):
         res = await affi_stats(ctx.guild)
         await ctx.send(res)

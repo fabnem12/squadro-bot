@@ -661,7 +661,7 @@ def main(idsTraites = set(range(10))):
         await ctx.send("Si vous avez utilisé le module SquadroBot, il faut mettre son code dans le même dossier que le notebook **__en gardant le même nom de fichier__**",
                        file = discord.File("SquadroBot.py"))
 
-    @bot.command(name = "stats")
+    @bot.command(name = "stats-old")
     async def stats(ctx):
         if not estAdmin(ctx.author): return
 
@@ -905,6 +905,9 @@ def main(idsTraites = set(range(10))):
             Popen(["python3", "maj.py"], stdout = DEVNULL)
 
             await ctx.message.add_reaction("👌")
+
+    @bot.command(name = "add_edt")
+    async def addedt(ctx, lien:str, salon: discord.Channel)
 
     return bot, TOKEN
 
