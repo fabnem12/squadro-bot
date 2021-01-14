@@ -54,7 +54,7 @@ async def bind_channel_edit(msg):
         texte, embeds = msg.content, msg.embeds
         auteur, echos = MSG_RETRANSMIS[msg.id]
 
-        texteRenvoye = "**@{} ({}) :**\n{}".format(auteur.nick or auteur.name, texte)
+        texteRenvoye = "**@{} :**\n{}".format(auteur.nick or auteur.name, texte)
 
         for echo in echos:
             await echo.edit(content = texteRenvoye)
