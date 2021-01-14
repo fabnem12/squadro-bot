@@ -21,7 +21,7 @@ if not os.path.exists(cheminPickle):
 
 INFOS = pickle.load(open(cheminPickle, "rb"))
 BINDED_CHANNELS = INFOS["BINDED_CHANNELS"]
-MSG_RETRANSMIS = set()
+MSG_RETRANSMIS = dict()
 
 def save():
     pickle.dump(INFOS, open(cheminPickle, "wb"))
@@ -32,18 +32,37 @@ async def dmChannelUser(user):
         await user.create_dm() #crée le dm channel, et après user.dm_channel est remplacé par l'objet représentant le dm channel
     return user.dm_channel
 
-async def bind_channel(msg):
-    if msg.channel.id in BINDED_CHANNELS and msg.id not in MSG_RETRANSMIS:
+async def bind_channel_envoi(msg):
+    if msg.author.id == bot.user.id: return
+
+    if msg.channel.id in BINDED_CHANNELS:
         auteur, texte, embeds = msg.author, msg.content, msg.embeds
         texteRenvoye = "**@{} :**\n{}".format(auteur.nick or auteur.name, texte)
+
+        MSG_RETRANSMIS[msg.id] = (auteur, [])
 
         for serveurCible, salonCible in BINDED_CHANNELS[msg.channel.id]:
             serveur = bot.get_guild(serveurCible)
             channel = serveur.get_channel(salonCible)
 
             retransmis = await channel.send(texteRenvoye)
-            MSG_RETRANSMIS.add(retransmis.id)
+            MSG_RETRANSMIS[msg.id][1].append(retransmis)
             sleep(0.5)
+
+async def bind_channel_edit(msg):
+    if msg.id in MSG_RETRANSMIS:
+        texte, embeds = msg.content, msg.embeds
+        auteur, echos = MSG_RETRANSMIS[msg.id]
+
+        texteRenvoye = "**@{} ({}) :**\n{}".format(auteur.nick or auteur.name, texte)
+
+        for echo in echos:
+            await echo.edit(content = texteRenvoye)
+
+async def bind_channel_del(msg):
+    if msg.id in MSG_RETRANSMIS:
+        for echo in MSG_RETRANSMIS[msg.id][1]:
+            await echo.delete()
 
 def main():
     bot = commands.Bot(command_prefix = prefixeBot, help_command = None)
@@ -55,9 +74,17 @@ def main():
         raise error
 
     @bot.event
+    async def on_message_edit(_, msg):
+        await bind_channel_edit(msg)
+
+    @bot.event
+    async def on_message_delete(msg):
+        await bind_channel_del(msg)
+
+    @bot.event
     async def on_message(msg):
         #liaison de salon
-        await bind_channel(msg)
+        await bind_channel_envoi(msg)
 
         await bot.process_commands(msg)
 
@@ -82,19 +109,22 @@ def main():
 
         cible.add((serveurSource, salonSource))
 
-        save()
-
         confirmation = await ctx.send("OK")
-        MSG_RETRANSMIS.add(confirmation)
+        save()
 
     @bot.command(name = "utils_unbind")
     async def unbind(ctx, salonSource: int):
         if salonSource in BINDED_CHANNELS:
+            for (_, channel) in BINDED_CHANNELS[salonSource]:
+                BINDED_CHANNELS[channel] = {(x, y) for x, y in BINDED_CHANNELS[channel] if y != salonSource}
+
             BINDED_CHANNELS[salonSource] = set()
-
             await ctx.send("OK")
+        else:
+            await ctx.send("Ce salon n'était pas relié aux autres")
 
-        await ctx.send("Ce salon n'était pas relié aux autres")
+        save()
+        print(BINDED_CHANNELS)
 
     return bot, TOKEN
 
