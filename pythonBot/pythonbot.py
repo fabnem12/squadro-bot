@@ -897,11 +897,7 @@ def main(idsTraites = set(range(10))):
         compteurTB[0] += 1 if moins != "sub" else -1
         await ctx.send("On en est à {} 'tout :bath:' <:VictorExposito_thuglife:777883106630828032>".format(compteurTB[0]))
 
-    @bot.command(name = "ba")
-    async def ba(ctx):
-        await ctx.send("Bonne année ! :tada:")
-
-    @bot.command(name="màj")
+    @bot.command(name = "màj")
     async def maj(ctx):
         if estAdmin(ctx.author):
             from subprocess import Popen, DEVNULL
