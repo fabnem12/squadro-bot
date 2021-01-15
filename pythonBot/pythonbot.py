@@ -906,9 +906,6 @@ def main(idsTraites = set(range(10))):
 
             await ctx.message.add_reaction("👌")
 
-    @bot.command(name = "add_edt")
-    async def addedt(ctx, lien:str, salon: discord.Channel)
-
     return bot, TOKEN
 
 if __name__ == "__main__":
