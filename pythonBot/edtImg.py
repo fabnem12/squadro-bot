@@ -8,7 +8,6 @@ import recurring_ical_events
 import os, sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from constantes import GROUPES_DISCORD
 from utils import cheminOutputs
 
 import pickle
@@ -42,7 +41,7 @@ def lectureEventsJournee(calendar, shift = 0):
 
     return TOUTE_JOURNEE, EVENTS
 
-def dessine(groupeId, toute_journee, liste_cours):
+def dessine(couleurDefaut, toute_journee, liste_cours, COULEUR_PRESENTIEL, COULEUR_DISTANCIEL, COULEUR_PARTIEL):
     lignesSvg = [""]
     def printF(*args): #fonction pour écrire facilement dans le str du code svg
         lignesSvg[0] += " ".join(str(x) for x in args) + "\n"
@@ -107,7 +106,7 @@ def dessine(groupeId, toute_journee, liste_cours):
             couleur = COULEUR_PARTIEL
             presentielCours = True
         else:
-            couleur = COULEURS_GROUPES[groupeId]
+            couleur = couleurDefaut
             presentielCours = presentiel
 
         yRect = offsetY + (heure_debut - 8) * HAUTEUR_COURS
@@ -119,7 +118,7 @@ def dessine(groupeId, toute_journee, liste_cours):
         printF("<text x='{}' y='{}' font-size='40' fill='white' font-weight='bold'>{}</text>".format(xText, yRect + 105, "{} à {}".format(heure_debut_str, heure_fin_str)))
 
         if lieu != "":
-            if not presentielCours: lieu = "chez toi ;)" if groupeId != "8A" else "chez toi ;) (sauf Julien bien sûr ;))"
+            if not presentielCours: lieu = "chez toi ;)"
             printF("<text x='{}' y='{}' font-size='40' fill='white'>Lieu : {}</text>".format(xText, yRect + 150, lieu))
 
     #fin du svg
@@ -149,14 +148,14 @@ def genereEDT(groupeId, shift = 0):
         COULEUR_DISTANCIEL = "#AA8800"
         COULEUR_PARTIEL    = "#F4511E"
 
-        pickle.dump((COULEURS_GROUPES, COULEUR_PRESENTIEL, COULEUR_DISTANCIEL, COULEUR_PARTIEL), open(nomFichierEDT, "wb"))
+        pickle.dump((GROUPES, COULEUR_PRESENTIEL, COULEUR_DISTANCIEL, COULEUR_PARTIEL), open(nomFichierEDT, "wb"))
 
     #on télécharge l'agenda
-    urlAgenda = GROUPES_DISCORD[groupeId][1]
+    couleur, urlAgenda = GROUPES[groupeId]
     agenda = chargeAgenda(urlAgenda)
     #on récupère les évènements
     toute_journee, cours = lectureEventsJournee(agenda, shift)
     #dessin du svg et conversion en png du même coup
-    lienImage = dessine(groupeId, toute_journee, cours)
+    lienImage = dessine(couleur, toute_journee, cours, COULEUR_PRESENTIEL, COULEUR_DISTANCIEL, COULEUR_PARTIEL)
 
     return lienImage
