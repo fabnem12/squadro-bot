@@ -22,7 +22,7 @@ def save():
     pickle.dump(infos, open(join(cheminOutputs, "ranks.p"), "wb"))
 
 def ajoutMsg(guild, author, minute):
-    if guild: guild = guild.id #si guild est None, c'est un message privé, sinon c'est un vrai serveur donc on garde récupère son id
+    if guild: guild = guild.id #si guild est None, c'est un message privé, sinon c'est un vrai serveur donc on récupère son id
 
     if guild in infos: infosGuild = infos[guild]
     else:
@@ -102,7 +102,7 @@ def main():
 
     @bot.command(name="prerank")
     async def prerank(ctx):
-        #if not estAdmin(ctx.author.id): return
+        if not estAdmin(ctx.author.id): return
 
         msgAnnonce = await ctx.send("**Calculs en cours…**")
 
@@ -136,6 +136,4 @@ def main():
 if __name__ == "__main__": #pour lancer le bot
     bot, token = main()
 
-    loop = asyncio.get_event_loop()
-    loop.create_task(bot.start(token))
-    loop.run_forever()
+    bot.run(token)
