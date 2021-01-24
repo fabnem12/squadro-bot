@@ -2,6 +2,7 @@ import asyncio
 import discord
 import os
 import pickle
+import requests
 import sys
 from discord.ext import commands
 from time import sleep
@@ -22,9 +23,22 @@ if not os.path.exists(cheminPickle):
 INFOS = pickle.load(open(cheminPickle, "rb"))
 BINDED_CHANNELS = INFOS["BINDED_CHANNELS"]
 MSG_RETRANSMIS = dict()
+ECHO2MSG = dict()
 
 def save():
     pickle.dump(INFOS, open(cheminPickle, "wb"))
+
+def resendFile(url, nomFichier):
+    cheminSave = os.path.join(cheminOutputs, nomFichier)
+    r = requests.get(url)
+    with open(cheminSave, "wb") as f:
+        f.write(r.content)
+
+    return discord.File(cheminSave)
+
+def supprFichier(fichierDiscord):
+    chemin = os.path.join(cheminOutputs, fichierDiscord.filename)
+    os.remove(chemin)
 ################################################################################
 
 async def dmChannelUser(user):
@@ -36,33 +50,60 @@ async def bind_channel_envoi(msg):
     if msg.author.id == bot.user.id: return
 
     if msg.channel.id in BINDED_CHANNELS:
-        auteur, texte, embeds = msg.author, msg.content, msg.embeds
+        auteur, texte, files = msg.author, msg.content, [resendFile(x.url, x.filename) for x in msg.attachments]
+        reference = msg.reference
+
         texteRenvoye = "**@{} :**\n{}".format(auteur.nick or auteur.name, texte)
 
-        MSG_RETRANSMIS[msg.id] = (auteur, [])
+        MSG_RETRANSMIS[msg.id] = (auteur, dict(), msg)
 
         for serveurCible, salonCible in BINDED_CHANNELS[msg.channel.id]:
             serveur = bot.get_guild(serveurCible)
             channel = serveur.get_channel(salonCible)
 
-            retransmis = await channel.send(texteRenvoye)
-            MSG_RETRANSMIS[msg.id][1].append(retransmis)
+            if reference:
+                refId = reference.message_id
+                #il y a deux cas
+                #1. soit on fait référence à un "vrai" message qui a été retransmis
+                #2. soit on fait référence à un écho
+
+                #1.
+                if refId in MSG_RETRANSMIS:
+                    refEcho = MSG_RETRANSMIS[refId][1][salonCible].id
+                    chanRef = channel.id
+                #2.
+                elif refId in ECHO2MSG:
+                    refEcho = ECHO2MSG[refId]
+                    chanRef = channel.id
+
+                objRef = discord.MessageReference(message_id = refEcho, channel_id = chanRef)
+                retransmis = await channel.send(texteRenvoye, reference = objRef, files = files)
+            else:
+                retransmis = await channel.send(texteRenvoye, files = files)
+
+            MSG_RETRANSMIS[msg.id][1][salonCible] = retransmis
+            ECHO2MSG[retransmis.id] = msg.id
             sleep(0.5)
+
+            for x in files: supprFichier(x)
 
 async def bind_channel_edit(msg):
     if msg.id in MSG_RETRANSMIS:
         texte, embeds = msg.content, msg.embeds
-        auteur, echos = MSG_RETRANSMIS[msg.id]
+        auteur, echos, _ = MSG_RETRANSMIS[msg.id]
 
         texteRenvoye = "**@{} :**\n{}".format(auteur.nick or auteur.name, texte)
 
-        for echo in echos:
+        for echo in echos.values():
             await echo.edit(content = texteRenvoye)
 
 async def bind_channel_del(msg):
     if msg.id in MSG_RETRANSMIS:
-        for echo in MSG_RETRANSMIS[msg.id][1]:
+        for echo in MSG_RETRANSMIS[msg.id][1].values():
             await echo.delete()
+
+async def bind_channel_react_add(reaction):
+    pass
 
 def main():
     bot = commands.Bot(command_prefix = prefixeBot, help_command = None)
@@ -80,6 +121,10 @@ def main():
     @bot.event
     async def on_message_delete(msg):
         await bind_channel_del(msg)
+
+    @bot.event
+    async def on_reaction_add(reaction, _):
+        await bind_channel_react_add(reaction)
 
     @bot.event
     async def on_message(msg):
@@ -124,7 +169,6 @@ def main():
             await ctx.send("Ce salon n'était pas relié aux autres")
 
         save()
-        print(BINDED_CHANNELS)
 
     return bot, TOKEN
 
