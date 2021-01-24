@@ -28,6 +28,8 @@ ECHO2MSG = dict()
 def save():
     pickle.dump(INFOS, open(cheminPickle, "wb"))
 
+def estAdmin(usrId): return usrId in ADMINS
+
 def resendFile(url, nomFichier):
     cheminSave = os.path.join(cheminOutputs, nomFichier)
     r = requests.get(url)
@@ -136,6 +138,8 @@ def main():
     #bind channels
     @bot.command(name = "utils_bind")
     async def bind(ctx, salonSource: int, serveurCible: int, salonCible: int):
+        if not estAdmin(ctx.author.id): return
+
         serveurSource = ctx.guild.id
 
         if salonSource in BINDED_CHANNELS:
@@ -159,6 +163,8 @@ def main():
 
     @bot.command(name = "utils_unbind")
     async def unbind(ctx, salonSource: int):
+        if not estAdmin(ctx.author.id): return
+        
         if salonSource in BINDED_CHANNELS:
             for (_, channel) in BINDED_CHANNELS[salonSource]:
                 BINDED_CHANNELS[channel] = {(x, y) for x, y in BINDED_CHANNELS[channel] if y != salonSource}
