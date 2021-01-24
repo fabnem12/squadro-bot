@@ -75,7 +75,7 @@ async def bind_channel_envoi(msg):
                     chanRef = channel.id
                 #2.
                 elif refId in ECHO2MSG:
-                    refEcho = ECHO2MSG[refId]
+                    refEcho, _ = ECHO2MSG[refId]
                     chanRef = channel.id
 
                 objRef = discord.MessageReference(message_id = refEcho, channel_id = chanRef)
@@ -84,7 +84,7 @@ async def bind_channel_envoi(msg):
                 retransmis = await channel.send(texteRenvoye, files = files)
 
             MSG_RETRANSMIS[msg.id][1][salonCible] = retransmis
-            ECHO2MSG[retransmis.id] = msg.id
+            ECHO2MSG[retransmis.id] = (msg.id, msg.channel.id)
             sleep(0.5)
 
             for x in files: supprFichier(x)
@@ -104,8 +104,28 @@ async def bind_channel_del(msg):
         for echo in MSG_RETRANSMIS[msg.id][1].values():
             await echo.delete()
 
-async def bind_channel_react_add(reaction):
-    pass
+async def bind_channel_react_add(reaction, user, bot):
+    compte = reaction.count
+    msgId = reaction.message.id
+
+    if user.id == bot.user.id: return
+
+    if compte:
+        #1. on a fait une réaction sur un écho, on ajoute la réaction sur le message de départ
+        if msgId in ECHO2MSG:
+            print(1)
+            msgId, channelId = ECHO2MSG[msgId]
+            channel = await bot.fetch_channel(channelId)
+            msg = await channel.fetch_message(msgId)
+
+            await msg.add_reaction(reaction.emoji)
+        #2.
+        elif msgId in MSG_RETRANSMIS:
+            print(2)
+            _, echos, _ = MSG_RETRANSMIS[msgId]
+
+            for echo in echos.values():
+                await echo.add_reaction(reaction.emoji)
 
 def main():
     bot = commands.Bot(command_prefix = prefixeBot, help_command = None)
@@ -125,8 +145,8 @@ def main():
         await bind_channel_del(msg)
 
     @bot.event
-    async def on_reaction_add(reaction, _):
-        await bind_channel_react_add(reaction)
+    async def on_reaction_add(reaction, user):
+        await bind_channel_react_add(reaction, user, bot)
 
     @bot.event
     async def on_message(msg):
@@ -164,7 +184,7 @@ def main():
     @bot.command(name = "utils_unbind")
     async def unbind(ctx, salonSource: int):
         if not estAdmin(ctx.author.id): return
-        
+
         if salonSource in BINDED_CHANNELS:
             for (_, channel) in BINDED_CHANNELS[salonSource]:
                 BINDED_CHANNELS[channel] = {(x, y) for x, y in BINDED_CHANNELS[channel] if y != salonSource}
