@@ -1,6 +1,8 @@
 from os.path import join
 from random import randint
+from typing import Optional
 import asyncio
+import discord
 import os
 import pickle
 import sys
@@ -119,10 +121,9 @@ def main():
         save()
 
     @bot.command(name = "rank")
-    async def rank(ctx, someone = None):
+    async def rank(ctx, someone: Optional[discord.Member]):
         if someone is None: someone = ctx.author.id
-        else:
-            someone = int(someone[3:21])
+        else: someone = someone.id #int(someone[3:21])
 
         await ctx.send(affiRank(someone, ctx.guild))
 
