@@ -908,6 +908,12 @@ def main(idsTraites = set(range(10))):
         compteurChristian[0] += 1 if moins != "sub" else -1
         await ctx.send("On en est à {} fois où le prof râle à cause de sa tablette".format(compteurChristian[0]))
 
+    compteurEnfait = [0]
+    @bot.command(name="enFait")
+    async def enFait(ctx, moins = "add"):
+        compteurEnfait[0] += 1 if moins != "sub" else -1
+        await ctx.send("On en est à {} 'en fait'".format(compteurEnfait[0]))
+
 
     @bot.command(name = "màj")
     async def maj(ctx):
