@@ -898,9 +898,16 @@ def main(idsTraites = set(range(10))):
 
     compteurIsa = [0]
     @bot.command(name="isa")
-    async def tb(ctx, moins = "add"):
+    async def isa(ctx, moins = "add"):
         compteurIsa[0] += 1 if moins != "sub" else -1
         await ctx.send("On en est à {} références à Isabelle Adjani".format(compteurIsa[0]))
+
+    compteurChristian = [0]
+    @bot.command(name="raleACauseDeLaTablette")
+    async def christian(ctx, moins = "add"):
+        compteurChristian[0] += 1 if moins != "sub" else -1
+        await ctx.send("On en est à {} fois où le prof râle à cause de sa tablette".format(compteurChristian[0]))
+
 
     @bot.command(name = "màj")
     async def maj(ctx):
