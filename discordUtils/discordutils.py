@@ -19,12 +19,13 @@ stockePID()
 #on récupère les constantes dans le pickle
 cheminPickle = os.path.join(cheminOutputs, "discordutils.p")
 
-INFOS = dict() if os.path.exists(cheminPickle) else pickle.load(open(cheminPickle, "rb"))
+INFOS = dict() if not os.path.exists(cheminPickle) else pickle.load(open(cheminPickle, "rb"))
 
 if "BINDED_CHANNELS" not in INFOS: INFOS["BINDED_CHANNELS"] = dict()
 BINDED_CHANNELS = INFOS["BINDED_CHANNELS"]
 MSG_RETRANSMIS = dict()
 ECHO2MSG = dict()
+BLANK = "‎" * 3
 
 if "VOCAL_ROLE" not in INFOS: INFOS["VOCAL_ROLE"] = dict()
 VOCAL_ROLE = INFOS["VOCAL_ROLE"]
@@ -53,13 +54,16 @@ async def dmChannelUser(user):
     return user.dm_channel
 
 async def bind_channel_envoi(msg):
-    if msg.author.id == bot.user.id: return
+    if msg.content.startswith(BLANK): return
 
     if msg.channel.id in BINDED_CHANNELS:
         auteur, texte, files = msg.author, msg.content, [resendFile(x.url, x.filename) for x in msg.attachments]
+        embeds = msg.embeds
         reference = msg.reference
 
-        texteRenvoye = "**@{} :**\n{}".format(auteur.nick or auteur.name, texte)
+        embed = None if embeds == [] else embeds[0]
+
+        texteRenvoye = BLANK + "**@{} :**\n{}".format(auteur.nick or auteur.name, texte)
 
         MSG_RETRANSMIS[msg.id] = (auteur, dict(), msg)
 
@@ -83,9 +87,9 @@ async def bind_channel_envoi(msg):
                     chanRef = channel.id
 
                 objRef = discord.MessageReference(message_id = refEcho, channel_id = chanRef)
-                retransmis = await channel.send(texteRenvoye, reference = objRef, files = files)
+                retransmis = await channel.send(texteRenvoye, reference = objRef, files = files, embed = embed)
             else:
-                retransmis = await channel.send(texteRenvoye, files = files)
+                retransmis = await channel.send(texteRenvoye, files = files, embed = embed)
 
             MSG_RETRANSMIS[msg.id][1][salonCible] = retransmis
             ECHO2MSG[retransmis.id] = (msg.id, msg.channel.id)
@@ -98,7 +102,7 @@ async def bind_channel_edit(msg):
         texte, embeds = msg.content, msg.embeds
         auteur, echos, _ = MSG_RETRANSMIS[msg.id]
 
-        texteRenvoye = "**@{} :**\n{}".format(auteur.nick or auteur.name, texte)
+        texteRenvoye = BLANK + "**@{} :**\n{}".format(auteur.nick or auteur.name, texte)
 
         for echo in echos.values():
             await echo.edit(content = texteRenvoye)
@@ -112,7 +116,7 @@ async def bind_channel_react_add(reaction, user, bot):
     compte = reaction.count
     msgId = reaction.message.id
 
-    if user.id == bot.user.id: return
+    #if user.id == bot.user.id: return
 
     if compte:
         #1. on a fait une réaction sur un écho, on ajoute la réaction sur le message de départ
@@ -122,20 +126,19 @@ async def bind_channel_react_add(reaction, user, bot):
             msg = await channel.fetch_message(msgId)
 
             await msg.add_reaction(reaction.emoji)
+            sleep(0.5)
         #2.
         elif msgId in MSG_RETRANSMIS:
             _, echos, _ = MSG_RETRANSMIS[msgId]
 
             for echo in echos.values():
                 await echo.add_reaction(reaction.emoji)
+                sleep(0.5)
 
 async def bind_channel_react_del(reaction, bot):
-    compte = reaction.count
     msgId = reaction.message.id
-    if user.id == bot.user.id: return
 
-    print(compte)
-    if compte == 0:
+    if True:
         #1. on a retiré une réaction sur un écho, on retire la réaction du bot sur l'original
         if msgId in ECHO2MSG:
             msgId, channelId = ECHO2MSG[msgId]
@@ -187,6 +190,10 @@ def main():
     @bot.event
     async def on_reaction_add(reaction, user):
         await bind_channel_react_add(reaction, user, bot)
+
+    @bot.event
+    async def on_reaction_clear_emoji(reaction):
+        await bind_channel_react_del(reaction, bot)
 
     @bot.event
     async def on_voice_state_update(member, before, after):
@@ -266,6 +273,7 @@ def main():
                     del VOCAL_ROLE[guildId][roleId]
 
                 await ctx.send("OK")
+                save()
                 return
 
         await ctx.send("Inutile")
