@@ -21,14 +21,20 @@ cheminPickle = os.path.join(cheminOutputs, "discordutils.p")
 
 INFOS = dict() if not os.path.exists(cheminPickle) else pickle.load(open(cheminPickle, "rb"))
 
+###
 if "BINDED_CHANNELS" not in INFOS: INFOS["BINDED_CHANNELS"] = dict()
 BINDED_CHANNELS = INFOS["BINDED_CHANNELS"]
 MSG_RETRANSMIS = dict()
 ECHO2MSG = dict()
 BLANK = "‎" * 3
 
+###
 if "VOCAL_ROLE" not in INFOS: INFOS["VOCAL_ROLE"] = dict()
 VOCAL_ROLE = INFOS["VOCAL_ROLE"]
+
+###
+if "AUTO_ROLE" not in infos: INFOS["AUTO_ROLE"] = dict()
+AUTO_ROLE = INFOS["AUTO_ROLE"]
 
 def save():
     pickle.dump(INFOS, open(cheminPickle, "wb"))
@@ -170,6 +176,17 @@ async def vocalrole_voicestate(member, before, after):
             nouvRole = guild.get_role(rolesGuild[channelAfter])
             await member.add_roles(nouvRole)
 
+#autorole
+async def autorole_react_add(reaction: discord.Reaction, user: discord.Member, bot):
+    msgId = reaction.message.id
+    guild = reaction.message.guild
+    emojiId = reaction.emoji.id
+
+    if msgId in AUTO_ROLE:
+        if emojiId in AUTO_ROLE[msgId]:
+            role = guild.get_role(AUTO_ROLE[msgId][emojiId])
+            await member.add_roles(role)
+
 def main():
     bot = commands.Bot(command_prefix = prefixeBot, help_command = None)
 
@@ -190,6 +207,7 @@ def main():
     @bot.event
     async def on_reaction_add(reaction, user):
         await bind_channel_react_add(reaction, user, bot)
+        await autorole_react_add(reaction, user, bot)
 
     @bot.event
     async def on_reaction_clear_emoji(reaction):
@@ -202,9 +220,10 @@ def main():
 
     @bot.event
     async def on_message(msg):
+        await bot.process_commands(msg)
+
         #liaison de salon
         await bind_channel_envoi(msg)
-        await bot.process_commands(msg)
 
     #bind channels
     @bot.command(name = "utils_bind")
@@ -253,6 +272,8 @@ def main():
     #vocal role
     @bot.command(name = "utils_vocalbind")
     async def vocalbind(ctx, role: discord.Role, salonVocalId: int):
+        if not estAdmin(ctx.author.id): return
+
         guildId = role.guild.id
 
         if guildId not in VOCAL_ROLE:
@@ -264,19 +285,58 @@ def main():
 
     @bot.command(name = "utils_vocalunbind")
     async def vocalunbind(ctx, role: discord.Role):
+        if not estAdmin(ctx.author.id): return
+
         guildId = role.guild.id
         roleId = role.id
 
-        if guildId in VOCAL_ROLE:
-            if roleId in VOCAL_ROLE[guildId].values():
-                for salon in (x for x, y in VOCAL_ROLE.items() if y == roleId):
-                    del VOCAL_ROLE[guildId][roleId]
+        if guildId in VOCAL_ROLE and roleId in VOCAL_ROLE[guildId].values():
+            for salon in (x for x, y in VOCAL_ROLE.items() if y == roleId):
+                del VOCAL_ROLE[guildId][roleId]
 
-                await ctx.send("OK")
-                save()
-                return
+            await ctx.send("OK")
+            save()
+            return
 
         await ctx.send("Inutile")
+
+    #autorole
+    @bot.command(name = "utils_rolebind")
+    async def rolebind(ctx, msgId: int, emoji: discord.Emoji, role: discord.Role):
+        if not estAdmin(ctx.author.id): return
+
+        roleId = role.id
+        emojiId = emoji.id
+
+        if msgId not in AUTO_ROLE: AUTO_ROLE[msgId] = dict()
+        AUTO_ROLE[msgId][emojiId] = roleId
+
+        save()
+
+        await ctx.send("C'est noté !")
+
+    @bot.command(name = "utils_roleunbind")
+    async def roleunbind(ctx, msgId: int, emoji: Optional[discord.Emoji]):
+        if not estAdmin(ctx.author.id): return
+
+        ok = True
+
+        if msgId in AUTO_ROLE:
+            if emoji:
+                if emoji.id in AUTO_ROLE[msgId]:
+                    del AUTO_ROLE[msgId][emojiId]
+                else:
+                    ok = False
+            else:
+                del AUTO_ROLE[msgId]
+        else:
+            ok = False
+
+        if ok:
+            save()
+            await ctx.send("C'est noté !")
+        else: await ctx.send("Inutile")
+
 
     return bot, TOKEN
 
