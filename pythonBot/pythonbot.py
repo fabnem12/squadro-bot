@@ -284,7 +284,7 @@ def main(idsTraites = set(range(10))):
 
     nonConcerne = lambda user: user.id % 10 not in idsTraites
 
-    bot = commands.Bot(command_prefix=prefixeBot, help_command=None)
+    bot = commands.Bot(command_prefix=prefixeBot, help_command=None, intents = discord.Intents.all())
     LE_BOT = lambda: bot.user
 
     ################################################################################
