@@ -236,6 +236,13 @@ def main():
 
             await ctx.send(info)
 
+    @bot.command(name="vote_asso")
+    async def asso(ctx):
+        msg = await ctx.send(":+1: pour OUI\n:-1: pour NON\n⚪ pour VOTE BLANC")
+        await msg.add_reaction("👍")
+        await msg.add_reaction("👎")
+        await msg.add_reaction("⚪")
+
     return bot, TOKEN
 
 if __name__ == "__main__": #pour lancer le bot
