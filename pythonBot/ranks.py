@@ -63,7 +63,6 @@ def affiRank(author, guild):
       return "Aucun message n'a été compté sur ce serveur…"
 
 def estAdmin(authorId):
-    print(ADMINS, authorId)
     return authorId in ADMINS
 
 
@@ -120,10 +119,12 @@ def main():
         await msgAnnonce.edit(content = "**Calculs finis !**")
         save()
 
+        await stats(ctx)
+
     @bot.command(name = "rank")
     async def rank(ctx, someone: Optional[discord.Member]):
         if someone is None: someone = ctx.author.id
-        else: someone = someone.id #int(someone[3:21])
+        else: someone = someone.id
 
         await ctx.send(affiRank(someone, ctx.guild))
 
