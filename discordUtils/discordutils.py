@@ -116,7 +116,7 @@ async def bind_channel_react_add(reaction, user, bot):
     compte = reaction.count
     msgId = reaction.message.id
 
-    #if user.id == bot.user.id: return
+    if user.id == bot.user.id: return
 
     if compte:
         #1. on a fait une réaction sur un écho, on ajoute la réaction sur le message de départ
