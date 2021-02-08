@@ -253,6 +253,8 @@ def main():
     #vocal role
     @bot.command(name = "utils_vocalbind")
     async def vocalbind(ctx, role: discord.Role, salonVocalId: int):
+        if not estAdmin(ctx.author.id): return
+
         guildId = role.guild.id
 
         if guildId not in VOCAL_ROLE:
@@ -264,6 +266,8 @@ def main():
 
     @bot.command(name = "utils_vocalunbind")
     async def vocalunbind(ctx, role: discord.Role):
+        if not estAdmin(ctx.author.id): return
+
         guildId = role.guild.id
         roleId = role.id
 
