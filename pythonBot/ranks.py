@@ -154,7 +154,7 @@ def main():
 
     return bot, TOKEN
 
-    @bot.command(name = "màj")
+    @bot.command(name = "màj_ranks")
     async def maj(ctx):
         if estAdmin(ctx.author.id):
             from subprocess import Popen, DEVNULL
