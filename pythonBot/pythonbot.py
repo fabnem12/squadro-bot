@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # CONSTANTES ###################################################################
 from constantes import ADMINS, TOKEN, prefixeBot, GROUPES_DISCORD
-from utils import stockePID
+from utils import stockePID, cheminOutputs
 from edtImg import genereEDT, nomFichierEDT
 from SquadroBot import brainfuckSquadroBot, getPlot
 
@@ -543,7 +543,7 @@ def main(idsTraites = set(range(10))):
 
         seed((timeComponent + userComponent) ** userComponent)
 
-        idRab = hex(randint(1, 1e6))[2:]
+        idRab = hex(randint(1e6, 1e7-1))[2:]
         return idRab
 
     def rabIsOk(user, idRab: str): #on vérifie que l'id de rab est le bon
@@ -921,6 +921,28 @@ def main(idsTraites = set(range(10))):
             from subprocess import Popen, DEVNULL
 
             Popen(["python3", "maj.py"], stdout = DEVNULL)
+
+            await ctx.message.add_reaction("👌")
+
+    @bot.command(name = "up_img")
+    async def up_img(ctx, name: str):
+        if ctx.author.id not in NOTEBOOKS:
+            await newNb(ctx, False)
+
+        from matplotlib import image
+        import requests
+
+        def downloadFile(url, nomFichier):
+            cheminSave = os.path.join(cheminOutputs, nomFichier)
+            r = requests.get(url)
+            with open(cheminSave, "wb") as f:
+                f.write(r.content)
+            return image.imread(cheminSave)
+
+        notebook = NOTEBOOKS[ctx.author.id]
+        imgs = [downloadFile(x.url, x.filename) for x in ctx.message.attachments if ".png" in x.filename or ".jpg" in x.filename]
+        if len(imgs) == 1:
+            notebook.glob[name] = imgs[0]
 
             await ctx.message.add_reaction("👌")
 
