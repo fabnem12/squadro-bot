@@ -51,11 +51,6 @@ def main(img):
     ax4.set_title('grid')
     ax4.imshow(1-grid, cmap='binary')
 
-    # Display our 4 plots
-    plt.show()
-
-
-
     # Zoom out binary picture into abstract map
     game_board = zoom(grid, tile_size)
     #print(game_board)
@@ -73,3 +68,6 @@ def main(img):
                delimiter=',',
                fmt='%s'
                )
+
+   # Display our 4 plots
+   return plt
