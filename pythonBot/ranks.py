@@ -106,6 +106,7 @@ def main():
         if not estAdmin(ctx.author.id): return
 
         msgAnnonce = await ctx.send("**Calculs en cours…**")
+        infos[ctx.guild.id] = dict()
 
         for channel in ctx.guild.text_channels:
              await msgAnnonce.edit(content = "**Calculs en cours…**\nSalon {} en cours de revue…".format(channel.name))
@@ -119,8 +120,6 @@ def main():
         await msgAnnonce.edit(content = "**Calculs finis !**")
         save()
 
-        await stats(ctx)
-
     @bot.command(name = "rank")
     async def rank(ctx, someone: Optional[discord.Member]):
         if someone is None: someone = ctx.author.id
@@ -132,6 +131,26 @@ def main():
     async def stats(ctx):
         res = await affi_stats(ctx.guild)
         await ctx.send(res)
+
+    @bot.command(name = "top_salons")
+    async def top_salons(ctx):
+        if not estAdmin(ctx.author.id): return
+
+        msgAnnonce = await ctx.send("**Calculs en cours…**")
+
+        comptes = dict()
+        for channel in ctx.guild.text_channels:
+            await msgAnnonce.edit(content = "**Calculs en cours…**\nSalon {} en cours de revue…".format(channel.name))
+            comptes[channel.name] = 0
+
+            try:
+                async for message in channel.history(limit = None):
+                    comptes[channel.name] += 1
+            except:
+                await ctx.send(f"Erreur pour le salon {channel.mention}. Il est probablement inacessible au bot")
+
+        txt = "**Salons les plus actifs sur ce serveur** :\n" + "\n".join(f"**{index+1}** {channel} ({nb} messages)" for index, (channel, nb) in enumerate(sorted(comptes.items(), key = lambda x: x[1], reverse=True)))
+        await ctx.send(txt[:1950])
 
     return bot, TOKEN
 
