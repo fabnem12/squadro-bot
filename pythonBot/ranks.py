@@ -154,6 +154,15 @@ def main():
 
     return bot, TOKEN
 
+    @bot.command(name = "màj")
+    async def maj(ctx):
+        if estAdmin(ctx.author.id):
+            from subprocess import Popen, DEVNULL
+
+            Popen(["python3", "maj.py"], stdout = DEVNULL)
+
+            await ctx.message.add_reaction("👌")
+
 if __name__ == "__main__": #pour lancer le bot
     bot, token = main()
 
