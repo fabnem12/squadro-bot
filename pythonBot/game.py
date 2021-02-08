@@ -69,5 +69,5 @@ def main(img):
                fmt='%s'
                )
 
-   # Display our 4 plots
-   return plt
+    # Display our 4 plots
+    return plt
