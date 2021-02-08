@@ -2,3 +2,4 @@ constantes.py
 __pycache__/
 *.log
 *.p
+outputs/
