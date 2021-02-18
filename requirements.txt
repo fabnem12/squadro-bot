@@ -1,0 +1,6 @@
+git+https://github.com/Rapptz/discord.py
+discord
+psutil
+icalendar
+asyncio
+svg
