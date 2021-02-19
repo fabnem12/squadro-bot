@@ -152,8 +152,6 @@ def main():
         txt = "**Salons les plus actifs sur ce serveur** :\n" + "\n".join(f"**{index+1}** {channel} ({nb} messages)" for index, (channel, nb) in enumerate(sorted(comptes.items(), key = lambda x: x[1], reverse=True)))
         await ctx.send(txt[:1950])
 
-    return bot, TOKEN
-
     @bot.command(name = "màj_ranks")
     async def maj(ctx):
         if estAdmin(ctx.author.id):
@@ -162,6 +160,8 @@ def main():
             Popen(["python3", "maj.py"], stdout = DEVNULL)
 
             await ctx.message.add_reaction("👌")
+
+    return bot, TOKEN
 
 if __name__ == "__main__": #pour lancer le bot
     bot, token = main()
