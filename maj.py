@@ -16,6 +16,6 @@ if "fichierPID.p" in os.listdir():
 pickle.dump(set(), open("fichierPID.p", "wb"))
 os.system("git pull")
 
+foutput = open("logs_bot.log".format(), "a")
 for path in listeScripts:
-    foutput = open("{}.log".format(path.split("/")[-1]), "w")
     Popen(["python3", path], stdout = foutput, stderr = foutput)
