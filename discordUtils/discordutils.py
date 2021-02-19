@@ -61,7 +61,7 @@ async def bind_channel_envoi(msg):
         embeds = msg.embeds
         reference = msg.reference
 
-        embed = None if embeds == [] else embeds[0]
+        embed = None if embeds == [] or auteur.id != bot.user.id else embeds[0]
 
         texteRenvoye = BLANK + "**@{} :**\n{}".format(auteur.nick or auteur.name, texte)
 
@@ -119,16 +119,17 @@ async def bind_channel_react_add(reaction, user, bot):
     if user.id == bot.user.id: return
 
     if compte:
-        #1. on a fait une réaction sur un écho, on ajoute la réaction sur le message de départ
+        #1. on a fait une réaction sur un écho, on ajoute la réaction sur le message initial
+        #et les autres échos via la partie 2
         if msgId in ECHO2MSG:
-            msgId, channelId = ECHO2MSG[msgId]
+            msgId, channelId = ECHO2MSG[msgId] #msgId désignera désormais le message initial
             channel = await bot.fetch_channel(channelId)
             msg = await channel.fetch_message(msgId)
 
             await msg.add_reaction(reaction.emoji)
             sleep(0.5)
         #2.
-        elif msgId in MSG_RETRANSMIS:
+        if msgId in MSG_RETRANSMIS:
             _, echos, _ = MSG_RETRANSMIS[msgId]
 
             for echo in echos.values():
