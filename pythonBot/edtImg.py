@@ -102,7 +102,7 @@ def dessine(couleurDefaut, toute_journee, liste_cours, COULEUR_PRESENTIEL, COULE
         elif titre.startswith("DISTANCIEL"):
             couleur = COULEUR_DISTANCIEL
             presentielCours = False
-        elif titre.startswith("EXAMEN"):
+        elif titre.startswith("EXAMEN") or titre.startswith("PARTIEL"):
             couleur = COULEUR_PARTIEL
             presentielCours = True
         else:
