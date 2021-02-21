@@ -87,7 +87,7 @@ class Imagine:
             raise ValueError("Impossible de faire une image aussi basse ({}) !".format(dimImage[1]))
 
         import os, time
-        self.nomFichier = os.path.join(os.path.dirname(__file__), "outputs/{}.png").format(round(time.time(), 10))
+        self.nomFichier = os.path.join(os.path.dirname(os.path.dirname(__file__)), "outputs/{}.png").format(round(time.time(), 10))
 
     def __mul__(self, nb):
         pixelsX, pixelsY = map(lambda x: round(x * nb), self.dimImage)
