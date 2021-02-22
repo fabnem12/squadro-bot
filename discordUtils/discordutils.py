@@ -6,7 +6,7 @@ import requests
 import sys
 from discord.ext import commands
 from time import sleep
-from typing import Optional
+from typing import Optional, Union
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -29,6 +29,9 @@ BLANK = "‎" * 3
 
 if "VOCAL_ROLE" not in INFOS: INFOS["VOCAL_ROLE"] = dict()
 VOCAL_ROLE = INFOS["VOCAL_ROLE"]
+
+if "AUTO_ROLE" not in INFOS: INFOS["AUTO_ROLE"] = dict()
+AUTO_ROLE = INFOS["VOCAL_ROLE"]
 
 def save():
     pickle.dump(INFOS, open(cheminPickle, "wb"))
@@ -171,6 +174,17 @@ async def vocalrole_voicestate(member, before, after):
             nouvRole = guild.get_role(rolesGuild[channelAfter])
             await member.add_roles(nouvRole)
 
+async def autorole_react_add(messageId, member, guild, emoji):
+    if (messageId, emoji) in AUTO_ROLE:
+
+        roleId = AUTO_ROLE[messageId, emoji]
+        role = guild.get_role(roleId)
+
+        if role in member.roles:
+            await member.remove_roles(role)
+        else:
+            await member.add_roles(role)
+
 def main():
     bot = commands.Bot(command_prefix = prefixeBot, help_command = None)
 
@@ -187,6 +201,18 @@ def main():
     @bot.event
     async def on_message_delete(msg):
         await bind_channel_del(msg)
+
+    @bot.event
+    async def on_raw_reaction_add(payload):
+        if payload.guild_id and payload.user_id != bot.user.id: #sinon, on est dans le cas d'une réaction en dm
+            messageId = payload.message_id
+            guild = bot.get_guild(payload.guild_id)
+            user = await guild.fetch_member(payload.user_id)
+
+            partEmoji = payload.emoji
+            emojiHash = partEmoji.id if partEmoji.is_custom_emoji() else partEmoji.name
+
+            await autorole_react_add(messageId, user, guild, emojiHash)
 
     @bot.event
     async def on_reaction_add(reaction, user):
@@ -263,6 +289,7 @@ def main():
 
         VOCAL_ROLE[guildId][salonVocalId] = role.id
         await ctx.send("OK")
+
         save()
 
     @bot.command(name = "utils_vocalunbind")
@@ -278,10 +305,36 @@ def main():
                     del VOCAL_ROLE[guildId][roleId]
 
                 await ctx.send("OK")
+
                 save()
                 return
 
         await ctx.send("Inutile")
+
+    @bot.command(name = "utils_autorole")
+    #async def autorole(ctx, role: discord.Role, messageId: int, emoji: discord.Emoji):
+    async def autorole(ctx, role: discord.Role, message: discord.Message, emoji: Union[discord.Emoji, str]):
+        emojiHash = emoji.id if isinstance(emoji, discord.Emoji) else emoji
+        messageId = message.id
+
+        if (messageId, emojiHash) not in AUTO_ROLE:
+            AUTO_ROLE[messageId, emojiHash] = role.id
+
+            try:
+                await message.add_reaction(emoji)
+            except:
+                pass
+            await ctx.send("Autorole activé")
+        else:
+            del AUTO_ROLE[messageId, emojiHash]
+            await ctx.send("Autorole désactivé")
+
+            try:
+                await message.remove_reaction(emoji, bot.user)
+            except:
+                pass
+
+        save()
 
     return bot, TOKEN
 
