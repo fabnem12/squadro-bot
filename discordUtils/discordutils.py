@@ -311,8 +311,8 @@ def main():
 
         await ctx.send("Inutile")
 
+    #autorole
     @bot.command(name = "utils_autorole")
-    #async def autorole(ctx, role: discord.Role, messageId: int, emoji: discord.Emoji):
     async def autorole(ctx, role: discord.Role, message: discord.Message, emoji: Union[discord.Emoji, str]):
         emojiHash = emoji.id if isinstance(emoji, discord.Emoji) else emoji
         messageId = message.id
