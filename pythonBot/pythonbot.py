@@ -594,15 +594,14 @@ def main(idsTraites = set(range(10))):
     @tasks.loop(minutes = 10.0)
     async def envoiEDT():
         now = utcnow().to("Europe/Brussels")
-        if True or now.weekday() in {4, 5}: return #on n'envoie pas l'edt le week-end
+        if now.weekday() in {4, 5}: return #on n'envoie pas l'edt le week-end
 
         if now.hour == 21 and now.minute >= 40 and now.minute < 50:
             for groupeId, (channelId, _) in GROUPES_DISCORD.items():
                 channel = bot.get_channel(channelId)
                 lienImage = genereEDT(groupeId, 1)
 
-                await channel.send("Voici l'agenda de demain pour le groupe {} :".format(groupeId))
-                await channel.send(file = discord.File(lienImage))
+                await channel.send("Voici l'agenda de demain pour le groupe {} :".format(groupeId), file = discord.File(lienImage))
 
     ################################################################################
     #EASTER-EGGS ###################################################################
