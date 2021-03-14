@@ -596,7 +596,7 @@ def main(idsTraites = set(range(10))):
         now = utcnow().to("Europe/Brussels")
         if now.weekday() in {4, 5}: return #on n'envoie pas l'edt le week-end
 
-        if now.hour == 21 and now.minute >= 40 and now.minute < 50:
+        if now.hour == 18 and now.minute >= 0 and now.minute < 10:
             for groupeId, (channelId, _) in GROUPES_DISCORD.items():
                 channel = bot.get_channel(channelId)
                 lienImage = genereEDT(groupeId, 1)
