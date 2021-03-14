@@ -36,6 +36,9 @@ VOCAL_ROLE = INFOS["VOCAL_ROLE"]
 if "AUTO_ROLE" not in INFOS: INFOS["AUTO_ROLE"] = dict()
 AUTO_ROLE = INFOS["VOCAL_ROLE"]
 
+if "AUTO_ASSO" not in INFOS: INFOS["AUTO_ASSO"] = dict()
+AUTO_ASSO = INFOS["AUTO_ASSO"]
+
 def save():
     pickle.dump(INFOS, open(cheminPickle, "wb"))
 
@@ -188,6 +191,29 @@ async def autorole_react_add(messageId, member, guild, emoji):
         else:
             await member.add_roles(role)
 
+async def autoasso_react_add(messageId, member, guild, emoji):
+    messagesVerifies = (813413525560361010, 813413830918406224) #questions entrée
+    messageAcces = 820709722860027915
+    roleMembreServeurAsso = 811670434315239424
+    memberId = member.id
+
+    if messageId in messagesVerifies: #on répond à une question du "qcm" d'entrée, on enregistre la question à laquelle le membre a répondu
+        if memberId in AUTO_ASSO:
+            AUTO_ASSO[memberId].add(messageId)
+        else:
+            AUTO_ASSO[memberId] = {messageId}
+
+        save()
+
+    elif messageId == messageAcces: #on demande l'accès en acceptant le règlement
+        if memberId not in AUTO_ASSO or len(AUTO_ASSO[memberId]) != len(messagesVerifies): #le qcm n'a pas été répondu
+            channel = await dmChannelUser(member)
+
+            await channel.send(f"**Arrivée sur le serveur de l'API des Passionnés d'Informatique**\nMerci d'avoir rejoint le serveur ! Pour y avoir accès, svp mettez bien des réactions aux {len(messagesVerifies)} messages au-dessus de celui qui permet d'accepter le règlement. À bientôt !")
+        else: #le qcm a été répondu, on donne l'accès au reste du serveur
+            role = guild.get_role(roleMembreServeurAsso)
+            await member.add_roles(role)
+
 def main():
     bot = commands.Bot(command_prefix = prefixeBot, help_command = None)
 
@@ -216,6 +242,7 @@ def main():
             emojiHash = partEmoji.id if partEmoji.is_custom_emoji() else partEmoji.name
 
             await autorole_react_add(messageId, user, guild, emojiHash)
+            await autoasso_react_add(messageId, user, guild, emojiHash)
 
     @bot.event
     async def on_reaction_add(reaction, user):
