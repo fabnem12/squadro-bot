@@ -19,7 +19,10 @@ stockePID()
 #on récupère les constantes dans le pickle
 cheminPickle = os.path.join(cheminOutputs, "discordutils.p")
 
-INFOS = dict() if not os.path.exists(cheminPickle) else pickle.load(open(cheminPickle, "rb"))
+try:
+    INFOS = dict() if not os.path.exists(cheminPickle) else pickle.load(open(cheminPickle, "rb"))
+except:
+    INFOS = dict()
 
 if "BINDED_CHANNELS" not in INFOS: INFOS["BINDED_CHANNELS"] = dict()
 BINDED_CHANNELS = INFOS["BINDED_CHANNELS"]
