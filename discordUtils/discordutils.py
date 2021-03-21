@@ -212,7 +212,7 @@ async def autoroleconf_react_add(messageId, member, guild, emoji):
             if toWhoId: member = await guild.fetch_member(toWhoId)
 
             await member.add_roles(role)
-            await dm.send("**Arrivée sur le serveur de TD de L2 MPI**\n\nC'est bon, ton groupe de TD est confirmé !")
+            await dm.send("**__Arrivée sur le serveur de TD de L2 MPI__**\nC'est bon, ton groupe de TD est confirmé !")
 
             if toWhoId:
                 del AUTO_ROLE_CONF[messageId, emoji]
@@ -228,7 +228,7 @@ async def autoroleconf_react_add(messageId, member, guild, emoji):
 
             save()
 
-            await dm.send(f"**Arrivée sur le serveur de TD de L2 MPI**\n\nBienvenue sur le serveur ! Tu as dit être dans le groupe {role.name}, ce sera confirmé par les admins bientôt.")
+            await dm.send(f"**__Arrivée sur le serveur de TD de L2 MPI__**\nBienvenue sur le serveur ! Tu as dit être dans le groupe {role.name}, ce sera confirmé par les admins bientôt.")
 
 async def autoasso_react_add(messageId, member, guild, emoji):
     messagesVerifies = (813413525560361010, 813413830918406224) #questions entrée
