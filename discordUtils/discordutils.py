@@ -39,6 +39,9 @@ AUTO_ROLE = INFOS["VOCAL_ROLE"]
 if "AUTO_ASSO" not in INFOS: INFOS["AUTO_ASSO"] = dict()
 AUTO_ASSO = INFOS["AUTO_ASSO"]
 
+if "AUTO_ROLE_CONF" not in INFOS: INFOS["AUTO_ROLE_CONF"] = dict()
+AUTO_ROLE_CONF = INFOS["AUTO_ROLE_CONF"]
+
 def save():
     pickle.dump(INFOS, open(cheminPickle, "wb"))
 
@@ -182,7 +185,6 @@ async def vocalrole_voicestate(member, before, after):
 
 async def autorole_react_add(messageId, member, guild, emoji):
     if (messageId, emoji) in AUTO_ROLE:
-
         roleId = AUTO_ROLE[messageId, emoji]
         role = guild.get_role(roleId)
 
@@ -190,6 +192,43 @@ async def autorole_react_add(messageId, member, guild, emoji):
             await member.remove_roles(role)
         else:
             await member.add_roles(role)
+
+async def autoroleconf_react_add(messageId, member, guild, emoji):
+    if (messageId, emoji) in AUTO_ROLE_CONF:
+        roleId, channelConfId, pingConfId, serveurAutoId, roleAutoId, toWhoId = AUTO_ROLE_CONF[messageId, emoji]
+        role = guild.get_role(roleId)
+
+        dm = await dmChannelUser(member)
+
+        roleConfirme = toWhoId is not None
+        if serveurAutoId is not None:
+            serveurAuto = bot.get_guild(serveurAutoId)
+            roleAuto = serveurAuto.get_role(roleAutoId)
+
+            memberAutreServeur = await serveurAuto.fetch_member(member.id)
+            roleConfirme = memberAutreServeur and roleAuto in memberAutreServeur.roles
+
+        if roleConfirme:
+            if toWhoId: member = await guild.fetch_member(toWhoId)
+
+            await member.add_roles(role)
+            await dm.send("**Arrivée sur le serveur de TD de L2 MPI**\n\nC'est bon, ton groupe de TD est confirmé !")
+
+            if toWhoId:
+                del AUTO_ROLE_CONF[messageId, emoji]
+                
+                save()
+        else:
+            channelConf = guild.get_channel(channelConfId)
+
+            msgConf = await channelConf.send(f"<@{pingConfId}> : {member.mention} prétend être du groupe {role.name}. C'est vrai ?")
+            await msgConf.add_reaction("👍")
+
+            AUTO_ROLE_CONF[msgConf.id, "👍"] = (roleId, channelConfId, pingConfId, serveurAutoId, roleAutoId, member.id)
+
+            save()
+
+            await dm.send(f"**Arrivée sur le serveur de TD de L2 MPI**\n\nBienvenue sur le serveur ! Tu as dit être dans le groupe {role.name}, ce sera confirmé par les admins bientôt.")
 
 async def autoasso_react_add(messageId, member, guild, emoji):
     messagesVerifies = (813413525560361010, 813413830918406224) #questions entrée
@@ -243,6 +282,7 @@ def main():
 
             await autorole_react_add(messageId, user, guild, emojiHash)
             await autoasso_react_add(messageId, user, guild, emojiHash)
+            await autoroleconf_react_add(messageId, user, guild, emojiHash)
 
     @bot.event
     async def on_reaction_add(reaction, user):
@@ -363,6 +403,29 @@ def main():
                 await message.remove_reaction(emoji, bot.user)
             except:
                 pass
+
+        save()
+
+    #autorole avec confirmation (sauf reconnaissance automatique)
+    @bot.command(name = "utils_autoroleconf")
+    async def autoroleconf(ctx, role: discord.Role, message: discord.Message, emoji: Union[discord.Emoji, str], channelConf: discord.TextChannel, pingConf: discord.Role, serveurAutoId: Optional[int], roleAutoId: Optional[int]):
+        emojiHash = emoji.id if isinstance(emoji, discord.Emoji) else emoji
+        messageId = message.id
+
+        AUTO_ROLE_CONF[messageId, emojiHash] = (role.id, channelConf.id, pingConf.id, serveurAutoId, roleAutoId, None)
+
+        try:
+            await message.add_reaction(emoji)
+        except:
+            pass
+
+        await ctx.send("Autorole activé")
+        save()
+
+    @bot.command(name = "utils_autoroleconf_reset")
+    async def autoroleconfreset(ctx):
+        AUTO_ROLE_CONF.clear()
+        await ctx.send("OK")
 
         save()
 
