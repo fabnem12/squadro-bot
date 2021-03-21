@@ -216,12 +216,12 @@ async def autoroleconf_react_add(messageId, member, guild, emoji):
 
             if toWhoId:
                 del AUTO_ROLE_CONF[messageId, emoji]
-                
+
                 save()
         else:
             channelConf = guild.get_channel(channelConfId)
 
-            msgConf = await channelConf.send(f"<@{pingConfId}> : {member.mention} prétend être du groupe {role.name}. C'est vrai ?")
+            msgConf = await channelConf.send(f"<@&{pingConfId}> : {member.mention} prétend être du groupe {role.name}. C'est vrai ?")
             await msgConf.add_reaction("👍")
 
             AUTO_ROLE_CONF[msgConf.id, "👍"] = (roleId, channelConfId, pingConfId, serveurAutoId, roleAutoId, member.id)
@@ -416,10 +416,10 @@ def main():
 
         try:
             await message.add_reaction(emoji)
+            await ctx.message.add_reaction("👌")
         except:
             pass
 
-        await ctx.send("Autorole activé")
         save()
 
     @bot.command(name = "utils_autoroleconf_reset")
