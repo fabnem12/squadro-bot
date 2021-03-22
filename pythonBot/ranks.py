@@ -102,7 +102,7 @@ def main():
             newLst = [""]
 
             compteur = 0
-            for ligne in lstRes:
+            for ligne in (x+"\n" for x in lstRes):
                 longLigne = len(ligne)
                 if compteur + longLigne < 1950:
                     compteur += longLigne
