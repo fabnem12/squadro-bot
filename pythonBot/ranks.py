@@ -84,10 +84,14 @@ def main():
 
         txt = "**Personnes les plus actives sur le serveur :**\n"
         for index, usrId in enumerate(classement):
-            usr = await guild.fetch_member(usrId)
+            try:
+                usr = await guild.fetch_member(usrId)
+                info = usr.nick or usr.name
+            except:
+                info = "???"
             nbPoints, nbMessages, _ = infosGuild[usrId]
 
-            txt += "**{}** {} avec {} XP ({} messages)\n".format(index+1, usr.nick or usr.name, nbPoints, nbMessages)
+            txt += "**{}** {} avec {} XP ({} messages)\n".format(index+1, info, nbPoints, nbMessages)
             if index == 19: break
 
         return txt
