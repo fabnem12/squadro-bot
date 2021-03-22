@@ -1,5 +1,6 @@
 from os.path import join
 from random import randint
+from time import sleep
 from typing import Optional
 import asyncio
 import discord
@@ -76,14 +77,14 @@ def main():
             return
         raise error
 
-    async def affi_stats(guild):
+    async def affi_stats(guild, nbAffi = 20):
         guildId = guild.id
 
         infosGuild = infos[guildId]
         classement = sorted(infosGuild, key = lambda x: infosGuild[x][0], reverse = True)
 
         txt = "**Personnes les plus actives sur le serveur :**\n"
-        for index, usrId in enumerate(classement):
+        for index, usrId in zip(range(nbAffi), classement):
             try:
                 usr = await guild.fetch_member(usrId)
                 info = usr.nick or usr.name
@@ -92,9 +93,25 @@ def main():
             nbPoints, nbMessages, _ = infosGuild[usrId]
 
             txt += "**{}** {} avec {} XP ({} messages)\n".format(index+1, info, nbPoints, nbMessages)
-            if index == 19: break
 
-        return txt
+        res = txt
+        if len(res) < 1950:
+            return [res]
+        else:
+            lstRes = res.split("\n")
+            newLst = [""]
+
+            compteur = 0
+            for ligne in lstRes:
+                longLigne = len(ligne)
+                if compteur + longLigne < 1950:
+                    compteur += longLigne
+                    newLst[-1] += ligne
+                else:
+                    compteur = longLigne
+                    newLst.append(ligne)
+
+            return newLst
 
     @bot.event
     async def on_message(msg):
@@ -132,9 +149,13 @@ def main():
         await ctx.send(affiRank(someone, ctx.guild))
 
     @bot.command(name = "stats")
-    async def stats(ctx):
-        res = await affi_stats(ctx.guild)
-        await ctx.send(res)
+    async def stats(ctx, nbAffi: Optional[int]):
+        if nbAffi is None: nbAffi = 20
+
+        listRes = await affi_stats(ctx.guild, nbAffi)
+        for res in listRes:
+            await ctx.send(res)
+            sleep(0.4)
 
     @bot.command(name = "top_salons")
     async def top_salons(ctx):
