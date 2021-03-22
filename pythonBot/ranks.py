@@ -123,14 +123,16 @@ def main():
         await bot.process_commands(msg)
 
     @bot.command(name="prerank")
-    async def prerank(ctx):
+    async def prerank(ctx, hidden: Optional[str]):
         if not estAdmin(ctx.author.id): return
 
-        msgAnnonce = await ctx.send("**Calculs en cours…**")
+        if hidden is None:
+            msgAnnonce = await ctx.send("**Calculs en cours…**")
         infos[ctx.guild.id] = dict()
 
         for channel in ctx.guild.text_channels:
-             await msgAnnonce.edit(content = "**Calculs en cours…**\nSalon {} en cours de revue…".format(channel.name))
+             if hidden is None:
+                 await msgAnnonce.edit(content = "**Calculs en cours…**\nSalon {} en cours de revue…".format(channel.name))
 
              try:
                  async for message in channel.history(limit = None):
@@ -138,7 +140,8 @@ def main():
              except:
                  print("Erreur : ", channel.name)
 
-        await msgAnnonce.edit(content = "**Calculs finis !**")
+        if hidden is None:
+            await msgAnnonce.edit(content = "**Calculs finis !**")
         save()
 
     @bot.command(name = "rank")
