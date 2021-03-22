@@ -144,9 +144,7 @@ def main():
 
         if hidden is None:
             await msgAnnonce.edit(content = "**Calculs finis !**")
-        else:
-            await ctx.message.add_reaction("👌")
-            
+
         save()
 
     @bot.command(name = "rank")
