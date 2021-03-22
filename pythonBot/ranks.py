@@ -128,6 +128,8 @@ def main():
 
         if hidden is None:
             msgAnnonce = await ctx.send("**Calculs en cours…**")
+        else:
+            await ctx.message.add_reaction("👌")
         infos[ctx.guild.id] = dict()
 
         for channel in ctx.guild.text_channels:
