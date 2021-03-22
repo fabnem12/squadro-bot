@@ -146,6 +146,7 @@ def main():
             await msgAnnonce.edit(content = "**Calculs finis !**")
         else:
             await ctx.message.add_reaction("👌")
+            
         save()
 
     @bot.command(name = "rank")
