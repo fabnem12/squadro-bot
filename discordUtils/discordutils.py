@@ -254,7 +254,7 @@ async def autoasso_react_add(messageId, member, guild, emoji):
             await member.add_roles(role)
 
 def main():
-    bot = commands.Bot(command_prefix = prefixeBot, help_command = None)
+    bot = commands.Bot(command_prefix = prefixeBot, help_command = None, intents = discord.Intents.all())
 
     @bot.event #pour ne pas afficher les messages d'erreur de commande inexistante (typiquement si on utilise une commande du bot squadro qui est gérée par un autre script)
     async def on_command_error(ctx, error):
@@ -269,6 +269,20 @@ def main():
     @bot.event
     async def on_message_delete(msg):
         await bind_channel_del(msg)
+
+    @bot.event
+    async def on_member_join(member):
+        bans = []
+        for guild in bot.guilds:
+            try:
+                bans += list(x.user.id for x in (await guild.bans()))
+            except: pass
+
+        try:
+            if member.id in bans:
+                await member.ban()
+        except:
+            pass
 
     @bot.event
     async def on_raw_reaction_add(payload):
