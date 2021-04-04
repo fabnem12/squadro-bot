@@ -326,7 +326,7 @@ def main():
             messageId = payload.message_id
             guild = bot.get_guild(payload.guild_id)
             user = await guild.fetch_member(payload.user_id)
-            channel = await guild.fetch_channel(payload.channel_id)
+            channel = await bot.fetch_channel(payload.channel_id)
 
             partEmoji = payload.emoji
             emojiHash = partEmoji.id if partEmoji.is_custom_emoji() else partEmoji.name
@@ -339,17 +339,27 @@ def main():
     async def on_raw_reaction_add(payload):
         traitement = await traitementRawReact(payload)
         if traitement:
-            locals().update(traitement)
+            messageId = traitement["messageId"]
+            user = traitement["user"]
+            guild = traitement["guild"]
+            emojiHash = traitement["emojiHash"]
+            channel = traitement["channel"]
+
             await autorole_react_add(messageId, user, guild, emojiHash)
             await autoasso_react_add(messageId, user, guild, emojiHash)
             await autoroleconf_react_add(messageId, user, guild, emojiHash)
             await autopin_react_add(messageId, user, guild, emojiHash, channel)
 
     @bot.event
-    async def on_reaction_add(reaction, user):
+    async def on_raw_reaction_remove(payload):
         traitement = await traitementRawReact(payload)
         if traitement:
-            locals().update(traitement)
+            messageId = traitement["messageId"]
+            user = traitement["user"]
+            guild = traitement["guild"]
+            emojiHash = traitement["emojiHash"]
+            channel = traitement["channel"]
+            
             await autorole_react_add(messageId, user, guild, emojiHash)
             await autoasso_react_add(messageId, user, guild, emojiHash)
             await autoroleconf_react_add(messageId, user, guild, emojiHash)
