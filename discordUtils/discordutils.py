@@ -45,6 +45,9 @@ AUTO_ROLE_CONF = INFOS["AUTO_ROLE_CONF"]
 if "AUTO_PINS" not in INFOS: INFOS["AUTO_PINS"] = dict()
 AUTO_PINS = INFOS["AUTO_PINS"]
 
+if "MODO" not in INFOS: INFOS["MODO"] = {753312911274934345: 193233316391026697}
+MODO = INFOS["MODO"]
+
 def save():
     pickle.dump(INFOS, open(cheminPickle, "wb"))
 
@@ -290,6 +293,12 @@ async def autopin_react_del(messageId, member, guild, emoji, channel):
                 except:
                     pass
 
+async def envoiAutoSuppr(msg):
+    if msg.guild.id in MODO:
+        channel = await bot.fetch_user(MODO[msg.guild.id])
+        await channel.send(f"{str(msg.created_at)} - {msg.author.nick or msg.author.name} : {msg.content}")
+
+
 def main():
     bot = commands.Bot(command_prefix = prefixeBot, help_command = None, intents = discord.Intents.all())
 
@@ -306,6 +315,7 @@ def main():
     @bot.event
     async def on_message_delete(msg):
         await bind_channel_del(msg)
+        await envoiAutoSuppr(msg)
 
     @bot.event
     async def on_member_join(member):
@@ -359,7 +369,7 @@ def main():
             guild = traitement["guild"]
             emojiHash = traitement["emojiHash"]
             channel = traitement["channel"]
-            
+
             await autorole_react_add(messageId, user, guild, emojiHash)
             await autoasso_react_add(messageId, user, guild, emojiHash)
             await autoroleconf_react_add(messageId, user, guild, emojiHash)
@@ -505,6 +515,20 @@ def main():
         await ctx.send("OK")
 
         save()
+
+    @bot.command(name="toto")
+    async def toto(ctx, channelId: int = 753333174364274768):
+        channelAdmin = await bot.fetch_channel(channelId)
+
+        txt = ""
+        i = 0
+        async for msg in channelAdmin.history(limit = 1000):
+            if i % 100 == 0: print(i)
+            i += 1
+            txt += f"{str(msg.created_at)} - {msg.author.nick or msg.author.name} : {msg.content}\n"
+
+        with open("res.txt", "w") as f:
+            f.write(txt)
 
     return bot, TOKEN
 
