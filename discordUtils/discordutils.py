@@ -42,6 +42,9 @@ AUTO_ASSO = INFOS["AUTO_ASSO"]
 if "AUTO_ROLE_CONF" not in INFOS: INFOS["AUTO_ROLE_CONF"] = dict()
 AUTO_ROLE_CONF = INFOS["AUTO_ROLE_CONF"]
 
+if "AUTO_PINS" not in INFOS: INFOS["AUTO_PINS"] = dict()
+AUTO_PINS = INFOS["AUTO_PINS"]
+
 def save():
     pickle.dump(INFOS, open(cheminPickle, "wb"))
 
@@ -253,6 +256,38 @@ async def autoasso_react_add(messageId, member, guild, emoji):
             role = guild.get_role(roleMembreServeurAsso)
             await member.add_roles(role)
 
+async def autopin_react_add(messageId, member, guild, emoji, channel):
+    if emoji == "📌": #c'est un pin !
+        if messageId not in AUTO_PINS:
+            AUTO_PINS[messageId] = {member.id}
+        else:
+            AUTO_PINS[messageId].add(member.id)
+
+        save()
+
+        if len(AUTO_PINS[messageId]) == 5: #on a 5 personnes qui demandent un pin, on le fait
+            msg = await channel.fetch_message(messageId)
+
+            try:
+                await msg.pin()
+            except:
+                await channel.send("Le bot n'a pas le droit d'épingler des messages ici")
+
+async def autopin_react_del(messageId, member, guild, emoji, channel):
+    if emoji == "📌":
+        if messageId in AUTO_PINS:
+            AUTO_PINS[messageId].remove(member.id)
+
+            save()
+
+            if len(AUTO_PINS[messageId]) < 5:
+                msg = await channel.fetch_message(messageId)
+
+                try:
+                    await msg.unpin()
+                except:
+                    pass
+
 def main():
     bot = commands.Bot(command_prefix = prefixeBot, help_command = None, intents = discord.Intents.all())
 
@@ -284,23 +319,39 @@ def main():
         except:
             pass
 
-    @bot.event
-    async def on_raw_reaction_add(payload):
+    async def traitementRawReact(payload):
         if payload.guild_id and payload.user_id != bot.user.id: #sinon, on est dans le cas d'une réaction en dm
             messageId = payload.message_id
             guild = bot.get_guild(payload.guild_id)
             user = await guild.fetch_member(payload.user_id)
+            channel = await guild.fetch_channel(payload.channel_id)
 
             partEmoji = payload.emoji
             emojiHash = partEmoji.id if partEmoji.is_custom_emoji() else partEmoji.name
 
+            return locals()
+        else:
+            return None
+
+    @bot.event
+    async def on_raw_reaction_add(payload):
+        traitement = await traitementRawReact(payload)
+        if traitement:
+            locals().update(traitement)
             await autorole_react_add(messageId, user, guild, emojiHash)
             await autoasso_react_add(messageId, user, guild, emojiHash)
             await autoroleconf_react_add(messageId, user, guild, emojiHash)
+            await autopin_react_add(messageId, user, guild, emojiHash, channel)
 
     @bot.event
     async def on_reaction_add(reaction, user):
-        await bind_channel_react_add(reaction, user, bot)
+        traitement = await traitementRawReact(payload)
+        if traitement:
+            locals().update(traitement)
+            await autorole_react_add(messageId, user, guild, emojiHash)
+            await autoasso_react_add(messageId, user, guild, emojiHash)
+            await autoroleconf_react_add(messageId, user, guild, emojiHash)
+            await autopin_react_del(messageId, user, guild, emojiHash, channel)
 
     @bot.event
     async def on_reaction_clear_emoji(reaction):
