@@ -212,10 +212,12 @@ async def autoroleconf_react_add(messageId, member, guild, emoji):
             roleConfirme = memberAutreServeur and roleAuto in memberAutreServeur.roles
 
         if roleConfirme:
-            if toWhoId: member = await guild.fetch_member(toWhoId)
+            if toWhoId:
+                member = await guild.fetch_member(toWhoId)
+                dm = await dmChannelUser(member)
 
             await member.add_roles(role)
-            await dm.send("**__Arrivée sur le serveur de TD de L2 MPI__**\nC'est bon, ton groupe de TD est confirmé !")
+            await dm.send("**__Arrivée sur le serveur de TD de L2 MPI__**\nC'est bon, ton groupe de TD est confirmé !\nAu fait, ce serait bien si tu pouvais prendre sur ce serveur un pseudo qui permettrait à tes profs de t'identifier x).")
 
             if toWhoId:
                 del AUTO_ROLE_CONF[messageId, emoji]
