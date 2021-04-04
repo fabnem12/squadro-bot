@@ -192,6 +192,16 @@ def main():
 
             await ctx.message.add_reaction("👌")
 
+    @bot.command(name = "reset_xp")
+    async def resetXP(ctx, member: discord.Member, newXP: int):
+        if estAdmin(ctx.author.id):
+            guild = ctx.guild
+
+            if guild.id in infosGuild:
+                infosGuild[guild.id][member.id] = newXP
+
+                save()
+
     return bot, TOKEN
 
 if __name__ == "__main__": #pour lancer le bot
