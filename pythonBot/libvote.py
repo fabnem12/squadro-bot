@@ -27,6 +27,13 @@ class Votant:
         return min(classements.keys(), key = lambda x: classements[x])
 
     def prefere2(self, candidatA, candidatB):
+        if candidatB in self.inferieurs[candidatA]:
+            return candidatA
+        elif candidatA in self.inferieurs[candidatB]:
+            return candidatB
+        else:
+            return None
+        """
         classements = self.classements
 
         if candidatA in classements and candidatB in classements:
@@ -36,6 +43,7 @@ class Votant:
                 return candidatB
 
         return None #un candidat non classé ou de même degré de préférence
+        """
 
     def resumePref(self): #résumé de l'ordre de préférence du votant
         return "\n".join("**{}** {}".format(b, a) for a, b in sorted(self.classements.items(), key = lambda x: x[1]))
@@ -109,6 +117,11 @@ class Votant:
                 for superieur in classeGagnant:
                     inf[superieur].add(inferieur)
                     sup[inferieur].add(superieur)
+
+        print(inf)
+        print(sup)
+        print(egaux)
+        print("----")
 
         self.duelsFaits.add((opt1, opt2))
 
@@ -330,13 +343,13 @@ def affiCondorcet(election):
         else: nbExaequo = 0
         numero = index+1-nbExaequo
 
-        msgs.append("**{}{}** {} avec {} duels gagnés :".format(numero, "e" if numero-1 else "er", candidat, len(duels)))
+        msgs.append("**{}{}** {} avec {} duels gagnés :\n".format(numero, "e" if numero-1 else "er", candidat, len(duels)))
         for (perdant, ptsA, ptsB, ptsNone) in duels:
             msgDuel = "- contre {} ({} votes contre {})".format(perdant, ptsA, ptsB)
             if ptsNone:
                 msgDuel += " + {} abstentions".format(ptsNone)
 
-            msgs.append(msgDuel)
+            msgs[-1] += msgDuel + "\n"
 
         duelsPrec = len(duels)
 

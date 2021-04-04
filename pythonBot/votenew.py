@@ -5,7 +5,7 @@ import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from constantes import prefixeBot, TOKEN
-from utils import stockePID
+from utils import stockePID, decoupeMessages
 from libvote import Votant, Election
 
 stockePID()
@@ -21,7 +21,7 @@ async def dmChannelUser(user):
 
 def main():
     from discord.ext import commands, tasks
-    
+
     intents = discord.Intents.all()
     bot = commands.Bot(command_prefix=prefixeBot, help_command=None, intents = intents) #il faudrait peut-être que je fasse une aide un jour...
 
@@ -38,6 +38,10 @@ def main():
         await msg.add_reaction("➡️")
         votant.ajouteMessageDuel((opt1, opt2), msg.id)
 
+        MSG2DUEL[msg.id] = (votant, (opt1, opt2))
+
+    async def majDuel(msg, votant, opt1, opt2):
+        await msg.edit(content = f":arrow_left: {opt1} ou {opt2} :arrow_right: ?")
         MSG2DUEL[msg.id] = (votant, (opt1, opt2))
 
     @bot.event
@@ -59,7 +63,7 @@ def main():
 
             opt1, opt2 = votant.duelAFaire(start = True)
             if len(election.candidats) > 2:
-                await channel.send("Pour enregistrer ton vote, j'ai besoin d'un ordre de préférence complet.\nComme c'est un peu relou de le faire soi-même, je vais juste te demander qui tu préfères dans quelques duels de candidat(e)s, et j'en déduirai ton ordre de préférence complet.")
+                await channel.send("Pour enregistrer ton vote, j'ai besoin d'un ordre de préférence complet.\nComme c'est un peu relou de le faire soi-même, je vais juste te demander qui tu préfères dans quelques duels d'options, et j'en déduirai ton ordre de préférence complet.")
             else:
                 await channel.send("Pour enregistrer ton vote, t'as juste à préciser avec :arrow_left: ou :arrow_right: ta préférence.")
 
@@ -76,13 +80,13 @@ def main():
                 votant.ajoutPreference(opt1, opt2, prefere)
 
                 if prefere is None: prefere = "Neutre" #pour un affichage plus parlant que None
-                await message.edit(content = ":arrow_left: {} ou {} :arrow_right:\n**Vote enregistré : {}**".format(opt1, opt2, prefere))
+                #await message.edit(content = ":arrow_left: {} ou {} :arrow_right:\n**Vote enregistré : {}**".format(opt1, opt2, prefere))
 
                 nouvDuel = votant.duelAFaire()
                 if nouvDuel: #on doit faire un nouveau duel pour avoir le classement complet, on l'envoie
                     opt1, opt2 = nouvDuel
 
-                    await ajoutDuel(votant, opt1, opt2, channel)
+                    await majDuel(message, votant, opt1, opt2)
 
                 else: #pas besoin d'un nouveau duel, on a fini !
                     classement = votant.calculClassement()
@@ -98,6 +102,10 @@ def main():
                     nbVotants = votant.election.nbVotesValides()
                     for msg in votant.election.msgInfo:
                         await msg.edit(content = "**Réagissez à ce message pour participer au vote.**\n {} votes ont été enregistrés pour le moment.".format(nbVotants))
+
+    @bot.event
+    async def on_reaction_remove(reaction, user):
+        await on_reaction_add(reaction, user)
 
     @bot.command(name="vote_setup") #pour démarrer à paramétrer une élection
     async def startvote(ctx, sysVote = "RankedPairs"):
@@ -205,7 +213,7 @@ def main():
             await ctx.send("**Résultats de l'élection :**")
             msgs, fichiers = election.affi()
 
-            for msg in msgs:
+            for msg in decoupeMessages(msgs):
                 await ctx.send(msg)
                 sleep(0.5) #on attend 1/2 seconde entre chaque message, sinon discord est vite en PLS
 
