@@ -197,10 +197,16 @@ def main():
         if estAdmin(ctx.author.id):
             guild = ctx.guild
 
-            if guild.id in infosGuild:
-                infosGuild[guild.id][member.id] = newXP
+            if guild.id in INFOS:
+                infosGuild = INFOS[guild.id]
+                xp, dernierMessage, nbMessages = infosGuild[member.id]
+                infosGuild[member.id] = (newXP, dernierMessage, nbMessages)
 
                 save()
+
+                await ctx.send(f"{member.mention} a maintenant {newXP} XP")
+            else:
+                await ctx.send("Erreur")
 
     return bot, TOKEN
 
