@@ -46,6 +46,22 @@ def ajoutMsg(guild, author, minute):
     if randint(0, 9) < 1:
         save()
 
+def ajoutReact(guildId, author):
+    if guildId not in infos:
+        infos[guildId] = dict()
+
+    infosGuild = infos[guildId]
+    nbPoints = randint(1, 5)
+
+    if author not in infosGuild:
+        infosGuild[author] = (nbPoints, 0, 0)
+    else:
+        nbPointsActuel, nbMessages, minuteDernier = infosGuild[author]
+        infosGuild[author] = (nbPointsActuel + nbPoints, nbMessages, minuteDernier)
+
+    if randint(0, 9) < 1:
+        save()
+
 def affiRank(author, guild):
     if guild: guild = guild.id
 
@@ -121,6 +137,12 @@ def main():
         ajoutMsg(guild, author, minute)
 
         await bot.process_commands(msg)
+
+    @bot.event
+    async def on_raw_reaction_add(payload):
+        author = payload.user_id
+        guildId = payload.guild_id
+        ajoutReact(guildId, author)
 
     @bot.command(name="prerank")
     async def prerank(ctx, hidden: Optional[str]):
