@@ -296,7 +296,7 @@ async def autopin_react_del(messageId, member, guild, emoji, channel):
 async def envoiAutoSuppr(msg):
     if msg.guild.id in MODO:
         channel = await bot.fetch_user(MODO[msg.guild.id])
-        await channel.send(f"{str(msg.created_at)} - {msg.author.nick or msg.author.name} : {msg.content}")
+        await channel.send(f"{str(msg.created_at)} - {str(msg.channel.name)} - {msg.author.nick or msg.author.name} : {msg.content}")
 
 
 def main():
