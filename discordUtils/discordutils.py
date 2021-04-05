@@ -516,19 +516,7 @@ def main():
 
         save()
 
-    @bot.command(name="toto")
-    async def toto(ctx, channelId: int = 753333174364274768):
-        channelAdmin = await bot.fetch_channel(channelId)
 
-        txt = ""
-        i = 0
-        async for msg in channelAdmin.history(limit = 1000):
-            if i % 100 == 0: print(i)
-            i += 1
-            txt += f"{str(msg.created_at)} - {msg.author.nick or msg.author.name} : {msg.content}\n"
-
-        with open("res.txt", "w") as f:
-            f.write(txt)
 
     return bot, TOKEN
 
