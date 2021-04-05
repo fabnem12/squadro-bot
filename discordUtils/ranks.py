@@ -1,6 +1,6 @@
 from os.path import join
 from random import randint
-from time import sleep
+from time import sleep, time
 from typing import Optional
 import asyncio
 import discord
@@ -24,43 +24,27 @@ else:
 def save():
     pickle.dump(infos, open(join(cheminOutputs, "ranks.p"), "wb"))
 
-def ajoutMsg(guild, author, minute):
-    if guild: guild = guild.id #si guild est None, c'est un message privé, sinon c'est un vrai serveur donc on récupère son id
-
-    if guild in infos: infosGuild = infos[guild]
-    else:
-        infos[guild] = dict()
+def ajoutMsg(guild, author, minute, nouvMessage: int = 1):
+    if guild not in infos: infos[guild] = dict()
         infosGuild = infos[guild]
+
+    nbNewPoints = randint(15, 25)
 
     if author in infosGuild:
         nbPoints, nbMessages, minuteDernier = infosGuild[author]
 
         if minuteDernier != minute:
-            nbPoints += randint(15, 25)
+            nbPoints += nbNewPoints
 
-        infosGuild[author] = (nbPoints, nbMessages + 1, minute)
+        infosGuild[author] = (nbPoints, nbMessages + nouvMessage, minute)
     else:
-        nbPoints = randint(15, 25)
-        infosGuild[author] = (nbPoints, 1, minute)
+        infosGuild[author] = (nbPointsNewPoints, nouvMessage, minute)
 
     if randint(0, 9) < 1:
         save()
 
-def ajoutReact(guildId, author):
-    if guildId not in infos:
-        infos[guildId] = dict()
-
-    infosGuild = infos[guildId]
-    nbPoints = randint(1, 5)
-
-    if author not in infosGuild:
-        infosGuild[author] = (nbPoints, 0, 0)
-    else:
-        nbPointsActuel, nbMessages, minuteDernier = infosGuild[author]
-        infosGuild[author] = (nbPointsActuel + nbPoints, nbMessages, minuteDernier)
-
-    if randint(0, 9) < 1:
-        save()
+def ajoutReact(guild, author, minute):
+    ajoutMsg(guild, author, minute, nouvMessage = 0)
 
 def affiRank(author, guild):
     if guild: guild = guild.id
@@ -134,15 +118,16 @@ def main():
         author = msg.author.id
         minute = msg.created_at.timestamp() // 60
         guild = msg.guild
-        ajoutMsg(guild, author, minute)
 
+        ajoutMsg(guild.id if guild else None, author, minute)
         await bot.process_commands(msg)
 
     @bot.event
     async def on_raw_reaction_add(payload):
         author = payload.user_id
-        guildId = payload.guild_id
-        ajoutReact(guildId, author)
+        minute = round(time()) // 60
+        guildId = payload.guild_id #int si on est sur un serveur, None en MP
+        ajoutReact(guildId, author, minute)
 
     @bot.command(name="prerank")
     async def prerank(ctx, hidden: Optional[str]):
