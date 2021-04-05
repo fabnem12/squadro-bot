@@ -26,7 +26,7 @@ def save():
 
 def ajoutMsg(guild, author, minute, nouvMessage: int = 1):
     if guild not in infos: infos[guild] = dict()
-        infosGuild = infos[guild]
+    infosGuild = infos[guild]
 
     nbNewPoints = randint(15, 25)
 
