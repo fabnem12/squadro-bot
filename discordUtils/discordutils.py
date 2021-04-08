@@ -355,7 +355,7 @@ def main():
             emojiHash = traitement["emojiHash"]
             channel = traitement["channel"]
 
-            await bind_channel_react_add(messageId, user, guild)
+            #await bind_channel_react_add(messageId, user, guild)
             await autorole_react_add(messageId, user, guild, emojiHash)
             await autoasso_react_add(messageId, user, guild, emojiHash)
             await autoroleconf_react_add(messageId, user, guild, emojiHash)
@@ -371,7 +371,7 @@ def main():
             emojiHash = traitement["emojiHash"]
             channel = traitement["channel"]
 
-            await bind_channel_react_del(messageId, user, guild)
+            #await bind_channel_react_del(messageId, user, guild)
             await autorole_react_add(messageId, user, guild, emojiHash)
             await autopin_react_del(messageId, user, guild, emojiHash, channel)
 
