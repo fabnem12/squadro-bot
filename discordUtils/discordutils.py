@@ -294,7 +294,7 @@ async def autopin_react_del(messageId, member, guild, emoji, channel):
                     pass
 
 async def envoiAutoSuppr(msg):
-    if msg.guild.id in MODO:
+    if msg.guild and msg.guild.id in MODO:
         channel = await bot.fetch_user(MODO[msg.guild.id])
         await channel.send(f"{str(msg.created_at)} - {str(msg.channel.name)} - {msg.author.nick or msg.author.name} : {msg.content}")
 
@@ -355,7 +355,6 @@ def main():
             emojiHash = traitement["emojiHash"]
             channel = traitement["channel"]
 
-            await bind_channel_react_add(messageId, user, guild, emojiHash)
             await autorole_react_add(messageId, user, guild, emojiHash)
             await autoasso_react_add(messageId, user, guild, emojiHash)
             await autoroleconf_react_add(messageId, user, guild, emojiHash)
@@ -371,10 +370,16 @@ def main():
             emojiHash = traitement["emojiHash"]
             channel = traitement["channel"]
 
-            await bind_channel_react_del(messageId, user, guild, emojiHash)
             await autorole_react_add(messageId, user, guild, emojiHash)
             await autopin_react_del(messageId, user, guild, emojiHash, channel)
 
+    @bot.event
+    async def on_reaction_add(reaction, user):
+        await bind_channel_react_add(reaction, user, bot)
+    @bot.event
+    async def on_reaction_clear_emoji(reaction):
+        await bind_channel_react_del(reaction, bot)
+            
     @bot.event
     async def on_reaction_clear_emoji(reaction):
         await bind_channel_react_del(reaction, bot)
