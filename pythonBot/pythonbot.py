@@ -820,7 +820,9 @@ def main(idsTraites = set(range(10))):
                         func_timeout(timeout - dureeExec, methode, args=(fin, valLigneFin, glob))
                         valLigneFin = valLigneFin[0]
 
-                        if "__module__" in dir(type(valLigneFin)) and "matplotlib" in type(valLigneFin).__module__: #pour détecter qu'on veut afficher le plot de matplotlib
+                        testType = valLigneFin if type(valLigneFin) != list or len(valLigneFin) < 1 else valLigneFin[0]
+
+                        if "__module__" in dir(type(testType)) and "matplotlib" in type(testType).__module__: #pour détecter qu'on veut afficher le plot de matplotlib
                             exec("getPlot()", glob)
                         elif valLigneFin is not None:
                             ajoutMsg(valLigneFin)
