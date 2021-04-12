@@ -25,7 +25,8 @@ def couleurDefautImagine(z):
     """Convertir un nombre complexe en la couleur dans laquelle le représenter
     """
 
-    if isnan(z): return 0, 0, 0
+    if isnan(z):
+        return 0, 0, 0
 
     argument = phase(z)
     r, g = round(127.5 * (cos(argument) + 1)), round(127.5 * (sin(argument) + 1))
