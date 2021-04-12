@@ -53,7 +53,7 @@ class Notebook:
         #on met quelques constantes de base dans le notebook
         self.setConstantes()
 
-        self.morceauxCodeOrd = ["def getFile(nomFichier):\n  from IPython.display import Image, display\n  display(Image(filename = nomFichier))\n\ndef getPlot():\n  import matplotlib.pyplot as plt\n  plt.show()"] #tous les morceaux de code de l'user
+        self.morceauxCodeOrd = ["def getFile(nomFichier):\n  from IPython.display import Image, display\n  display(Image(filename = nomFichier))\n\ndef getPlot():\n  import matplotlib.pyplot as plt\n  plt.show()" + "\nfrom cmath import*; arg = phase\nimport numpy as np\nimport matplotlib.pyplot as plt"] #tous les morceaux de code de l'user
         self.msgIdToMorceauId = dict() #dico qui à un id de msg associe son index dans self.morceauxCodeOrd
         self.reponses = [[None]] * len(self.morceauxCodeOrd) #qui à un id de message associe les msg de réponse
         self.images = []
@@ -67,7 +67,6 @@ class Notebook:
         exec("import SquadroBot", glob) #import automatique du module SquadroBot
         exec("import numpy as np")
         exec("import matplotlib.pyplot as plt")
-        self.morceauxCodeOrd.append("from cmath import*; arg = phase\nimport numpy as np\nimport matplotlib.pyplot as plt")
 
         #ajout des fonctions Re et Im complexes et de l'unité imaginaire en tant que i
         #+ autres fonctions standard qui sont utiles
