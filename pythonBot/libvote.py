@@ -3,6 +3,7 @@ from Graphe import Noeud, Graphe
 #pour l'affichage du graphe des duels
 import matplotlib.pyplot as plt
 import networkx as nx
+from random import shuffle #juste pour ne pas avoir un fichier de détails de vote avec l'ordre qui correspond aux votes
 
 class Votant:
     def __init__(self, election, optionsVote):
@@ -328,7 +329,10 @@ def resume(election):
                 classements[clsVotant] += 1
 
         with open("resume.txt", "w") as f:
-            for classement, nbVotants in classements.items():
+            infosVotes = list(classements.items())
+            shuffle(infosVotes)
+
+            for classement, nbVotants in infosVotes:
                 f.write("{}:{}\n".format(nbVotants, ">".join(x[0] for x in classement)))
 
         return "resume.txt"
