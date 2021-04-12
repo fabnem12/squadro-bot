@@ -67,6 +67,7 @@ class Notebook:
         exec("import SquadroBot", glob) #import automatique du module SquadroBot
         exec("import numpy as np")
         exec("import matplotlib.pyplot as plt")
+        self.morceauxCodeOrd.append("from cmath import*; arg = phase\nimport numpy as np\nimport matplotlib.pyplot as plt")
 
         #ajout des fonctions Re et Im complexes et de l'unité imaginaire en tant que i
         #+ autres fonctions standard qui sont utiles
