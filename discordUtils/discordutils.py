@@ -129,7 +129,7 @@ async def bind_channel_del(msg):
     msgInit = msg.id
     if msg.id in ECHOS2MSG: #si c'est un écho, on retrouve le message original pour retrouver les autres échos
         msgInit = ECHOS2MSG[msg.id][0]
-        del MSG_RETRANSMIS[msgInit][1][msg.id] #on a supprimé cet écho donc on le retire de MSG_RETRANSMIS
+        del MSG_RETRANSMIS[msgInit][1][msg.channel.id] #on a supprimé cet écho donc on le retire de MSG_RETRANSMIS
         
         #on peut tenter de supprimer le message original (mais ce n'est pas garanti, le bot peut ne pas avoir les droits)
         try:
