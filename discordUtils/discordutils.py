@@ -126,9 +126,20 @@ async def bind_channel_edit(msg):
             await echo.edit(content = texteRenvoye)
 
 async def bind_channel_del(msg):
-    if msg.id in MSG_RETRANSMIS:
+    msgInit = msg.id
+    if msg.id in ECHOS2MSG: #si c'est un écho, on retrouve le message original pour retrouver les autres échos
+        msgInit = ECHOS2MSG[msg.id][0]
+        del MSG_RETRANSMIS[msgInit][1][msg.id] #on a supprimé cet écho donc on le retire de MSG_RETRANSMIS
+        
+        #on peut tenter de supprimer le message original (mais ce n'est pas garanti, le bot peut ne pas avoir les droits)
+        try:
+            await MSG_RETRANSMIS[msgInit][2].delete()
+        except: pass #on ne fait rien si la suppression de l'original n'a pas marché
+    
+    if msgInit in MSG_RETRANSMIS:
         for echo in MSG_RETRANSMIS[msg.id][1].values():
             await echo.delete()
+            
 
 async def bind_channel_react_add(reaction, user, bot):
     compte = reaction.count
