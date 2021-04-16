@@ -18,7 +18,7 @@ RAB_TEMPS = set()
 
 DELAI_RAB = 120 #en secondes, combien de temps faut-il attendre avant d'avoir de nouveau du rab ?
 DUREE_EXEC = 5
-DUREE_EXEC_ADMIN = 20
+DUREE_EXEC_ADMIN = 120
 DUREE_EXEC_RAB = 60
 
 commandesInterdites = ["input(", "open(", "= open", "=open"]
@@ -565,12 +565,9 @@ def main(idsTraites = set(range(10))):
         heureFinStr = "{}h{}".format(*list(map(lambda x: str(x).zfill(2), (heureFin.hour, heureFin.minute))))
 
         if idRab in RAB_TEMPS: #l'user a déjà utilisé son rab de temps
-            await ctx.send("Je ne peux pas encore vous donner du rab de temps…")
-            await ctx.send("Vous avez droit à un toutes les {} minutes.".format(DELAI_RAB / 60))
+            await ctx.send("Je ne peux pas encore vous donner du rab de temps…\nVous avez droit à un toutes les {} minutes.".format(DELAI_RAB / 60))
         else: #on peut lui donner
-            await ctx.send("Voici l'id d'autorisation de rab de temps : {}".format(idRab))
-            await ctx.send("Pour l'utiliser, il faut l'écrire entre la commande d'appel de la fonction et le code :\nS.nb ID_AUTORISATION \`\`\`python…")
-            await ctx.send("Il est valide de {} à {} inclus".format(heureDebutStr, heureFinStr))
+            await ctx.send(f"Voici l'id d'autorisation de rab de temps : {idRab}\nPour l'utiliser, il faut l'écrire entre la commande d'appel de la fonction et le code :\n{prefixeBot}.nb ID_AUTORISATION \`\`\`python…\nIl est valide de {heureDebutStr} à {heureFinStr} inclus")
 
     async def infoRab(rabId: str, ctx, user):
         if rabId.startswith("``"): return False
