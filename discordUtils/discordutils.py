@@ -130,16 +130,16 @@ async def bind_channel_del(msg):
     if msg.id in ECHOS2MSG: #si c'est un écho, on retrouve le message original pour retrouver les autres échos
         msgInit = ECHOS2MSG[msg.id][0]
         del MSG_RETRANSMIS[msgInit][1][msg.channel.id] #on a supprimé cet écho donc on le retire de MSG_RETRANSMIS
-        
+
         #on peut tenter de supprimer le message original (mais ce n'est pas garanti, le bot peut ne pas avoir les droits)
         try:
             await MSG_RETRANSMIS[msgInit][2].delete()
         except: pass #on ne fait rien si la suppression de l'original n'a pas marché
-    
+
     if msgInit in MSG_RETRANSMIS:
         for echo in MSG_RETRANSMIS[msg.id][1].values():
             await echo.delete()
-            
+
 
 async def bind_channel_react_add(reaction, user, bot):
     compte = reaction.count
@@ -267,7 +267,7 @@ async def autoasso_react_add(messageId, member, guild, emoji):
         if memberId not in AUTO_ASSO or len(AUTO_ASSO[memberId]) != len(messagesVerifies): #le qcm n'a pas été répondu
             channel = await dmChannelUser(member)
 
-            await channel.send(f"**Arrivée sur le serveur de l'API des Passionnés d'Informatique**\nMerci d'avoir rejoint le serveur ! Pour y avoir accès, svp mettez bien des réactions aux {len(messagesVerifies)} messages au-dessus de celui qui permet d'accepter le règlement. À bientôt !")
+            await channel.send(f"**Arrivée sur le serveur de l'API des Passionnés d'Informatique**\nMerci d'avoir rejoint le serveur ! Pour y avoir accès, svp mettez bien des réactions aux {len(messagesVerifies)} messages au-dessus de celui qui permet d'accepter le règlement, puis remettre la réaction pour accepter le règlement.\nÀ bientôt !")
         else: #le qcm a été répondu, on donne l'accès au reste du serveur
             role = guild.get_role(roleMembreServeurAsso)
             await member.add_roles(role)
@@ -390,7 +390,7 @@ def main():
     @bot.event
     async def on_reaction_clear_emoji(reaction):
         await bind_channel_react_del(reaction, bot)
-            
+
     @bot.event
     async def on_reaction_clear_emoji(reaction):
         await bind_channel_react_del(reaction, bot)
