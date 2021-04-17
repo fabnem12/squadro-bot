@@ -311,7 +311,7 @@ def affiCondorcet(election):
 
         duelsPrec = len(duels)
 
-    return msgs, [resume(election), graphe(election)]
+    return msgs, [resume(election), None and graphe(election)]
 
 def affiPoints(election):
     msgs = []
