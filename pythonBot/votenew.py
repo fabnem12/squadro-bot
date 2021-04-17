@@ -36,7 +36,6 @@ def main():
         await msg.add_reaction("⬅️")
         #await msg.add_reaction("↔️")
         await msg.add_reaction("➡️")
-        votant.ajouteMessageDuel((opt1, opt2), msg.id)
 
         MSG2DUEL[msg.id] = (votant, (opt1, opt2))
 
@@ -61,7 +60,7 @@ def main():
 
             votant = election.getVotant(userId)
 
-            opt1, opt2 = votant.duelAFaire(start = True)
+            opt1, opt2 = votant.duelAFaire()
             if len(election.candidats) > 2:
                 await channel.send("Pour enregistrer ton vote, j'ai besoin d'un ordre de préférence complet.\nComme c'est un peu relou de le faire soi-même, je vais juste te demander qui tu préfères dans quelques duels d'options, et j'en déduirai ton ordre de préférence complet.")
             else:
@@ -72,7 +71,7 @@ def main():
         elif message.id in MSG2DUEL: #on a voté sur un duel
             votant, (opt1, opt2) = MSG2DUEL[message.id]
 
-            if emoji in ("⬅️", "➡️", "↔️") and not votant.duelFait(opt1, opt2):
+            if emoji in ("⬅️", "➡️", "↔️"):
                 if emoji == "↔️":
                     prefere = None
                 else:

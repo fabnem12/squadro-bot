@@ -1,24 +1,20 @@
 from Graphe import Noeud, Graphe
 
 #pour l'affichage du graphe des duels
-import matplotlib.pyplot as plt
-import networkx as nx
+#import matplotlib.pyplot as plt
+#import networkx as nx
 from random import shuffle #juste pour ne pas avoir un fichier de détails de vote avec l'ordre qui correspond aux votes
+from typing import List, Dict, Optional, Tuple
 
 class Votant:
-    def __init__(self, election, optionsVote):
-        self.classements = dict()
+    def __init__(self, election, optionsVote: List[str]):
+        self.classements: Dict[str, int] = dict()
         self.election = election
 
-        self.inferieurs = {opt: set() for opt in optionsVote}
-        self.superieurs = {opt: set() for opt in optionsVote}
-        self.egaux = {opt: set() for opt in optionsVote}
-        self.options = optionsVote.copy()
-        self.duelsFaits = set()
-        self.messagesDuels = dict()
-
-    def ajouteMessageDuel(self, duel, message):
-        self.messagesDuels[duel] = message
+        self.listeCandidats = optionsVote.copy()
+        shuffle(self.listeCandidats)
+        self.duels: Dict[Tuple[str, str], Optional[str]] = {(x, x): None for x in optionsVote}
+        #gagnants des duels
 
     def classement(self, candidat):
         return self.classements[candidat] if candidat in self.classements else None
@@ -28,13 +24,6 @@ class Votant:
         return min(classements.keys(), key = lambda x: classements[x])
 
     def prefere2(self, candidatA, candidatB):
-        if candidatB in self.inferieurs[candidatA]:
-            return candidatA
-        elif candidatA in self.inferieurs[candidatB]:
-            return candidatB
-        else:
-            return None
-        """
         classements = self.classements
 
         if candidatA in classements and candidatB in classements:
@@ -44,96 +33,61 @@ class Votant:
                 return candidatB
 
         return None #un candidat non classé ou de même degré de préférence
-        """
 
     def resumePref(self): #résumé de l'ordre de préférence du votant
         return "\n".join("**{}** {}".format(b, a) for a, b in sorted(self.classements.items(), key = lambda x: x[1]))
 
-    def duelAFaire(self, start = False):
-        #on renvoie un duel à faire s'il faut en faire un, None sinon
-        from random import shuffle
+    def duelAFaire(self):
+        tab = self.listeCandidats.copy()
 
-        options = self.options
-        if start:
-            self.inferieurs, self.superieurs = {opt: set() for opt in options}, {opt: set() for opt in options}
-            self.egaux = {opt: set() for opt in options}
-            self.duelsFaits = set()
+        def separe(low, high):
+            pivot, up, down, UpGoing = tab[low], low, high, False
 
-        shuffle(options) #pour randomiser le duel qui va être choisi, s'il y en a plusieurs
+            for i in range(high - low):
+                if UpGoing:
+                    if (tab[up], pivot) not in self.duels: return (tab[up], pivot)
 
-        for opt in options:
-            infOpt, supOpt, egauxOpt = self.inferieurs[opt], self.superieurs[opt], self.egaux[opt]
-
-            if len(infOpt) + len(supOpt) + len(egauxOpt) + 1 < len(options):
-                #on ne connaît pas le classement relatif de cette option par rapport à tous les autres
-                #on va donc faire un duel avec cette option et une autre
-                adversaire = None
-                for optPossible in options:
-                    if optPossible == opt or optPossible in infOpt or optPossible in supOpt: #on a déjà le classement de l'opt par la personne
-                        continue
+                    if self.duels[tab[up],pivot] in (tab[up], None): up += 1
                     else:
-                        adversaire = optPossible
-                        break
+                        tab[down] = tab[up]
+                        down -= 1
+                        UpGoing = False
+                else:
+                    if (pivot, tab[down]) not in self.duels: return (pivot, tab[down])
 
-                #on a forcément un adversaire à ce stade
-                #puisque les ensembles inf, sup et egaux sont disjoints et options c'est leur union + opt
-                return (opt, adversaire)
+                    if self.duels[pivot, tab[down]] in (pivot, None): down -= 1
+                    else:
+                        tab[up] = tab[down]
+                        up += 1
+                        UpGoing = True
 
-        return None
+            tab[up] = pivot
+            return up
+
+        def TR(d, f):
+            if d < f:
+                pp = separe(d, f)
+
+                if isinstance(pp, int):
+                    a = TR(d, pp-1)
+                    if a: return a
+                    b = TR(pp+1, f)
+                    if b: return b
+                else:
+                    return pp #c'est un duel, on le renvoie au niveau précédent
+
+        ret = TR(0, len(self.listeCandidats)-1)
+        #si ret est non nul, il faut faire un nouveau duel. sinon, ben on enregistre le classement
+        if not ret: self.listeCandidats = tab
+        return ret
 
     def ajoutPreference(self, opt1, opt2, prefere):
-        inf, sup, egaux = self.inferieurs, self.superieurs, self.egaux
-
-        if prefere is None: #l'électeur estime que opt1 = opt2 (en pratique le bot discord associé ne le permet pas encore)
-            #étape 0 : l'un est l'égal de l'autre
-            egaux[opt1].add(opt2)
-            egaux[opt2].add(opt1)
-
-            #étape 1 : tous ceux qui sont supérieurs à l'un sont supérieurs à l'autre
-            sup[opt1] |= sup[opt2]
-            sup[opt2] = sup[opt1]
-
-            #étape 2 : tous ceux qui sont inférieurs à l'un sont inférieurs à l'autre
-            inf[opt1] |= inf[opt2]
-            inf[opt2] = inf[opt1]
-        else:
-            gagnant, perdant = prefere, opt2 if opt1 == prefere else opt1
-            classeGagnant = {gagnant} | egaux[gagnant]
-            classePerdant = {perdant} | egaux[perdant]
-
-            #étape 0 : le gagnant et ses égaux sont supérieurs au perdant et à ses égaux
-            for inferieur in classePerdant:
-                sup[inferieur] |= classeGagnant
-            for superieur in classeGagnant:
-                inf[superieur] |= classePerdant
-
-            #étape 1 : tous ceux qui sont supérieurs au gagnant sont supérieurs au perdant
-            for superieur in sup[gagnant].copy():
-                for inferieur in classePerdant:
-                    sup[inferieur].add(superieur)
-                    inf[superieur].add(inferieur)
-
-            #étape 2 : tous ceux qui sont inférieurs au perdant sont inférieurs au gagnant
-            for inferieur in inf[perdant].copy():
-                for superieur in classeGagnant:
-                    inf[superieur].add(inferieur)
-                    sup[inferieur].add(superieur)
-
-        print(inf)
-        print(sup)
-        print(egaux)
-        print("----")
-
-        self.duelsFaits.add((opt1, opt2))
-
-    def duelFait(self, a, b):
-        return (a, b) in self.duelsFaits or (b, a) in self.duelsFaits
+        self.duels[opt1, opt2] = prefere
+        self.duels[opt2, opt1] = prefere
 
     def calculClassement(self):
-        sup, options = self.superieurs, self.options
-        self.classements = {opt: len(sup[opt]) for opt in options}
-
-        return list(sorted(self.classements.items(), key = lambda x: x[1]))
+        self.classements = {x: i for i, x in enumerate(self.listeCandidats)}
+        return list((y, x) for x, y in enumerate(self.listeCandidats))
 
 class Election:
     sysVotes = {"Borda", "sumaut", "approbation", "Copeland", "RankedPairs"}
