@@ -38,7 +38,7 @@ def ajoutMsg(guild, author, minute, nouvMessage: int = 1):
 
         infosGuild[author] = (nbPoints, nbMessages + nouvMessage, minute)
     else:
-        infosGuild[author] = (nbPointsNewPoints, nouvMessage, minute)
+        infosGuild[author] = (nbNewPoints, nouvMessage, minute)
 
     if randint(0, 9) < 1:
         save()
