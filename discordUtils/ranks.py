@@ -19,7 +19,10 @@ dossierOutputs = ""
 if "ranks.p" not in os.listdir(cheminOutputs):
     infos = dict()
 else:
-    infos = pickle.load(open(join(cheminOutputs, "ranks.p"), "rb"))
+    try:
+        infos = pickle.load(open(join(cheminOutputs, "ranks.p"), "rb"))
+    except:
+        infos = dict()
 
 def save():
     pickle.dump(infos, open(join(cheminOutputs, "ranks.p"), "wb"))
@@ -205,8 +208,8 @@ def main():
         if estAdmin(ctx.author.id):
             guild = ctx.guild
 
-            if guild.id in INFOS:
-                infosGuild = INFOS[guild.id]
+            if guild.id in infos:
+                infosGuild = infos[guild.id]
                 xp, dernierMessage, nbMessages = infosGuild[member.id]
                 infosGuild[member.id] = (newXP, dernierMessage, nbMessages)
 
