@@ -130,7 +130,7 @@ def main():
         ajoutReact(guildId, author, minute)
 
     @bot.command(name="prerank")
-    async def prerank(ctx, hidden: Optional[str]):
+    async def prerank(ctx, hidden: Optional[str], qqun: Optional[int] = None):
         if not estAdmin(ctx.author.id): return
 
         if hidden is None:
@@ -145,7 +145,8 @@ def main():
 
              try:
                  async for message in channel.history(limit = None):
-                     ajoutMsg(message.guild, message.author.id, message.created_at.timestamp() // 60)
+                     if not qqun or message.author.id == qqun:
+                         ajoutMsg(message.guild, message.author.id, message.created_at.timestamp() // 60)
              except:
                  print("Erreur : ", channel.name)
 
