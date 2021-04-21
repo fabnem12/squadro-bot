@@ -61,7 +61,7 @@ def affiRank(author, guild):
         else:
             return "<@{}> n'as pas envoyé de message sur ce serveur jusque là…".format(author)
     else:
-      return "Aucun message n'a été compté sur ce serveur…"
+        return "Aucun message n'a été compté sur ce serveur…"
 
 def estAdmin(authorId):
     return authorId in ADMINS
@@ -146,7 +146,7 @@ def main():
              try:
                  async for message in channel.history(limit = None):
                      if not qqun or message.author.id == qqun:
-                         ajoutMsg(message.guild, message.author.id, message.created_at.timestamp() // 60)
+                         ajoutMsg(message.guild.id if message.guild else None, message.author.id, message.created_at.timestamp() // 60)
              except:
                  print("Erreur : ", channel.name)
 
