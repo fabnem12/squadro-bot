@@ -127,8 +127,8 @@ async def bind_channel_edit(msg):
 
 async def bind_channel_del(msg):
     msgInit = msg.id
-    if msg.id in ECHOS2MSG: #si c'est un écho, on retrouve le message original pour retrouver les autres échos
-        msgInit = ECHOS2MSG[msg.id][0]
+    if msg.id in ECHO2MSG: #si c'est un écho, on retrouve le message original pour retrouver les autres échos
+        msgInit = ECHO2MSG[msg.id][0]
         del MSG_RETRANSMIS[msgInit][1][msg.channel.id] #on a supprimé cet écho donc on le retire de MSG_RETRANSMIS
 
         #on peut tenter de supprimer le message original (mais ce n'est pas garanti, le bot peut ne pas avoir les droits)
@@ -532,7 +532,19 @@ def main():
 
         save()
 
+    @bot.command(name="toto")
+    async def toto(ctx, channelId: int = 753333174364274768):
+        channelAdmin = await bot.fetch_channel(channelId)
 
+        txt = ""
+        i = 0
+        async for msg in channelAdmin.history(limit = 1000):
+            if i % 100 == 0: print(i)
+            i += 1
+            txt += f"{str(msg.created_at)} - {msg.author.nick or msg.author.name} : {msg.content}\n"
+
+        with open("res.txt", "w") as f:
+            f.write(txt)
 
     return bot, TOKEN
 
