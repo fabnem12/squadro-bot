@@ -69,10 +69,10 @@ class Votant:
                 pp = separe(d, f)
 
                 if isinstance(pp, int):
-                    a = TR(d, pp-1)
-                    if a: return a
-                    b = TR(pp+1, f)
+                    a = TR(pp+1, f)
                     if b: return b
+                    b = TR(d, pp-1)
+                    if a: return a
                 else:
                     return pp #c'est un duel, on le renvoie au niveau précédent
 
