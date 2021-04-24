@@ -205,7 +205,7 @@ async def autorole_react_add(messageId, member, guild, emoji):
         roleId = AUTO_ROLE[messageId, emoji]
         role = guild.get_role(roleId)
 
-        if role in member.roles:
+        if False and role in member.roles:
             await member.remove_roles(role)
         else:
             await member.add_roles(role)
