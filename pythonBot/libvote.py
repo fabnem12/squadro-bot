@@ -70,9 +70,9 @@ class Votant:
 
                 if isinstance(pp, int):
                     a = TR(pp+1, f)
-                    if b: return b
-                    b = TR(d, pp-1)
                     if a: return a
+                    b = TR(d, pp-1)
+                    if b: return b
                 else:
                     return pp #c'est un duel, on le renvoie au niveau précédent
 
@@ -80,6 +80,9 @@ class Votant:
         #si ret est non nul, il faut faire un nouveau duel. sinon, ben on enregistre le classement
         if not ret: self.listeCandidats = tab
         return ret
+
+    def classementStandard():
+        pass
 
     def ajoutPreference(self, opt1, opt2, prefere):
         self.duels[opt1, opt2] = prefere
