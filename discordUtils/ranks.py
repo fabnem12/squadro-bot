@@ -88,7 +88,7 @@ def main():
         classement = sorted(infosGuild, key = tri, reverse = True)
 
         txt = "**Personnes les plus actives sur le serveur :**\n"
-        for index, usrId in zip(range(nbAffi + (guildId == 753312911274934345)), classement):
+        for index, usrId in zip(range(nbAffi + (not parXp and guildId == 753312911274934345)), classement):
             if not parXp and usrId == 577237503057330196 and guildId == 753312911274934345: continue
             try:
                 usr = await guild.fetch_member(usrId)
