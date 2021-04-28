@@ -200,15 +200,18 @@ async def vocalrole_voicestate(member, before, after):
             nouvRole = guild.get_role(rolesGuild[channelAfter])
             await member.add_roles(nouvRole)
 
-async def autorole_react_add(messageId, member, guild, emoji):
+async def autorole_react_add(messageId, member, guild, emoji, add = True):
     if (messageId, emoji) in AUTO_ROLE:
         roleId = AUTO_ROLE[messageId, emoji]
         role = guild.get_role(roleId)
 
-        if False and role in member.roles:
-            await member.remove_roles(role)
-        else:
+        if add and role not in member.roles:
             await member.add_roles(role)
+        elif not add and role in member.roles:
+            await member.remove_roles(role)
+
+async def autorole_react_del(messageId, member, guild, emoji):
+    await autopin_react_add(messageId, member, guild, emoji, add = False)
 
 async def autoroleconf_react_add(messageId, member, guild, emoji):
     if (messageId, emoji) in AUTO_ROLE_CONF:
@@ -381,9 +384,9 @@ def main():
             emojiHash = traitement["emojiHash"]
             channel = traitement["channel"]
 
-            await autorole_react_add(messageId, user, guild, emojiHash)
+            await autorole_react_del(messageId, user, guild, emojiHash)
             await autopin_react_del(messageId, user, guild, emojiHash, channel)
-
+            
     @bot.event
     async def on_reaction_add(reaction, user):
         await bind_channel_react_add(reaction, user, bot)
