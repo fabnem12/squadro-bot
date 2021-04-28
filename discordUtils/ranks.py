@@ -64,7 +64,7 @@ def affiRank(author, guild, parXp = True):
             if guild == 753312911274934345:
                 if author == 577237503057330196:
                     return ":shushing_face:"
-                else:
+                elif not parXp:
                     rang -= 1
 
             return "<@{}> est {}{} sur ce serveur. {} XPs, {} messages".format(author, rang+1, "e" if rang else "er", nbPoints, nbMessages)
