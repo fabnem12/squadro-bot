@@ -80,14 +80,16 @@ def main():
             return
         raise error
 
-    async def affi_stats(guild, nbAffi = 20):
+    async def affi_stats(guild, nbAffi = 20, parXp = True):
         guildId = guild.id
 
         infosGuild = infos[guildId]
+        tri = lambda x: infosGuild[x][0] if parXp else infosGuild[x][1] #0 -> nb xp, 1 -> nb messages
         classement = sorted(infosGuild, key = lambda x: infosGuild[x][0], reverse = True)
 
         txt = "**Personnes les plus actives sur le serveur :**\n"
         for index, usrId in zip(range(nbAffi), classement):
+            if not parXp and usrId == 577237503057330196: continue
             try:
                 usr = await guild.fetch_member(usrId)
                 info = usr.nick or usr.name
@@ -95,7 +97,7 @@ def main():
                 info = "???"
             nbPoints, nbMessages, _ = infosGuild[usrId]
 
-            txt += "**{}** {} avec {} XP ({} messages)\n".format(index+1, info, nbPoints, nbMessages)
+            txt += "**{}** {} avec {} XP ({} messages)\n".format((index+1) if parXp else index, info, nbPoints, nbMessages)
 
         res = txt
         if len(res) < 1950:
@@ -170,6 +172,15 @@ def main():
         if nbAffi is None: nbAffi = 20
 
         listRes = await affi_stats(ctx.guild, nbAffi)
+        for res in listRes:
+            await ctx.send(res)
+            sleep(0.4)
+
+    @bot.commands(name = "stats_msg")
+    async def stats(ctx, nbAffi: Optional[int]):
+        if nbAffi is None: nbAffi = 20
+
+        listRes = await affi_stats(ctx.guild, nbAffi, False)
         for res in listRes:
             await ctx.send(res)
             sleep(0.4)
