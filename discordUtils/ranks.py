@@ -49,16 +49,23 @@ def ajoutMsg(guild, author, minute, nouvMessage: int = 1):
 def ajoutReact(guild, author, minute):
     ajoutMsg(guild, author, minute, nouvMessage = 0)
 
-def affiRank(author, guild):
+def affiRank(author, guild, parXp = True):
     if guild: guild = guild.id
 
     if guild in infos:
         infosGuild = infos[guild]
 
         if author in infosGuild:
-            classements = sorted(infosGuild, key = lambda x: infosGuild[x][0], reverse = True)
+            tri = lambda x: infosGuild[x][0] if parXp else infosGuild[x][1]
+            classements = sorted(infosGuild, key = tri, reverse = True)
             rang = classements.index(author)
             nbPoints, nbMessages, _ = infosGuild[author]
+
+            if guild == 753312911274934345:
+                if author == 577237503057330196:
+                    return ":shushing_face:"
+                else:
+                    rang -= 1
 
             return "<@{}> est {}{} sur ce serveur. {} XPs, {} messages".format(author, rang+1, "e" if rang else "er", nbPoints, nbMessages)
         else:
@@ -167,6 +174,13 @@ def main():
 
         await ctx.send(affiRank(someone, ctx.guild))
 
+    @bot.command(name = "rank_msg")
+    async def rankMsg(ctx, someone: Optional[discord.Member]):
+        if someone is None: someone = ctx.author.id
+        else: someone = someone.id
+
+        await ctx.send(affiRank(someone, ctx.guild, False))
+
     @bot.command(name = "stats")
     async def stats(ctx, nbAffi: Optional[int]):
         if nbAffi is None: nbAffi = 20
@@ -177,7 +191,7 @@ def main():
             sleep(0.4)
 
     @bot.command(name = "stats_msg")
-    async def stats(ctx, nbAffi: Optional[int]):
+    async def statsMsg(ctx, nbAffi: Optional[int]):
         if nbAffi is None: nbAffi = 20
 
         listRes = await affi_stats(ctx.guild, nbAffi, False)
