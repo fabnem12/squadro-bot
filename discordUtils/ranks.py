@@ -176,7 +176,7 @@ def main():
             await ctx.send(res)
             sleep(0.4)
 
-    @bot.commands(name = "stats_msg")
+    @bot.command(name = "stats_msg")
     async def stats(ctx, nbAffi: Optional[int]):
         if nbAffi is None: nbAffi = 20
 
