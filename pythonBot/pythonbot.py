@@ -373,7 +373,7 @@ def main(idsTraites = set(range(10))):
         if emoji == "🔂" and msg.content.startswith(prefixeBot): #relancer le morceau de code
             await evalue(msg, "")
             #pas de rab autorisé quand on relance le bout de code
-        if emoji == "🗑️" and (msg.guild is None or user.guild_permissions.manage_messages or user.guild_permissions.administrator):
+        if emoji == "🗑️" and (msg.guild is None or user.guild_permissions.manage_messages or user.guild_permissions.administrator or estAdmin(user)):
             await msg.delete()
 
     salonsOk = {325349544655323139, 549326239756976148, 506937154811723777, 406921230629732352, 692674190897315960, 221388620810944515, 709046166964404426, 631946475634556949, 343503582643093506, 374982766812594176, 227889965076316162}
