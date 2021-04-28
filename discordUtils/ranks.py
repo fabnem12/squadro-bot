@@ -85,11 +85,11 @@ def main():
 
         infosGuild = infos[guildId]
         tri = lambda x: infosGuild[x][0] if parXp else infosGuild[x][1] #0 -> nb xp, 1 -> nb messages
-        classement = sorted(infosGuild, key = lambda x: infosGuild[x][0], reverse = True)
+        classement = sorted(infosGuild, key = tri, reverse = True)
 
         txt = "**Personnes les plus actives sur le serveur :**\n"
         for index, usrId in zip(range(nbAffi), classement):
-            if not parXp and usrId == 577237503057330196: continue
+            if not parXp and usrId == 577237503057330196 and guildId == 753312911274934345: continue
             try:
                 usr = await guild.fetch_member(usrId)
                 info = usr.nick or usr.name
