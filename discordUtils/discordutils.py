@@ -433,7 +433,8 @@ def main():
 
         cible.add((serveurSource, salonSource))
 
-        confirmation = await ctx.send("OK")
+        await ctx.message.add_reaction("👌")
+
         save()
 
     @bot.command(name = "utils_unbind")
@@ -447,7 +448,7 @@ def main():
                 BINDED_CHANNELS[channel] = {(x, y) for x, y in BINDED_CHANNELS[channel] if y != salonSource}
 
             BINDED_CHANNELS[salonSource] = set()
-            await ctx.send("OK")
+            await ctx.message.add_reaction("👌")
         else:
             await ctx.send("Ce salon n'était pas relié aux autres")
 
@@ -464,7 +465,7 @@ def main():
             VOCAL_ROLE[guildId] = dict()
 
         VOCAL_ROLE[guildId][salonVocalId] = role.id
-        await ctx.send("OK")
+        await ctx.message.add_reaction("👌")
 
         save()
 
@@ -480,7 +481,7 @@ def main():
                 for salon in (x for x, y in VOCAL_ROLE.items() if y == roleId):
                     del VOCAL_ROLE[guildId][roleId]
 
-                await ctx.send("OK")
+                await ctx.message.add_reaction("👌")
 
                 save()
                 return
@@ -531,7 +532,7 @@ def main():
     @bot.command(name = "utils_autoroleconf_reset")
     async def autoroleconfreset(ctx):
         AUTO_ROLE_CONF.clear()
-        await ctx.send("OK")
+        await ctx.message.add_reaction("👌")
 
         save()
 
