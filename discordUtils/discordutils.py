@@ -140,7 +140,7 @@ async def bind_channel_del(msg):
         except: pass #on ne fait rien si la suppression de l'original n'a pas marché
 
     if msgInit in MSG_RETRANSMIS:
-        for echo in MSG_RETRANSMIS[msg.id][1].values():
+        for echo in MSG_RETRANSMIS[msgInit][1].values():
             await echo.delete()
 
 
@@ -214,7 +214,7 @@ async def autorole_react_add(messageId, member, guild, emoji, add = True):
             await member.remove_roles(role)
 
 async def autorole_react_del(messageId, member, guild, emoji):
-    await autopin_react_add(messageId, member, guild, emoji, add = False)
+    await autopin_react_add(messageId, member, guild, emoji, False)
 
 async def autoroleconf_react_add(messageId, member, guild, emoji):
     if (messageId, emoji) in AUTO_ROLE_CONF:
