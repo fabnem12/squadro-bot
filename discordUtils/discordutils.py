@@ -81,7 +81,7 @@ async def bind_channel_envoi(msg):
 
         embed = None if embeds == [] or auteur.id != bot.user.id else embeds[0]
 
-        texteRenvoye = BLANK + "**@{} :**\n{}".format(auteur.nick or auteur.name, texte)
+        texteRenvoye = BLANK + "**@{} ({}) :**\n{}".format(auteur.nick or auteur.name, msg.guild.name if msg.guild else "DM", texte)
 
         MSG_RETRANSMIS[msg.id] = (auteur, dict(), msg)
 
@@ -386,7 +386,7 @@ def main():
 
             await autorole_react_del(messageId, user, guild, emojiHash)
             await autopin_react_del(messageId, user, guild, emojiHash, channel)
-            
+
     @bot.event
     async def on_reaction_add(reaction, user):
         await bind_channel_react_add(reaction, user, bot)
