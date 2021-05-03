@@ -58,7 +58,7 @@ def affiRank(author, guild, parXp = True, parRapport = False):
         if author in infosGuild:
             tri = lambda x: infosGuild[x][0] if parXp else infosGuild[x][1]
             if parRapport:
-                tri = lambda x: -infosGuild[x][0] / infosGuild[x][1] if infosGuild[x][1] else 0
+                tri = lambda x: -infosGuild[x][0] / infosGuild[x][1] if infosGuild[x][0] and infosGuild[x][1] else 0
 
             classements = sorted(infosGuild, key = tri, reverse = True)
             rang = classements.index(author)
@@ -96,7 +96,7 @@ def main():
         infosGuild = infos[guildId]
         tri = lambda x: infosGuild[x][0] if parXp else infosGuild[x][1] #0 -> nb xp, 1 -> nb messages
         if parRapport:
-            tri = lambda x: -infosGuild[x][0] / infosGuild[x][1] if infosGuild[x][1] else 0
+            tri = lambda x: -infosGuild[x][0] / infosGuild[x][1] if infosGuild[x][0] and infosGuild[x][1] else 0
         classement = sorted(infosGuild, key = tri, reverse = True)
 
         txt = "**Personnes les plus actives sur le serveur :**\n"
