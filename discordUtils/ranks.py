@@ -186,7 +186,7 @@ def main():
 
         await ctx.send(affiRank(someone, ctx.guild, False))
 
-    @bot.command(name = "rank_rap")
+    @bot.command(name = "rank_spam")
     async def rankRap(ctx, someone: Optional[discord.Member]):
         if someone is None: someone = ctx.author.id
         else: someone = someone.id
@@ -211,7 +211,7 @@ def main():
             await ctx.send(res)
             sleep(0.4)
 
-    @bot.command(name = "stats_rap")
+    @bot.command(name = "stats_spam")
     async def statsRap(ctx, nbAffi: Optional[int]):
         if nbAffi is None: nbAffi = 20
 
