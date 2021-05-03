@@ -58,7 +58,7 @@ def affiRank(author, guild, parXp = True, parRapport = False):
         if author in infosGuild:
             tri = lambda x: infosGuild[x][0] if parXp else infosGuild[x][1]
             if parRapport:
-                tri = lambda x: infosGuild[x][0] / infosGuild[x][1] if infosGuild[x][1] else 0
+                tri = lambda x: infosGuild[x][1] / infosGuild[x][0] if infosGuild[x][0] else 0
 
             classements = sorted(infosGuild, key = tri, reverse = True)
             rang = classements.index(author)
@@ -96,7 +96,7 @@ def main():
         infosGuild = infos[guildId]
         tri = lambda x: infosGuild[x][0] if parXp else infosGuild[x][1] #0 -> nb xp, 1 -> nb messages
         if parRapport:
-            tri = lambda x: infosGuild[x][0] / infosGuild[x][1] if infosGuild[x][1] else 0
+            tri = lambda x: infosGuild[x][1] / infosGuild[x][0] if infosGuild[x][0] else 0
         classement = sorted(infosGuild, key = tri, reverse = True)
 
         txt = "**Personnes les plus actives sur le serveur :**\n"
@@ -191,7 +191,7 @@ def main():
         if someone is None: someone = ctx.author.id
         else: someone = someone.id
 
-        await ctx.send(affiRank(someone, ctx.guild, False, True))
+        await ctx.send(affiRank(someone, ctx.guild, True, True))
 
     @bot.command(name = "stats")
     async def stats(ctx, nbAffi: Optional[int]):
@@ -215,7 +215,7 @@ def main():
     async def statsRap(ctx, nbAffi: Optional[int]):
         if nbAffi is None: nbAffi = 20
 
-        listRes = await affi_stats(ctx.guild, nbAffi, False, True)
+        listRes = await affi_stats(ctx.guild, nbAffi, True, True)
         for res in listRes:
             await ctx.send(res)
             sleep(0.4)
