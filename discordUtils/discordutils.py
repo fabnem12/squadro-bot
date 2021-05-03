@@ -123,7 +123,7 @@ async def bind_channel_edit(msg):
         texte, embeds = msg.content, msg.embeds
         auteur, echos, _ = MSG_RETRANSMIS[msg.id]
 
-        texteRenvoye = BLANK + "**@{} ({}) :**\n{}".format(auteur.nick or auteur.name, msg.guild.name if msg.guild else "DM",, texte)
+        texteRenvoye = BLANK + "**@{} ({}) :**\n{}".format(auteur.nick or auteur.name, msg.guild.name if msg.guild else "DM", texte)
 
         for echo in echos.values():
             await echo.edit(content = texteRenvoye)
