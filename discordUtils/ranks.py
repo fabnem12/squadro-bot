@@ -49,7 +49,7 @@ def ajoutMsg(guild, author, minute, nouvMessage: int = 1):
 def ajoutReact(guild, author, minute):
     ajoutMsg(guild, author, minute, nouvMessage = 0)
 
-def affiRank(author, guild, parXp = True):
+def affiRank(author, guild, parXp = True, parRapport = False):
     if guild: guild = guild.id
 
     if guild in infos:
@@ -57,6 +57,9 @@ def affiRank(author, guild, parXp = True):
 
         if author in infosGuild:
             tri = lambda x: infosGuild[x][0] if parXp else infosGuild[x][1]
+            if parRapport:
+                tri = lambda x: infosGuild[x][0] / infosGuild[x][1] if infosGuild[x][1] else 0
+
             classements = sorted(infosGuild, key = tri, reverse = True)
             rang = classements.index(author)
             nbPoints, nbMessages, _ = infosGuild[author]
@@ -87,11 +90,13 @@ def main():
             return
         raise error
 
-    async def affi_stats(guild, nbAffi = 20, parXp = True):
+    async def affi_stats(guild, nbAffi = 20, parXp = True, parRapport = False):
         guildId = guild.id
 
         infosGuild = infos[guildId]
         tri = lambda x: infosGuild[x][0] if parXp else infosGuild[x][1] #0 -> nb xp, 1 -> nb messages
+        if parRapport:
+            tri = lambda x: infosGuild[x][0] / infosGuild[x][1] if infosGuild[x][1] else 0
         classement = sorted(infosGuild, key = tri, reverse = True)
 
         txt = "**Personnes les plus actives sur le serveur :**\n"
@@ -181,6 +186,13 @@ def main():
 
         await ctx.send(affiRank(someone, ctx.guild, False))
 
+    @bot.command(name = "rank_rap")
+    async def rankRap(ctx, someone: Optional[discord.Member]):
+        if someone is None: someone = ctx.author.id
+        else: someone = someone.id
+
+        await ctx.send(affiRank(someone, ctx.guild, False, True))
+
     @bot.command(name = "stats")
     async def stats(ctx, nbAffi: Optional[int]):
         if nbAffi is None: nbAffi = 20
@@ -195,6 +207,15 @@ def main():
         if nbAffi is None: nbAffi = 20
 
         listRes = await affi_stats(ctx.guild, nbAffi, False)
+        for res in listRes:
+            await ctx.send(res)
+            sleep(0.4)
+
+    @bot.command(name = "stats_rap")
+    async def statsRap(ctx, nbAffi: Optional[int]):
+        if nbAffi is None: nbAffi = 20
+
+        listRes = await affi_stats(ctx.guild, nbAffi, False, True)
         for res in listRes:
             await ctx.send(res)
             sleep(0.4)
