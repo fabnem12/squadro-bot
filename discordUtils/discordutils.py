@@ -308,6 +308,8 @@ async def bind_new_react_add(reaction, user, bot):
     channelId = msg.channel.id
     guildId = msg.guild.id
 
+    if user.id == 689536409060900933: return #on ne retransmet pas les réactions déjà faites par le bot
+
     if channelId in BIND_NEW:
         groupe = BIND_NEW[BIND_NEW[channelId]]
 
