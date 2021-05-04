@@ -4,7 +4,7 @@ import pickle
 import psutil
 import sys
 
-listeScripts = ["pythonBot/pythonbot.py", "pythonBot/votenew.py", "discordUtils/ranks.py", "squadroGame/bot.py", "discordUtils/discordutils.py", "tobybot.py"]
+listeScripts = ["pythonBot/pythonbot.py", "pythonBot/votenew.py", "discordUtils/ranks.py", "squadroGame/bot.py", "discordUtils/discordutils.py"]
 
 if "fichierPID.p" in os.listdir():
     pidsBot = pickle.load(open("fichierPID.p", "rb"))
