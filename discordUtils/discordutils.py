@@ -23,8 +23,10 @@ Message = int #l'id du message
 class Groupe(OpenDigraph):
     def __init__(self):
         super().__init__([], [], [])
-        self.originaux: Dict[int, int] = dict() #associe à une copie le message original
-        self.copies: Dict[int, Set[int]] = dict() #associe à un original la liste de ses copies
+        self.originaux: Dict[Message, Message] = dict() #associe à une copie le message original
+        self.copies: Dict[Message, Set[Message]] = dict() #associe à un original la liste de ses copies
+        self.copiesGuild: Dict[Tuple[Message, ChannelID], Message] = dict() #associe à un message son pendant sur un autre salon
+        self.auteur: Dict[Message, str] = dict() #associe à un message le pseudo de son auteur
 
     def salonInGroupe(self: 'Groupe', channelId: ChannelID) -> bool:
         return any(x.getLabel() == channelId for x in self.getNodes())
@@ -37,8 +39,12 @@ class Groupe(OpenDigraph):
         nodeChannel = self.getNodeChannel(channelId)
         return {self.nodes[idChild].getLabel() for idChild in nodeChannel.getChildrenIds()}
 
-    def ajoutMsg(self: 'Groupe', idOriginal: Message, idCopie: Message, channelIdOriginal: ChannelID, channelIdCopie: ChannelID) -> None:
+    def ajoutMsg(self: 'Groupe', idOriginal: Message, idCopie: Message, channelIdOriginal: ChannelID, channelIdCopie: ChannelID, auteur: str) -> None:
         self.originaux[idCopie] = (idOriginal, channelIdOriginal)
+        self.copiesGuild[idCopie, channelIdOriginal] = idOriginal
+        self.copiesGuild[idOriginal, channelIdCopie] = idCopie
+        self.auteur[idOriginal] = auteur
+        self.auteur[idCopie] = auteur
 
         if idOriginal not in self.copies:
             self.copies[idOriginal] = {(idCopie, channelIdCopie)}
@@ -51,6 +57,15 @@ class Groupe(OpenDigraph):
         else: #idMsg est une copie par le bot, il faut retrouver l'original et les copies de l'original - idMsg
             original = self.originaux[idMsg]
             return {original} | {x for x in self.copies[original] if x[0] != idMsg}
+    def copieDansSalon(self: 'Groupe', idMsg: Message, channelId: ChannelID) -> Optional[Message]:
+        if (idMsg, channelId) in self.copiesGuild: #ça ne marche que si idMsg est le message original
+            return self.copiesGuild[idMsg, channelId]
+        else: #sinon, il faut retrouver l'original
+            msgOriginal, channelOriginal = self.originaux[idMsg]
+            #par construction le truc suivant existe forcément
+            return self.copiesGuild[msgOriginal, channelId]
+    def auteurMsg(self: 'Groupe', idMsg: Message) -> str:
+        return self.auteur[idMsg]
 
 stockePID()
 
@@ -125,10 +140,11 @@ async def bind_channel_envoi(msg):
         auteur, texte, files = msg.author, msg.content, [resendFile(x.url, x.filename) for x in msg.attachments]
         embeds = msg.embeds
         reference = msg.reference
+        pseudoAuteur = auteur.nick or auteur.name
 
         embed = None if embeds == [] or auteur.id != bot.user.id else embeds[0]
 
-        texteRenvoye = BLANK + "**@{} ({}) :**\n{}".format(auteur.nick or auteur.name, msg.guild.name if msg.guild else "DM", texte)
+        texteRenvoye = BLANK + "**@{} ({}) :**\n{}".format(pseudoAuteur, msg.guild.name if msg.guild else "DM", texte)
 
         MSG_RETRANSMIS[msg.id] = (auteur, dict(), msg)
 
@@ -169,21 +185,33 @@ async def bind_new_envoi(msg):
 
     if channelId in BIND_NEW:
         groupe = BIND_NEW[BIND_NEW[channelId]]
-        auteur, texte, files = msg.author, msg.content, [resendFile(x.url, x.filename) for x in msg.attachments]
+        auteur, texte, files = msg.author, msg.content, lambda: [resendFile(x.url, x.filename) for x in msg.attachments]
         embeds = msg.embeds
         reference = msg.reference
+        pseudoAuteur = auteur.nick or auteur.name
 
         embed = None if embeds == [] or auteur.id != bot.user.id else embeds[0]
-        texteRenvoye = BLANK + "**@{} ({}) :**\n{}".format(auteur.nick or auteur.name, msg.guild.name if msg.guild else "DM", texte)
+        texteRenvoye = BLANK + "**@{} ({}) :**\n{}".format(pseudoAuteur, msg.guild.name if msg.guild else "DM", texte)
 
-        if reference:
-            pass
-        else:
-            for channelCibleId, serveurCibleId in groupe.autresSalons((channelId, guildId)):
-                serveur = bot.get_guild(serveurCibleId)
-                channel = serveur.get_channel(channelCibleId)
+        for channelCibleId, serveurCibleId in groupe.autresSalons((channelId, guildId)):
+            serveur = bot.get_guild(serveurCibleId)
+            channel = serveur.get_channel(channelCibleId)
+            fichiersHere = files()
 
-                retransmis = await channel.send(texteRenvoye, files = files, embed = embed)
+            if reference:
+                referenceId = reference.message_id
+                pendantRefChannel = groupe.copieDansSalon(referenceId, (channelCibleId, serveurCibleId))
+                objRef = discord.MessageReference(message_id = pendantRefChannel, channel_id = channelCibleId)
+                retransmis = await channel.send(texteRenvoye, reference = objRef, files = fichiersHere, embed = embed)
+            else:
+                retransmis = await channel.send(texteRenvoye, files = fichiersHere, embed = embed)
+
+            groupe.ajoutMsg(msg.id, retransmis.id, (channelId, guildId), (channelCibleId, serveurCibleId), pseudoAuteur)
+
+            map(supprFichier, fichiersHere)
+            sleep(0.4)
+
+    if randint(0, 10) == 0: save()
 
 async def bind_channel_edit(msg):
     if msg.id in MSG_RETRANSMIS:
@@ -196,7 +224,23 @@ async def bind_channel_edit(msg):
             await echo.edit(content = texteRenvoye)
 
 async def bind_new_edit(msg):
-    pass
+    channelId = msg.channel.id
+    guildId = msg.guild.id if msg.guild else msg.guild
+    if msg.author.id == 689536409060900933: return #on ne fait rien si le bot modifie son propre message
+
+    if channelId in BIND_NEW:
+        groupe = BIND_NEW[BIND_NEW[channelId]]
+        texte, embeds = msg.content, msg.embeds
+        pseudoAuteur = groupe.auteurMsg(msg.id)
+
+        texteRenvoye = BLANK + "**@{} ({}) :**\n{}".format(pseudoAuteur, msg.guild.name if msg.guild else "DM", texte)
+        for channelCibleId, serveurCibleId in groupe.autresSalons((channelId, guildId)):
+            serveur = bot.get_guild(serveurCibleId)
+            channel = serveur.get_channel(channelCibleId)
+
+            echoId = groupe.copieDansSalon(msg.id, (channelCibleId, serveurCibleId))
+            echo = await channel.fetch_message(echoId)
+            await echo.edit(content = texteRenvoye)
 
 async def bind_channel_del(msg):
     msgInit = msg.id
@@ -214,7 +258,23 @@ async def bind_channel_del(msg):
             await echo.delete()
 
 async def bind_new_del(msg):
-    pass
+    channelId = msg.channel.id
+    guildId = msg.guild.id if msg.guild else msg.guild
+
+    if channelId in BIND_NEW:
+        groupe = BIND_NEW[BIND_NEW[channelId]]
+
+        for channelCibleId, serveurCibleId in groupe.autresSalons((channelId, guildId)):
+            try:
+                serveur = bot.get_guild(serveurCibleId)
+                channel = serveur.get_channel(channelCibleId)
+
+                echoId = groupe.copieDansSalon(msg.id, (channelCibleId, serveurCibleId))
+                echo = await channel.fetch_message(echoId)
+                await echo.delete()
+                sleep(0.4)
+            except:
+                print("Mon développeur a triché !")
 
 async def bind_channel_react_add(reaction, user, bot):
     compte = reaction.count
@@ -241,7 +301,21 @@ async def bind_channel_react_add(reaction, user, bot):
                 sleep(0.5)
 
 async def bind_new_react_add(reaction, user, bot):
-    pass
+    msg = reaction.message
+    channelId = msg.channel.id
+    guildId = msg.guild.id
+
+    if channelId in BIND_NEW:
+        groupe = BIND_NEW[BIND_NEW[channelId]]
+
+        for channelCibleId, serveurCibleId in groupe.autresSalons((channelId, guildId)):
+            serveur = bot.get_guild(serveurCibleId)
+            channel = serveur.get_channel(channelCibleId)
+
+            echoId = groupe.copieDansSalon(msg.id, (channelCibleId, serveurCibleId))
+            echo = await channel.fetch_message(echoId)
+            await echo.add_reaction(reaction.emoji)
+            sleep(0.4)
 
 async def bind_channel_react_del(reaction, bot):
     msgId = reaction.message.id
@@ -413,10 +487,12 @@ def main():
     @bot.event
     async def on_message_edit(_, msg):
         await bind_channel_edit(msg)
+        await bind_new_edit(msg)
 
     @bot.event
     async def on_message_delete(msg):
         await bind_channel_del(msg)
+        await bind_new_del(msg)
         await envoiAutoSuppr(msg)
 
     @bot.event
@@ -478,13 +554,11 @@ def main():
     @bot.event
     async def on_reaction_add(reaction, user):
         await bind_channel_react_add(reaction, user, bot)
+        await bind_new_react_add(reaction, user, bot)
     @bot.event
     async def on_reaction_clear_emoji(reaction):
         await bind_channel_react_del(reaction, bot)
-
-    @bot.event
-    async def on_reaction_clear_emoji(reaction):
-        await bind_channel_react_del(reaction, bot)
+        await bind_new_react_del(reaction, bot)
 
     @bot.event
     async def on_voice_state_update(member, before, after):
@@ -495,6 +569,7 @@ def main():
     async def on_message(msg):
         #liaison de salon
         await bind_channel_envoi(msg)
+        await bind_new_envoi(msg)
         await bot.process_commands(msg)
         await close_envoi(msg)
 
