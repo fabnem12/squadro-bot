@@ -183,7 +183,10 @@ async def bind_new_envoi(msg):
     channelId = msg.channel.id
     guildId = msg.guild.id if msg.guild else msg.guild
 
+
     if channelId in BIND_NEW:
+        if msg.content == "" and msg.embeds == [] and msg.attachments == []: return #c'est un message système qu'on ne veut pas transmettre
+
         groupe = BIND_NEW[BIND_NEW[channelId]]
         auteur, texte, files = msg.author, msg.content, lambda: [resendFile(x.url, x.filename) for x in msg.attachments]
         embeds = msg.embeds
@@ -337,6 +340,26 @@ async def bind_channel_react_del(reaction, bot):
 
 async def bind_new_react_del(reaction, bot):
     pass
+
+async def bind_new_pin_event(channel, last_pin):
+    channelId = channel.id
+    guildId = channel.guild.id
+
+    if last_pin and channelId in BIND_NEW: #sinon, c'est qu'on a retiré un pin (et pour le moment on ne fait rien)
+        lastPinMsg = (await channel.pins())[0]
+        groupe = BIND_NEW[BIND_NEW[channelId]]
+
+        for channelCibleId, serveurCibleId in groupe.autresSalons((channelId, guildId)):
+            serveur = bot.get_guild(serveurCibleId)
+            channel = serveur.get_channel(channelCibleId)
+
+            echoId = groupe.copieDansSalon(lastPinMsg.id, (channelCibleId, serveurCibleId))
+            echo = await channel.fetch_message(echoId)
+            try:
+                await echo.pin()
+            except:
+                print("Mon développeur a triché")
+            sleep(0.4)
 
 async def vocalrole_voicestate(member, before, after):
     channelBefore = before.channel and before.channel.id
@@ -572,6 +595,10 @@ def main():
         await bind_new_envoi(msg)
         await bot.process_commands(msg)
         await close_envoi(msg)
+
+    @bot.event
+    async def on_guild_channel_pins_update(channel, last_pin):
+        await bind_new_pin_event(channel, last_pin)
 
     #bind channels
     @bot.command(name = "utils_bind")
