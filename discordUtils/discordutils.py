@@ -5,14 +5,52 @@ import pickle
 import requests
 import sys
 from discord.ext import commands
+from random import randint
 from time import sleep
-from typing import Optional, Union
+from typing import Optional, Union, Dict, Set, Tuple
+try:
+    from open_digraph import *
+except ImportError:
+    from .open_digraph import *
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # CONSTANTES ###################################################################
 from constantes import ADMINS, TOKEN, prefixeBot
 from utils import stockePID, cheminOutputs
+ChannelID = Tuple[int, int] #tuple qui contient l'id du salon et l'id du serveur
+Message = int #l'id du message
+class Groupe(OpenDigraph):
+    def __init__(self):
+        super().__init__([], [], [])
+        self.originaux: Dict[int, int] = dict() #associe à une copie le message original
+        self.copies: Dict[int, Set[int]] = dict() #associe à un original la liste de ses copies
+
+    def salonInGroupe(self: 'Groupe', channelId: ChannelID) -> bool:
+        return any(x.getLabel() == channelId for x in self.getNodes())
+    def getNodeChannel(self: 'Groupe', channelId: ChannelID) -> Optional[Node]:
+        for node in self.getNodes():
+            if node.getLabel() == channelId:
+                return node
+
+    def autresSalons(self: 'Groupe', channelId: ChannelID) -> Set[ChannelID]:
+        nodeChannel = self.getNodeChannel(channelId)
+        return {self.nodes[idChild].getLabel() for idChild in nodeChannel.getChildrenIds()}
+
+    def ajoutMsg(self: 'Groupe', idOriginal: Message, idCopie: Message, channelIdOriginal: ChannelID, channelIdCopie: ChannelID) -> None:
+        self.originaux[idCopie] = (idOriginal, channelIdOriginal)
+
+        if idOriginal not in self.copies:
+            self.copies[idOriginal] = {(idCopie, channelIdCopie)}
+        else:
+            self.copies[idOriginal].add((idCopie, channelIdCopie))
+
+    def copiesMessage(self: 'Groupe', idMsg: Message) -> Set[Tuple[Message, ChannelID]]:
+        if idMsg in self.copies: #idMsg est un message original, c'est facile de retrouver ses copies
+            return self.copies[idMsg]
+        else: #idMsg est une copie par le bot, il faut retrouver l'original et les copies de l'original - idMsg
+            original = self.originaux[idMsg]
+            return {original} | {x for x in self.copies[original] if x[0] != idMsg}
 
 stockePID()
 
@@ -24,38 +62,44 @@ try:
 except:
     INFOS = dict()
 
-if "BINDED_CHANNELS" not in INFOS: INFOS["BINDED_CHANNELS"] = dict()
-BINDED_CHANNELS = INFOS["BINDED_CHANNELS"]
-MSG_RETRANSMIS = dict()
-ECHO2MSG = dict()
-BLANK = "‎" * 3
+if True:
+    if "BINDED_CHANNELS" not in INFOS: INFOS["BINDED_CHANNELS"] = dict()
+    BINDED_CHANNELS = INFOS["BINDED_CHANNELS"]
+    MSG_RETRANSMIS = dict()
+    ECHO2MSG = dict()
+    BLANK = "‎" * 3
 
-if "VOCAL_ROLE" not in INFOS: INFOS["VOCAL_ROLE"] = dict()
-VOCAL_ROLE = INFOS["VOCAL_ROLE"]
+    if "VOCAL_ROLE" not in INFOS: INFOS["VOCAL_ROLE"] = dict()
+    VOCAL_ROLE = INFOS["VOCAL_ROLE"]
 
-if "AUTO_ROLE" not in INFOS: INFOS["AUTO_ROLE"] = dict()
-AUTO_ROLE = INFOS["VOCAL_ROLE"]
+    if "AUTO_ROLE" not in INFOS: INFOS["AUTO_ROLE"] = dict()
+    AUTO_ROLE = INFOS["VOCAL_ROLE"]
 
-if "AUTO_ASSO" not in INFOS: INFOS["AUTO_ASSO"] = dict()
-AUTO_ASSO = INFOS["AUTO_ASSO"]
+    if "BIND_NEW" not in INFOS: INFOS["BIND_NEW"] = dict()
+    BIND_NEW = INFOS["BIND_NEW"]
 
-if "AUTO_ROLE_CONF" not in INFOS: INFOS["AUTO_ROLE_CONF"] = dict()
-AUTO_ROLE_CONF = INFOS["AUTO_ROLE_CONF"]
+    if "AUTO_ASSO" not in INFOS: INFOS["AUTO_ASSO"] = dict()
+    AUTO_ASSO = INFOS["AUTO_ASSO"]
 
-if "AUTO_PINS" not in INFOS: INFOS["AUTO_PINS"] = dict()
-AUTO_PINS = INFOS["AUTO_PINS"]
+    if "AUTO_ROLE_CONF" not in INFOS: INFOS["AUTO_ROLE_CONF"] = dict()
+    AUTO_ROLE_CONF = INFOS["AUTO_ROLE_CONF"]
 
-if "CLOSE" not in INFOS: INFOS["CLOSE"] = set()
-CLOSE = INFOS["CLOSE"]
+    if "AUTO_PINS" not in INFOS: INFOS["AUTO_PINS"] = dict()
+    AUTO_PINS = INFOS["AUTO_PINS"]
 
-if "MODO" not in INFOS: INFOS["MODO"] = {753312911274934345: 193233316391026697, 690209463369859129: 619574125622722560}
-MODO = INFOS["MODO"]
+    if "CLOSE" not in INFOS: INFOS["CLOSE"] = set()
+    CLOSE = INFOS["CLOSE"]
+
+    if "MODO" not in INFOS: INFOS["MODO"] = {753312911274934345: 193233316391026697, 690209463369859129: 619574125622722560}
+    MODO = INFOS["MODO"]
 
 def save():
     pickle.dump(INFOS, open(cheminPickle, "wb"))
 
 def estAdmin(usrId): return usrId in ADMINS
 
+
+#TRUCS UTILES ##################################################################
 def resendFile(url, nomFichier):
     cheminSave = os.path.join(cheminOutputs, nomFichier)
     r = requests.get(url)
@@ -116,7 +160,30 @@ async def bind_channel_envoi(msg):
             ECHO2MSG[retransmis.id] = (msg.id, msg.channel.id)
             sleep(0.5)
 
-            for x in files: supprFichier(x)
+        for x in files: supprFichier(x)
+
+async def bind_new_envoi(msg):
+    if msg.content.startswith(BLANK): return
+    channelId = msg.channel.id
+    guildId = msg.guild.id if msg.guild else msg.guild
+
+    if channelId in BIND_NEW:
+        groupe = BIND_NEW[BIND_NEW[channelId]]
+        auteur, texte, files = msg.author, msg.content, [resendFile(x.url, x.filename) for x in msg.attachments]
+        embeds = msg.embeds
+        reference = msg.reference
+
+        embed = None if embeds == [] or auteur.id != bot.user.id else embeds[0]
+        texteRenvoye = BLANK + "**@{} ({}) :**\n{}".format(auteur.nick or auteur.name, msg.guild.name if msg.guild else "DM", texte)
+
+        if reference:
+            pass
+        else:
+            for channelCibleId, serveurCibleId in groupe.autresSalons((channelId, guildId)):
+                serveur = bot.get_guild(serveurCibleId)
+                channel = serveur.get_channel(channelCibleId)
+
+                retransmis = await channel.send(texteRenvoye, files = files, embed = embed)
 
 async def bind_channel_edit(msg):
     if msg.id in MSG_RETRANSMIS:
@@ -127,6 +194,9 @@ async def bind_channel_edit(msg):
 
         for echo in echos.values():
             await echo.edit(content = texteRenvoye)
+
+async def bind_new_edit(msg):
+    pass
 
 async def bind_channel_del(msg):
     msgInit = msg.id
@@ -143,6 +213,8 @@ async def bind_channel_del(msg):
         for echo in MSG_RETRANSMIS[msgInit][1].values():
             await echo.delete()
 
+async def bind_new_del(msg):
+    pass
 
 async def bind_channel_react_add(reaction, user, bot):
     compte = reaction.count
@@ -168,6 +240,9 @@ async def bind_channel_react_add(reaction, user, bot):
                 await echo.add_reaction(reaction.emoji)
                 sleep(0.5)
 
+async def bind_new_react_add(reaction, user, bot):
+    pass
+
 async def bind_channel_react_del(reaction, bot):
     msgId = reaction.message.id
 
@@ -185,6 +260,9 @@ async def bind_channel_react_del(reaction, bot):
 
             for echo in echos.values():
                 await echo.remove_reaction(reaction.emoji, bot.user)
+
+async def bind_new_react_del(reaction, bot):
+    pass
 
 async def vocalrole_voicestate(member, before, after):
     channelBefore = before.channel and before.channel.id
@@ -465,6 +543,50 @@ def main():
 
         save()
 
+    #bind new
+    @bot.command(name = "create_bind")
+    async def createBind(ctx):
+        int_to_hex = lambda x: hex(x)[2:]
+        idGroupe = int_to_hex(randint(1000000, 9999999))
+        BIND_NEW[idGroupe] = Groupe()
+
+        await ctx.send(f"Id du groupe : {idGroupe}. Pour ajouter un nouveau salon, il faut lancer la commande `{prefixeBot}bind {idGroupe}`")
+
+        save()
+
+    @bot.command(name = "bind")
+    async def bindnew(ctx, nomGroupe: str):
+        channelId = ctx.channel.id
+        guildId = ctx.guild.id if ctx.guild else ctx.guild
+
+        if nomGroupe in BIND_NEW:
+            groupe = BIND_NEW[nomGroupe]
+            if groupe.salonInGroupe((channelId, guildId)):
+                await ctx.message.add_reaction("❔")
+            else:
+                autresNodes = groupe.getNodeIds()
+                groupe.addNode((channelId, guildId), autresNodes, autresNodes)
+                BIND_NEW[channelId] = nomGroupe
+
+                await ctx.message.add_reaction("👌")
+                save()
+        else:
+            await ctx.message.add_reaction("❌")
+
+    @bot.command(name = "del_bind")
+    async def delBind(ctx, nomGroupe: str):
+        if nomGroupe in BIND_NEW:
+            for node in BIND_NEW[nomGroupe].getNodes():
+                channelId, guildId = node.getLabel()
+                del BIND_NEW[channelId]
+
+            del BIND_NEW[nomGroupe]
+            await ctx.message.add_reaction("👌")
+
+            save()
+        else:
+            await ctx.message.add_reaction("❔")
+
     #vocal role
     @bot.command(name = "utils_vocalbind")
     async def vocalbind(ctx, role: discord.Role, salonVocalId: int):
@@ -569,6 +691,7 @@ def main():
             if i % 100 == 0: print(i)
             i += 1
             txt += f"{str(msg.created_at)} - {msg.author.nick or msg.author.name} : {msg.content}\n"
+            print(f"{str(msg.created_at)} - {msg.author.nick or msg.author.name} : {msg.content}\n")
 
         with open("res.txt", "w") as f:
             f.write(txt)
