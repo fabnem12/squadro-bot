@@ -137,7 +137,7 @@ async def dmChannelUser(user):
     return user.dm_channel
 
 async def bind_new_envoi(msg):
-    if msg.content.startswith(BLANK): return
+    if msg.content.startswith(BLANK) or msg.author.discriminator == "0000": return
     channelId = msg.channel.id
     guildId = msg.guild.id if msg.guild else msg.guild
 
@@ -163,9 +163,15 @@ async def bind_new_envoi(msg):
                 referenceId = reference.message_id
                 pendantRefChannel = groupe.copieDansSalon(referenceId, (channelCibleId, serveurCibleId))
                 objRef = discord.MessageReference(message_id = pendantRefChannel, channel_id = channelCibleId)
+
                 retransmis = await channel.send(texteRenvoye, reference = objRef, files = fichiersHere, embed = embed)
             else:
-                retransmis = await channel.send(texteRenvoye, files = fichiersHere, embed = embed)
+                webhook = discord.utils.get((await channel.webhooks()), name=auteur.name)
+                if webhook is None:
+                    webhook = await channel.create_webhook(name = auteur.name)
+
+                retransmis = await webhook.send(texte, wait = True, files = fichiersHere, embed = embed, username = auteur.name, avatar_url = auteur.avatar_url)
+                #retransmis = await channel.send(texteRenvoye, files = fichiersHere, embed = embed)
 
             groupe.ajoutMsg(msg.id, retransmis.id, (channelId, guildId), (channelCibleId, serveurCibleId), pseudoAuteur)
 
@@ -177,7 +183,7 @@ async def bind_new_envoi(msg):
 async def bind_new_edit(msg):
     channelId = msg.channel.id
     guildId = msg.guild.id if msg.guild else msg.guild
-    if msg.author.id == 689536409060900933: return #on ne fait rien si le bot modifie son propre message
+    if msg.author.id == 689536409060900933 or msg.author.discriminator == "0000": return #on ne fait rien si le bot modifie son propre message
 
     if channelId in BIND_NEW:
         groupe = BIND_NEW[BIND_NEW[channelId]]
@@ -191,7 +197,14 @@ async def bind_new_edit(msg):
 
             echoId = groupe.copieDansSalon(msg.id, (channelCibleId, serveurCibleId))
             echo = await channel.fetch_message(echoId)
-            await echo.edit(content = texteRenvoye)
+            if echo.reference:
+                await echo.edit(content = texteRenvoye)
+            else:
+                webhook = discord.utils.get((await channel.webhooks()), name = pseudoAuteur)
+                if webhook is None:
+                    webhook = await channel.create_webhook(name = pseudoAuteur)
+
+                await webhook.edit_message(echoId, content = texte)
 
 async def bind_new_del(msg):
     channelId = msg.channel.id
