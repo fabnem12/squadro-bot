@@ -30,6 +30,13 @@ class Groupe(OpenDigraph):
 
     def salonInGroupe(self: 'Groupe', channelId: ChannelID) -> bool:
         return any(x.getLabel() == channelId for x in self.getNodes())
+    def addChannel(self: 'Groupe', channelId: ChannelID) -> None:
+        autresNodes = self.getNodeIds()
+        self.addNode(channelId, autresNodes, autresNodes)
+    def remChannel(self: 'Groupe', channelId: ChannelID) -> None:
+        for idNode, node in self.nodes.items():
+            if node.getLabel() == channelId:
+                self.removeNodeById(idNode)
     def getNodeChannel(self: 'Groupe', channelId: ChannelID) -> Optional[Node]:
         for node in self.getNodes():
             if node.getLabel() == channelId:
@@ -78,10 +85,6 @@ except:
     INFOS = dict()
 
 if True:
-    if "BINDED_CHANNELS" not in INFOS: INFOS["BINDED_CHANNELS"] = dict()
-    BINDED_CHANNELS = INFOS["BINDED_CHANNELS"]
-    MSG_RETRANSMIS = dict()
-    ECHO2MSG = dict()
     BLANK = "‎" * 3
 
     if "VOCAL_ROLE" not in INFOS: INFOS["VOCAL_ROLE"] = dict()
@@ -133,51 +136,6 @@ async def dmChannelUser(user):
         await user.create_dm() #crée le dm channel, et après user.dm_channel est remplacé par l'objet représentant le dm channel
     return user.dm_channel
 
-async def bind_channel_envoi(msg):
-    if msg.content.startswith(BLANK): return
-
-    if msg.channel.id in BINDED_CHANNELS:
-        auteur, texte, files = msg.author, msg.content, [resendFile(x.url, x.filename) for x in msg.attachments]
-        embeds = msg.embeds
-        reference = msg.reference
-        pseudoAuteur = auteur.nick or auteur.name
-
-        embed = None if embeds == [] or auteur.id != bot.user.id else embeds[0]
-
-        texteRenvoye = BLANK + "**@{} ({}) :**\n{}".format(pseudoAuteur, msg.guild.name if msg.guild else "DM", texte)
-
-        MSG_RETRANSMIS[msg.id] = (auteur, dict(), msg)
-
-        for serveurCible, salonCible in BINDED_CHANNELS[msg.channel.id]:
-            serveur = bot.get_guild(serveurCible)
-            channel = serveur.get_channel(salonCible)
-
-            if reference:
-                refId = reference.message_id
-                #il y a deux cas
-                #1. soit on fait référence à un "vrai" message qui a été retransmis
-                #2. soit on fait référence à un écho
-
-                #1.
-                if refId in MSG_RETRANSMIS:
-                    refEcho = MSG_RETRANSMIS[refId][1][salonCible].id
-                    chanRef = channel.id
-                #2.
-                elif refId in ECHO2MSG:
-                    refEcho, _ = ECHO2MSG[refId]
-                    chanRef = channel.id
-
-                objRef = discord.MessageReference(message_id = refEcho, channel_id = chanRef)
-                retransmis = await channel.send(texteRenvoye, reference = objRef, files = files, embed = embed)
-            else:
-                retransmis = await channel.send(texteRenvoye, files = files, embed = embed)
-
-            MSG_RETRANSMIS[msg.id][1][salonCible] = retransmis
-            ECHO2MSG[retransmis.id] = (msg.id, msg.channel.id)
-            sleep(0.5)
-
-        for x in files: supprFichier(x)
-
 async def bind_new_envoi(msg):
     if msg.content.startswith(BLANK): return
     channelId = msg.channel.id
@@ -216,16 +174,6 @@ async def bind_new_envoi(msg):
 
     if randint(0, 10) == 0: save()
 
-async def bind_channel_edit(msg):
-    if msg.id in MSG_RETRANSMIS:
-        texte, embeds = msg.content, msg.embeds
-        auteur, echos, _ = MSG_RETRANSMIS[msg.id]
-
-        texteRenvoye = BLANK + "**@{} ({}) :**\n{}".format(auteur.nick or auteur.name, msg.guild.name if msg.guild else "DM", texte)
-
-        for echo in echos.values():
-            await echo.edit(content = texteRenvoye)
-
 async def bind_new_edit(msg):
     channelId = msg.channel.id
     guildId = msg.guild.id if msg.guild else msg.guild
@@ -244,21 +192,6 @@ async def bind_new_edit(msg):
             echoId = groupe.copieDansSalon(msg.id, (channelCibleId, serveurCibleId))
             echo = await channel.fetch_message(echoId)
             await echo.edit(content = texteRenvoye)
-
-async def bind_channel_del(msg):
-    msgInit = msg.id
-    if msg.id in ECHO2MSG: #si c'est un écho, on retrouve le message original pour retrouver les autres échos
-        msgInit = ECHO2MSG[msg.id][0]
-        del MSG_RETRANSMIS[msgInit][1][msg.channel.id] #on a supprimé cet écho donc on le retire de MSG_RETRANSMIS
-
-        #on peut tenter de supprimer le message original (mais ce n'est pas garanti, le bot peut ne pas avoir les droits)
-        try:
-            await MSG_RETRANSMIS[msgInit][2].delete()
-        except: pass #on ne fait rien si la suppression de l'original n'a pas marché
-
-    if msgInit in MSG_RETRANSMIS:
-        for echo in MSG_RETRANSMIS[msgInit][1].values():
-            await echo.delete()
 
 async def bind_new_del(msg):
     channelId = msg.channel.id
@@ -279,30 +212,6 @@ async def bind_new_del(msg):
             except:
                 print("Mon développeur a triché !")
 
-async def bind_channel_react_add(reaction, user, bot):
-    compte = reaction.count
-    msgId = reaction.message.id
-
-    if user.id == bot.user.id: return
-
-    if compte:
-        #1. on a fait une réaction sur un écho, on ajoute la réaction sur le message initial
-        #et les autres échos via la partie 2
-        if msgId in ECHO2MSG:
-            msgId, channelId = ECHO2MSG[msgId] #msgId désignera désormais le message initial
-            channel = await bot.fetch_channel(channelId)
-            msg = await channel.fetch_message(msgId)
-
-            await msg.add_reaction(reaction.emoji)
-            sleep(0.5)
-        #2.
-        if msgId in MSG_RETRANSMIS:
-            _, echos, _ = MSG_RETRANSMIS[msgId]
-
-            for echo in echos.values():
-                await echo.add_reaction(reaction.emoji)
-                sleep(0.5)
-
 async def bind_new_react_add(reaction, user, bot):
     msg = reaction.message
     channelId = msg.channel.id
@@ -321,24 +230,6 @@ async def bind_new_react_add(reaction, user, bot):
             echo = await channel.fetch_message(echoId)
             await echo.add_reaction(reaction.emoji)
             sleep(0.4)
-
-async def bind_channel_react_del(reaction, bot):
-    msgId = reaction.message.id
-
-    if True:
-        #1. on a retiré une réaction sur un écho, on retire la réaction du bot sur l'original
-        if msgId in ECHO2MSG:
-            msgId, channelId = ECHO2MSG[msgId]
-            channel = await bot.fetch_channel(channelId)
-            msg = await channel.fetch_message(msgId)
-
-            await msg.remove_reaction(reaction.emoji, bot.user)
-        #2.
-        elif msgId in MSG_RETRANSMIS:
-            _, echos, _ = MSG_RETRANSMIS[msgId]
-
-            for echo in echos.values():
-                await echo.remove_reaction(reaction.emoji, bot.user)
 
 async def bind_new_react_del(reaction, bot):
     pass
@@ -511,12 +402,10 @@ def main():
 
     @bot.event
     async def on_message_edit(_, msg):
-        await bind_channel_edit(msg)
         await bind_new_edit(msg)
 
     @bot.event
     async def on_message_delete(msg):
-        await bind_channel_del(msg)
         await bind_new_del(msg)
         await envoiAutoSuppr(msg)
 
@@ -539,7 +428,7 @@ def main():
             messageId = payload.message_id
             guild = bot.get_guild(payload.guild_id)
             user = await guild.fetch_member(payload.user_id)
-            channel = await bot.fetch_channel(payload.channel_id)
+            channel = bot.get_channel(payload.channel_id)
 
             partEmoji = payload.emoji
             emojiHash = partEmoji.id if partEmoji.is_custom_emoji() else partEmoji.name
@@ -578,11 +467,9 @@ def main():
 
     @bot.event
     async def on_reaction_add(reaction, user):
-        await bind_channel_react_add(reaction, user, bot)
         await bind_new_react_add(reaction, user, bot)
     @bot.event
     async def on_reaction_clear_emoji(reaction):
-        await bind_channel_react_del(reaction, bot)
         await bind_new_react_del(reaction, bot)
 
     @bot.event
@@ -593,7 +480,6 @@ def main():
     @bot.event
     async def on_message(msg):
         #liaison de salon
-        await bind_channel_envoi(msg)
         await bind_new_envoi(msg)
         await bot.process_commands(msg)
         await close_envoi(msg)
@@ -650,46 +536,58 @@ def main():
     #bind new
     @bot.command(name = "create_bind")
     async def createBind(ctx):
-        int_to_hex = lambda x: hex(x)[2:]
-        idGroupe = int_to_hex(randint(1000000, 9999999))
-        BIND_NEW[idGroupe] = Groupe()
+        if ctx.author.guild_permissions.administrator or estAdmin(ctx.author.id):
+            int_to_hex = lambda x: hex(x)[2:]
+            idGroupe = int_to_hex(randint(1000000, 9999999))
+            BIND_NEW[idGroupe] = Groupe()
 
-        await ctx.send(f"Id du groupe : {idGroupe}. Pour ajouter un nouveau salon, il faut lancer la commande `{prefixeBot}bind {idGroupe}`")
+            await ctx.send(f"Id du groupe : {idGroupe}. Pour ajouter un nouveau salon, il faut lancer la commande `{prefixeBot}bind {idGroupe}`")
 
-        save()
+            save()
 
     @bot.command(name = "bind")
     async def bindnew(ctx, nomGroupe: str):
         channelId = ctx.channel.id
         guildId = ctx.guild.id if ctx.guild else ctx.guild
 
-        if nomGroupe in BIND_NEW:
-            groupe = BIND_NEW[nomGroupe]
-            if groupe.salonInGroupe((channelId, guildId)):
-                await ctx.message.add_reaction("❔")
-            else:
-                autresNodes = groupe.getNodeIds()
-                groupe.addNode((channelId, guildId), autresNodes, autresNodes)
+        if ctx.author.guild_permissions.administrator or estAdmin(ctx.author.id):
+            if nomGroupe in BIND_NEW and (channelId not in BIND_NEW or BIND_NEW[channelId] == nomGroupe):
+                groupe = BIND_NEW[nomGroupe]
+                if groupe.salonInGroupe((channelId, guildId)):
+                    await ctx.message.add_reaction("❔")
+                else:
+                    groupe.addChannel((channelId, guildId))
+                    BIND_NEW[channelId] = nomGroupe
+
+                    await ctx.message.add_reaction("👌")
+                    save()
+            elif nomGroupe in BIND_NEW and channelId in BIND_NEW and BIND_NEW[channelId] != nomGroupe:
+                groupeOld = BIND_NEW[BIND_NEW[channelId]]
+                groupeOld.remChannel((channelId, guildId))
+
+                groupe = BIND_NEW[nomGroupe]
+                groupe.addChannel((channelId, guildId))
                 BIND_NEW[channelId] = nomGroupe
 
                 await ctx.message.add_reaction("👌")
                 save()
-        else:
-            await ctx.message.add_reaction("❌")
+            else:
+                await ctx.message.add_reaction("❌")
 
     @bot.command(name = "del_bind")
     async def delBind(ctx, nomGroupe: str):
-        if nomGroupe in BIND_NEW:
-            for node in BIND_NEW[nomGroupe].getNodes():
-                channelId, guildId = node.getLabel()
-                del BIND_NEW[channelId]
+        if ctx.author.guild_permissions.administrator or estAdmin(ctx.author.id):
+            if nomGroupe in BIND_NEW:
+                for node in BIND_NEW[nomGroupe].getNodes():
+                    channelId, guildId = node.getLabel()
+                    del BIND_NEW[channelId]
 
-            del BIND_NEW[nomGroupe]
-            await ctx.message.add_reaction("👌")
+                del BIND_NEW[nomGroupe]
+                await ctx.message.add_reaction("👌")
 
-            save()
-        else:
-            await ctx.message.add_reaction("❔")
+                save()
+            else:
+                await ctx.message.add_reaction("❔")
 
     #vocal role
     @bot.command(name = "utils_vocalbind")
@@ -728,62 +626,79 @@ def main():
     #autorole
     @bot.command(name = "utils_autorole")
     async def autorole(ctx, role: discord.Role, message: discord.Message, emoji: Union[discord.Emoji, str]):
-        emojiHash = emoji.id if isinstance(emoji, discord.Emoji) else emoji
-        messageId = message.id
+        if ctx.author.guild_permissions.manage_roles or ctx.author.guild_permissions.administrator or estAdmin(ctx.author.id):
+            emojiHash = emoji.id if isinstance(emoji, discord.Emoji) else emoji
+            messageId = message.id
 
-        if (messageId, emojiHash) not in AUTO_ROLE:
-            AUTO_ROLE[messageId, emojiHash] = role.id
+            if (messageId, emojiHash) not in AUTO_ROLE:
+                AUTO_ROLE[messageId, emojiHash] = role.id
 
-            try:
-                await message.add_reaction(emoji)
-            except:
-                pass
-            await ctx.send("Autorole activé")
-        else:
-            del AUTO_ROLE[messageId, emojiHash]
-            await ctx.send("Autorole désactivé")
+                try:
+                    await message.add_reaction(emoji)
+                except:
+                    pass
+                await ctx.send("Autorole activé")
+            else:
+                del AUTO_ROLE[messageId, emojiHash]
+                await ctx.send("Autorole désactivé")
 
-            try:
-                await message.remove_reaction(emoji, bot.user)
-            except:
-                pass
+                try:
+                    await message.remove_reaction(emoji, bot.user)
+                except:
+                    pass
 
-        save()
+            save()
 
     #autorole avec confirmation (sauf reconnaissance automatique)
     @bot.command(name = "utils_autoroleconf")
     async def autoroleconf(ctx, role: discord.Role, message: discord.Message, emoji: Union[discord.Emoji, str], channelConf: discord.TextChannel, pingConf: discord.Role, serveurAutoId: Optional[int], roleAutoId: Optional[int]):
-        emojiHash = emoji.id if isinstance(emoji, discord.Emoji) else emoji
-        messageId = message.id
+        if estAdmin(ctx.author.id):
+            emojiHash = emoji.id if isinstance(emoji, discord.Emoji) else emoji
+            messageId = message.id
 
-        AUTO_ROLE_CONF[messageId, emojiHash] = (role.id, channelConf.id, pingConf.id, serveurAutoId, roleAutoId, None)
+            AUTO_ROLE_CONF[messageId, emojiHash] = (role.id, channelConf.id, pingConf.id, serveurAutoId, roleAutoId, None)
 
-        try:
-            await message.add_reaction(emoji)
-            await ctx.message.add_reaction("👌")
-        except:
-            pass
+            try:
+                await message.add_reaction(emoji)
+                await ctx.message.add_reaction("👌")
+            except:
+                pass
 
-        save()
+            save()
 
     @bot.command(name = "utils_autoroleconf_reset")
     async def autoroleconfreset(ctx):
-        AUTO_ROLE_CONF.clear()
-        await ctx.message.add_reaction("👌")
+        if estAdmin(ctx.author.id):
+            AUTO_ROLE_CONF.clear()
+            await ctx.message.add_reaction("👌")
 
-        save()
+            save()
 
+    #fermeture ouverture d'un salon
     @bot.command(name = "open")
     async def open(ctx):
-        CLOSE.remove(ctx.channel.id)
-        save()
-        await ctx.message.add_reaction("👌")
+        if ctx.author.guild_permissions.administrator or ctx.author.guild_permissions.manage_messages or estAdmin(ctx.author.id):
+            CLOSE.remove(ctx.channel.id)
+            save()
+            await ctx.message.add_reaction("👌")
 
     @bot.command(name = "close")
     async def close(ctx):
-        CLOSE.add(ctx.channel.id)
-        save()
-        await ctx.message.add_reaction("👌")
+        if ctx.author.guild_permissions.administrator or ctx.author.guild_permissions.manage_messages or estAdmin(ctx.author.id):
+            CLOSE.add(ctx.channel.id)
+            save()
+            await ctx.message.add_reaction("👌")
+
+    @bot.command(name = "avatar")
+    async def avatar(ctx, someone: Optional[discord.Member]):
+        if someone is None:
+            someone = ctx.author
+
+        ref = discord.MessageReference(channel_id = ctx.channel.id, message_id = ctx.message.id)
+        embed = discord.Embed()
+        embed.set_image(url=someone.avatar_url)
+        await ctx.send(embed=embed, reference = ref)
+
 
     @bot.command(name="toto")
     async def toto(ctx, channelId: int = 753333174364274768):
