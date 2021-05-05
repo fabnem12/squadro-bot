@@ -152,7 +152,8 @@ async def bind_new_envoi(msg):
         pseudoAuteur = auteur.nick or auteur.name
 
         embed = None if embeds == [] or auteur.id != bot.user.id else embeds[0]
-        texteRenvoye = BLANK + "**@{} ({}) :**\n{}".format(pseudoAuteur, msg.guild.name if msg.guild else "DM", texte)
+        affiNom = f"{pseudoAuteur} ({msg.guild.name if msg.guild else 'DM'})"
+        texteRenvoye = BLANK + "**@{} :**\n{}".format(affiNom, texte)
 
         for channelCibleId, serveurCibleId in groupe.autresSalons((channelId, guildId)):
             serveur = bot.get_guild(serveurCibleId)
@@ -170,7 +171,7 @@ async def bind_new_envoi(msg):
                 if webhook is None:
                     webhook = await channel.create_webhook(name = auteur.name)
 
-                retransmis = await webhook.send(texte, wait = True, files = fichiersHere, embed = embed, username = auteur.name, avatar_url = auteur.avatar_url)
+                retransmis = await webhook.send(texte, wait = True, files = fichiersHere, embed = embed, username = affiNom, avatar_url = auteur.avatar_url)
                 #retransmis = await channel.send(texteRenvoye, files = fichiersHere, embed = embed)
 
             groupe.ajoutMsg(msg.id, retransmis.id, (channelId, guildId), (channelCibleId, serveurCibleId), pseudoAuteur)
