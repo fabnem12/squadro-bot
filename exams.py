@@ -63,6 +63,8 @@ def main():
             await channel.send(f"Matière inconnue : '{matiere}'")
             await affiInfosMatiere(ctx, None, None)
         else:
+            await ctx.message.add_reaction("👌")
+
             if numEtudiant is None:
                 await channel.send(f"Il faut donner un numéro d'étudiant : `{prefixeBot}exams {matiere} numEtudiant`")
             else:
