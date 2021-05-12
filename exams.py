@@ -42,7 +42,7 @@ def main():
     @bot.command(name = "exams")
     async def affiInfosMatiere(ctx, matiere: Optional[str], numEtudiant: Optional[str]):
         ref = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id)
-        matiere = matiere.lower()
+        if matiere: matiere = matiere.lower()
 
         if matiere is None:
             affi = "Pour avoir des informations sur un examen, vous pouvez utiliser les commandes suivantes :\n"
