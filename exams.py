@@ -40,19 +40,23 @@ def main():
     bot = commands.Bot(command_prefix = prefixeBot, help_command = None, intents = discord.Intents.all())
 
     @bot.command(name = "exams")
-    async def exms(ctx):
-        await ctx.send("Pour avoir des informations sur un examen, vous pouvez utiliser les commandes suivantes :")
+    async def affiInfosMatiere(ctx, matiere: Optional[str], numEtudiant: Optional[str]):
+        ref = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id)
+        matiere = matiere.lower()
 
-        affi = "\n".join(f"`{prefixeBot}{matiere}` numeroEtudiant" for matiere in fichiers)
-        await ctx.send(affi)
+        if matiere is None:
+            affi = "Pour avoir des informations sur un examen, vous pouvez utiliser les commandes suivantes :\n"
+            affi += "\n".join(f"- `{prefixeBot}exams {matiere}` numeroEtudiant" for matiere in fichiers)
 
-    for matiere, nomFichier in fichiers.items():
-        @bot.command(name = matiere)
-        async def affiInfosMatiere(ctx, numEtudiant: Optional[str]):
+            await ctx.send(affi, reference = ref)
+        elif matiere not in fichiers:
+            await ctx.send(f"Matière inconnue : '{matiere}'", reference = ref)
+            await affiInfosMatiere(ctx, None, None)
+        else:
+            nomFichier = fichiers[matiere]
             if numEtudiant is None:
-                await ctx.send(f"Il faut donner un numéro d'étudiant : `{prefixeBot}{matiere} numEtudiant`")
+                await ctx.send(f"Il faut donner un numéro d'étudiant : `{prefixeBot}exams {matiere} numEtudiant`", reference = ref)
             else:
-                ref = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id)
                 await ctx.send(seekInfo(os.path.join(cheminCsv, nomFichier), numEtudiant), reference = ref)
 
     return bot, TOKEN
