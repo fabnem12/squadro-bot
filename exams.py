@@ -27,7 +27,7 @@ def seekInfo(matiere: str, numEtudiant: str) -> str:
             reader = csv.DictReader(f)
 
             for row in reader:
-                if numEtudiant in row["N° étudiant"] or row["N° étudiant"] in numEtudiant:
+                if row["N° étudiant"].replace(" ", "") == numEtudiant:
                     res = row
                     break
     except:
