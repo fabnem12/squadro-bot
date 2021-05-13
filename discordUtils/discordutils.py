@@ -296,7 +296,7 @@ async def autorole_react_add(messageId, member, guild, emoji, add = True):
             await member.remove_roles(role)
 
 async def autorole_react_del(messageId, member, guild, emoji):
-    await autopin_react_add(messageId, member, guild, emoji, False)
+    await autorole_react_add(messageId, member, guild, emoji, False)
 
 async def autoroleconf_react_add(messageId, member, guild, emoji):
     if (messageId, emoji) in AUTO_ROLE_CONF:
