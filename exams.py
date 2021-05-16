@@ -17,6 +17,7 @@ stockePID()
 
 cheminCsv = os.path.join(cheminOutputs, "exams")
 fichiers = {"bdd": "BDD.csv", "igsd": "IGSD.csv", "mdd251": "MDD251.csv", "mdd252": "MDD252.csv", "mdd253": "MDD253.csv", "pogl": "POGL.csv"}
+dates = {"bdd": "Vendredi 13h45-15h45", "igsd": "Jeudi 8h30-10h30", "mdd251": "Mercredi 8h30-11h30", "mdd252": "Jeudi 13h45-16h45", "mdd253": "Lundi 9h30-11h30", "pogl": "Lundi 13h45-16h15"}
 
 def seekInfo(matiere: str, numEtudiant: str) -> str:
     fichierMatiere = os.path.join(cheminCsv, fichiers[matiere])
@@ -36,7 +37,7 @@ def seekInfo(matiere: str, numEtudiant: str) -> str:
     if res is None:
         return "Aucune information trouvée…"
     else:
-        return f"Infos pour l'examen de {matiere.upper()}\n\n" + "\n".join(f"**{a}** {b}" for a, b in res.items() if b != "")
+        return f"Infos pour l'examen de {matiere.upper()}\n-> {dates[matiere]}\n\n" + "\n".join(f"**{a}** {b}" for a, b in res.items() if b != "")
 
 def main():
     bot = commands.Bot(command_prefix = prefixeBot, help_command = None, intents = discord.Intents.all())
