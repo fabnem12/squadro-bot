@@ -21,7 +21,7 @@ DUREE_EXEC = 5
 DUREE_EXEC_ADMIN = 120
 DUREE_EXEC_RAB = 60
 
-commandesInterdites = ["input(", "open(", "= open", "=open"]
+commandesInterdites = ["input(", "open(", "= open", "=open", "exec(", "eval("]
 importsAutorises = {"cmath", "math", "matplotlib", "numpy", "pandas", "random", "SquadroBot", "time", "scipy", "pythonBot", "functools", "timeit"}
 substituts = {"%ptrlib": "from SquadroBot import ptrlib\nglobals().update(ptrlib())", "%llistlib": "from SquadroBot import linkedlistlib\nglobals().update(linkedlistlib())", "plt.show()": "getPlot()"}
 substituts.update({"%matplotlib inline": ""})
