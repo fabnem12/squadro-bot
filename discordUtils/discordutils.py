@@ -399,7 +399,10 @@ async def envoiAutoSuppr(msg, bot):
         except: #on n'a pas bien récupéré le salon, donc en fait on a 1 id de user, pas de salon
             channel = await bot.fetch_user(MODO[msg.guild.id])
 
-        await channel.send(f"{str(msg.created_at)} - {str(msg.channel.name)} - {msg.author.nick or msg.author.name} : {msg.content}")
+        embeds, files = msg.embeds, lambda: [resendFile(x.url, x.filename) for x in msg.attachments]
+        embed = None if embeds == [] or msg.author.id != bot.user.id else embeds[0]
+        fichierHere = files()
+        await channel.send(f"{str(msg.created_at)} - {str(msg.channel.name)} - {msg.author.nick or msg.author.name} : {msg.content}", files = fichierHere, embed = embed)
 
 async def close_envoi(msg):
     channelId = msg.channel.id
