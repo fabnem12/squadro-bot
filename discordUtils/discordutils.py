@@ -108,7 +108,7 @@ if True:
     if "CLOSE" not in INFOS: INFOS["CLOSE"] = set()
     CLOSE = INFOS["CLOSE"]
 
-    if "MODO" not in INFOS: INFOS["MODO"] = {753312911274934345: 193233316391026697, 690209463369859129: 619574125622722560}
+    if "MODO" not in INFOS: INFOS["MODO"] = {753312911274934345: 805389165788528650, 690209463369859129: 619574125622722560}
     MODO = INFOS["MODO"]
 
 def save():
@@ -392,9 +392,13 @@ async def autopin_react_del(messageId, member, guild, emoji, channel):
                 except:
                     pass
 
-async def envoiAutoSuppr(msg):
+async def envoiAutoSuppr(msg, bot):
     if msg.guild and msg.guild.id in MODO:
-        channel = await bot.fetch_user(MODO[msg.guild.id])
+        try:
+            channel = await bot.fetch_channel(MODO[msg.guild.id])
+        except: #on n'a pas bien récupéré le salon, donc en fait on a 1 id de user, pas de salon
+            channel = await bot.fetch_user(MODO[msg.guild.id])
+
         await channel.send(f"{str(msg.created_at)} - {str(msg.channel.name)} - {msg.author.nick or msg.author.name} : {msg.content}")
 
 async def close_envoi(msg):
@@ -421,7 +425,7 @@ def main():
     @bot.event
     async def on_message_delete(msg):
         await bind_new_del(msg)
-        await envoiAutoSuppr(msg)
+        await envoiAutoSuppr(msg, bot)
 
     @bot.event
     async def on_member_join(member):
