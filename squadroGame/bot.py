@@ -333,7 +333,7 @@ def main():
                         #on dit au joueur qui a fini que la balle est dans le camp adverse
                         if not parties[partie]["dansSalon"]: await channel.send("L'autre joueur réfléchit...")
 
-                            #on récupère la channel du joueur adverse
+                        #on récupère la channel du joueur adverse
                         joueurSuivant = parties[partie]["joueurs"][idJoueurSuivant]
 
                         channelUser = await dmChannelUser(joueurSuivant)

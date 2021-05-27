@@ -39,10 +39,6 @@ class Partie:
 
             self.joueurs[self.idJoueur].coup(self.gameBoard, y)
 
-            if not self.apprentissage:
-                self.finCoup()
-                self.affichePlateau()
-
             self.changementJoueur()
 
             if coup != -1: return True
@@ -64,23 +60,13 @@ class Partie:
             if self.joueurEnCours().estIA:
                 y, _ = self.joueurEnCours().IA_coup(self.gameBoard)
             else:
-                if self.console:
-                    print("À votre tour, Joueur", self.idJoueur+1, "!!")
-                    y = int(input())
-
-                    y = (6 - y) if 1-self.idJoueur else y
-                else:
-                    self.affichePlateau()
+                y = int(input())
+                y = (6 - y) if 1-self.idJoueur else y
 
         return y-1
 
     def finCoup(self):
-        self.affichePlateau()
-
-        if self.console:
-            pass
-        else:
-            pass
+        return
 
     def finPartie(self):
         perdant = self.idJoueur
@@ -110,33 +96,22 @@ class Partie:
 
         return False
 
-    def verifCoup(self, coup):
-        if coup > 5 or coup <= 0: return False
-        if self.joueurs[self.idJoueur].pieces[coup-1].arrive(): return False
-
-        return True
+    def verifCoup(self, coup: int) -> bool:
+        return coup <= 5 and coup > 0 and not self.joueurs[self.idJoueur].pieces[coup-1].arrive()
 
     def enregistrement(self):
         return
-
-        with open("config.cfg", "w") as f:
-            printF = lambda *args: f.write(" ".join([str(x) for x in args]) + "\n")
-
-            printF("ia" if self.joueurs[0].estIA else "humain")
-            printF("ia" if self.joueurs[1].estIA else "humain")
-            printF("console" if self.console else "fenetre")
-            printF("volee")
-
-            if self.joueurs[0].gagnant() or self.joueurs[1].gagnant():
-                printF("0D=5.'LMNOP")
-            else:
-                printF(self.mini())
 
     def plateau(self):
         return self.gameBoard
 
     def joueurEnCours(self):
         return self.joueurs[self.idJoueur]
+
+    def coupIA(self) -> int:
+        joueur = self.joueurs[self.idJoueur]
+        coup, _ = joueur.IA_coup(self.gameBoard)
+        return coup
 
     def mieuxPlace(self):
         idEnCours = self.idJoueur
