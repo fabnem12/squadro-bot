@@ -393,7 +393,7 @@ async def autopin_react_del(messageId, member, guild, emoji, channel):
                     pass
 
 async def envoiAutoSuppr(msg, bot):
-    if msg.guild and msg.guild.id in MODO:
+    if msg.guild and msg.guild.id in MODO and msg.author.id != bot.user.id:
         try:
             channel = await bot.fetch_channel(MODO[msg.guild.id])
         except: #on n'a pas bien récupéré le salon, donc en fait on a 1 id de user, pas de salon
