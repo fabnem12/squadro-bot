@@ -45,10 +45,14 @@ class PartieBot:
         return self.partie.coupIA()
 
     def faitCoup(self, coup: int) -> None:
+        if self.partie.idJoueur == 0 and self.ia != 0:
+            coup = 6 - coup
+
+        if self.ia == self.partie.idJoueur:
+            self.dernierCoupIa = coup if self.ia else 6 - coup
+
         self.partie.interaction(coup) #suppose que le coup est valide
         self.situations.append(self.partie.mini())
-        if self.ia == self.partie.idJoueur:
-            self.dernierCoupIa = coup+1
 
     def affi(self) -> str: #renvoie le lien vers le fichier de l'image
         return self.partie.affichePlateau(self.moutons)
@@ -66,11 +70,12 @@ class PartieBot:
         return self.partie.finPartie()
 
     def info(self) -> str:
-        joueur = self.joueurs[self.partie.idJoueur]
         if self.finie():
-            return f"Le joueur {self.partie.idJoueur+1} ({f'<@{joueur}>' if joueur else 'IA'}) a cordialement écrasé son adversaire !!!"
+            joueur = self.joueurs[1-self.partie.idJoueur]
+            return f"Le joueur {2-self.partie.idJoueur} ({f'<@{joueur}>' if joueur else 'IA'}) a cordialement écrasé son adversaire !!!"
         else:
-            return f"C'est au joueur {self.partie.idJoueur+1} de jouer ({f'<@{joueur}>' if joueur else 'IA'})" + (f" Dernier coup de l'IA : {self.dernierCoupIa}" if self.dernierCoupIa else "")
+            joueur = self.joueurs[self.partie.idJoueur]
+            return f"C'est au joueur {self.partie.idJoueur+1} de jouer ({f'<@{joueur}>' if joueur else 'IA'})" + (f"\nDernier coup de l'IA : {self.dernierCoupIa}" if self.dernierCoupIa and joueur else "")
 
     def joueursHumains(self) -> List[JoueurId]:
         return (x for x in self.joueurs if x)

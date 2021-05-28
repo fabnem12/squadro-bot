@@ -26,10 +26,8 @@ class Partie:
                 self.enregistrement()
 
             if coup != -1:
-                if IAManoeuvre:
-                    y = coup
-                else:
-                    y = int(6 - coup) if 1-self.idJoueur else coup
+                y = int(6 - coup) if 1-self.idJoueur else coup
+
                 if not self.verifCoup(y):
                     return False
                 else:
@@ -97,6 +95,7 @@ class Partie:
         return False
 
     def verifCoup(self, coup: int) -> bool:
+        if 1-self.idJoueur: coup = 6 - coup
         return coup <= 5 and coup > 0 and not self.joueurs[self.idJoueur].pieces[coup-1].arrive()
 
     def enregistrement(self):
@@ -111,6 +110,8 @@ class Partie:
     def coupIA(self) -> int:
         joueur = self.joueurs[self.idJoueur]
         coup, _ = joueur.IA_coup(self.gameBoard)
+
+        if self.idJoueur == 0: coup = 6 - coup
         return coup
 
     def mieuxPlace(self):

@@ -113,35 +113,23 @@ async def react_jeu(bot, messageId, user, channel, emojiHash) -> None:
                         partie.faitCoup(coup)
                         await affichePlateau(bot, partie)
                 else:
-                    await channel.send(f"Coup invalide : {coup}. Les seuls coups valides sont : {', '.join(x for x in range(1, 5+1) if partie.coupValide(x))}")
+                    await channel.send(f"Coup invalide : {coup}. Les seuls coups valides sont : {', '.join(str(x) for x in range(1, 5+1) if partie.coupValide(x))}")
             else:
                 await channel.send("Hé, c'est pas à toi de jouer :angry:")
 
-async def tourIA(bot, partie) -> None:
+async def tourIA(bot, partie: PartieBot) -> None:
     coup = partie.coupIA()
     partie.faitCoup(coup)
 
     if partie.salon:
         channel = await bot.fetch_channel(partie.salon)
 
-    if partie.refresh:
-        if partie.salon:
-            msgInfoObj = await channel.fetch_message(partie.msgRefresh[partie.salon][1])
-            await msgInfoObj.edit(content = f"L'IA joue le coup {coup}")
-        else:
-            for joueurId in partie.joueursHumains():
-                channel = await dmChannelUser(await bot.fetch_user(joueurId))
-                msgInfoObj = await channel.fetch_message(partie.msgRefresh[channel.id][1])
-                await msgInfoObj.edit(content = f"L'IA joue le coup {coup}")
-    else:
-        if partie.salon:
-            await channel.send(f"L'IA joue le coup {coup}")
-        else:
-            for joueurId in partie.joueursHumains():
-                channel = await dmChannelUser(await bot.fetch_user(joueurId))
-                await channel.send(f"L'IA joue le coup {coup}")
-
     await affichePlateau(bot, partie)
+
+def finPartie(partie: PartieBot) -> None:
+    toDelete = [trucId for trucId, part in PARTIES.items() if part is partie]
+    for trucId in toDelete:
+        del PARTIES[trucId]
 
 async def affichePlateau(bot, partie: PartieBot) -> None:
     if partie.salon:
@@ -179,17 +167,20 @@ async def affichePlateau(bot, partie: PartieBot) -> None:
                     await channel.send(file = discord.File(img))
                     await channel.send(partie.info())
 
-        if partie.aQuiLeTour() is None: #c'est à l'IA de jouer
+        if partie.aQuiLeTour() is None and not partie.finie(): #c'est à l'IA de jouer
             if partie.salon:
                 async with channel.typing():
                     await tourIA(bot, partie)
             else:
                 await tourIA(bot, partie)
+
+        if partie.finie():
+            finPartie(partie)
     else:
         await channel.send("Euh il y a un problème d'affichage, là :sweat_smile:")
 #MAIN ##########################################################################
 def main():
-    bot = commands.Bot(command_prefix = "T.", help_command = None, intents = discord.Intents.all())
+    bot = commands.Bot(command_prefix = prefixeBot, help_command = None, intents = discord.Intents.all())
 
     @bot.event #pour ne pas afficher les messages d'erreur de commande inexistante (typiquement si on utilise une commande du bot squadro qui est gérée par un autre script)
     async def on_command_error(ctx, error):
@@ -261,11 +252,15 @@ def main():
     @bot.command(name = "forfait")
     async def forfait(ctx):
         partie = PARTIES[ctx.author.id]
-        toDelete = [trucId for trucId, part in PARTIES.items() if part is partie]
-        for trucId in toDelete:
-            del PARTIES[trucId]
+        if partie.salon:
+            channel = await bot.fetch_channel(partie.salon)
+            await channel.send(f"<@{ctx.author.id}> a déclaré forfait !")
+        else:
+            for joueurId in partie.joueursHumains():
+                channel = await dmChannelUser(await bot.fetch_user(joueurId))
+                await channel.send(f"<@{ctx.author.id}> a déclaré forfait !")
 
-        await ctx.message.add_reaction("👌")
+        finPartie(partie)
 
     return bot, TOKEN
 

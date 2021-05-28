@@ -21,6 +21,7 @@ class Joueur:
         self.apprentissageVolee = apprentissageVolee
 
     def coup(self, plateau, y):
+        if 1-self.id: y = 4 - y
         positionVoulue = self.pieces[y].positionVoulueX(plateau)
         plateau.deplaceNew(positionVoulue, self.pieces[y], self.id)
 
@@ -69,6 +70,7 @@ class Joueur:
                 coup = choice([x for x in range(1, 5+1) if not self.pieces[x-1].arrive()])
 
             self.coups[situation] = coup
+            if 1-self.id: coup = 6 - coup
             return coup, pourcentageVictoires
 
         for i in range(1, 5+1):
@@ -77,6 +79,8 @@ class Joueur:
 
         coup = choice(loiProba)
         self.coups[situation] = coup
+
+        if 1-self.id: coup = 6 - coup
         return coup, pourcentageVictoires
 
     def nbPiecesArrivees(self):
