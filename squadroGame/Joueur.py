@@ -63,7 +63,10 @@ class Joueur:
             loiProba = [] if situation not in self.situationsConnues or len(self.situationsConnues[situation]) < 30 else self.situationsConnues[situation]
 
         if self.apprentissageVolee:
-            coup = coupPlusFrequent(self.situationsConnues[situation])
+            if situation in self.situationsConnues:
+                coup = coupPlusFrequent(self.situationsConnues[situation])
+            else:
+                coup = choice([x for x in range(1, 5+1) if not self.pieces[x-1].arrive()])
 
             self.coups[situation] = coup
             return coup, pourcentageVictoires

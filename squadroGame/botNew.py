@@ -42,12 +42,16 @@ async def dmChannelUser(user: Union[discord.Member, discord.User]) -> 'discord.C
     return user.dm_channel
 ################################################################################
 #UTILE #########################################################################
-async def traitementRawReact(payload) -> dict:
-    if payload.guild_id and payload.user_id != bot.user.id: #sinon, on est dans le cas d'une réaction en dm
+async def traitementRawReact(payload, bot) -> dict:
+    if payload.user_id != bot.user.id: #sinon, on est dans le cas d'une réaction en dm
         messageId = payload.message_id
-        guild = bot.get_guild(payload.guild_id)
-        user = await guild.fetch_member(payload.user_id)
-        channel = bot.get_channel(payload.channel_id)
+        if payload.guild_id:
+            guild = bot.get_guild(payload.guild_id)
+            user = await guild.fetch_member(payload.user_id)
+        else:
+            guild = None
+            user = await bot.fetch_user(payload.user_id)
+        channel = await bot.fetch_channel(payload.channel_id)
 
         partEmoji = payload.emoji
         emojiHash = partEmoji.id if partEmoji.is_custom_emoji() else partEmoji.name
@@ -100,15 +104,18 @@ async def react_jeu(bot, messageId, user, channel, emojiHash) -> None:
         partie = PARTIES[messageId]
         coup = reac2coup[emojiHash]
 
-        if partie.aQuiLeTour() == user.id:
-            if partie.coupValide(coup): #on joue le coup
-                async with channel.typing():
-                    partie.faitCoup(coup)
-                    await affichePlateau(bot, partie)
-            else:
-                await channel.send(f"Coup invalide : {coup}. Les seuls coups valides sont : {', '.join(x for x in range(1, 5+1) if partie.coupValide(x))}")
+        if partie.finie():
+            await channel.send("La partie est déjà finie :tada:")
         else:
-            await channel.send("Hé, c'est pas à toi de jouer :angry:")
+            if partie.aQuiLeTour() == user.id:
+                if partie.coupValide(coup): #on joue le coup
+                    async with channel.typing():
+                        partie.faitCoup(coup)
+                        await affichePlateau(bot, partie)
+                else:
+                    await channel.send(f"Coup invalide : {coup}. Les seuls coups valides sont : {', '.join(x for x in range(1, 5+1) if partie.coupValide(x))}")
+            else:
+                await channel.send("Hé, c'est pas à toi de jouer :angry:")
 
 async def tourIA(bot, partie) -> None:
     coup = partie.coupIA()
@@ -121,9 +128,18 @@ async def tourIA(bot, partie) -> None:
         if partie.salon:
             msgInfoObj = await channel.fetch_message(partie.msgRefresh[partie.salon][1])
             await msgInfoObj.edit(content = f"L'IA joue le coup {coup}")
+        else:
+            for joueurId in partie.joueursHumains():
+                channel = await dmChannelUser(await bot.fetch_user(joueurId))
+                msgInfoObj = await channel.fetch_message(partie.msgRefresh[channel.id][1])
+                await msgInfoObj.edit(content = f"L'IA joue le coup {coup}")
     else:
         if partie.salon:
             await channel.send(f"L'IA joue le coup {coup}")
+        else:
+            for joueurId in partie.joueursHumains():
+                channel = await dmChannelUser(await bot.fetch_user(joueurId))
+                await channel.send(f"L'IA joue le coup {coup}")
 
     await affichePlateau(bot, partie)
 
@@ -148,7 +164,7 @@ async def affichePlateau(bot, partie: PartieBot) -> None:
             await msgTmp.delete()
 
             if partie.salon:
-                await update(urlImg, (await bot.fetch_channel(partie.salon)))
+                await update(urlImg, await bot.fetch_channel(partie.salon))
             else:
                 for joueurId in partie.joueursHumains():
                     channel = await dmChannelUser(await bot.fetch_user(joueurId))
@@ -163,7 +179,7 @@ async def affichePlateau(bot, partie: PartieBot) -> None:
                     await channel.send(file = discord.File(img))
                     await channel.send(partie.info())
 
-        if not partie.aQuiLeTour(): #c'est à l'IA de jouer
+        if partie.aQuiLeTour() is None: #c'est à l'IA de jouer
             if partie.salon:
                 async with channel.typing():
                     await tourIA(bot, partie)
@@ -183,7 +199,7 @@ def main():
 
     @bot.event
     async def on_raw_reaction_add(payload):
-        traitement = await traitementRawReact(payload)
+        traitement = await traitementRawReact(payload, bot)
         if traitement:
             messageId = traitement["messageId"]
             user = traitement["user"]
