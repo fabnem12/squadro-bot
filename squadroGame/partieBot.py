@@ -1,4 +1,4 @@
-from typing import Optional, List, Set, Dict
+from typing import Optional, List, Set, Dict, Tuple
 from Partie import Partie
 
 JoueurId = int
@@ -71,11 +71,17 @@ class PartieBot:
 
     def info(self) -> str:
         if self.finie():
-            joueur = self.joueurs[1-self.partie.idJoueur]
-            return f"Le joueur {2-self.partie.idJoueur} ({f'<@{joueur}>' if joueur else 'IA'}) a cordialement écrasé son adversaire !!!"
+            joueur = self.joueurs[self.partie.gagnant]
+            return f"Le joueur {self.partie.gagnant+1} ({f'<@{joueur}>' if joueur else 'IA'}) a cordialement écrasé son adversaire !!!"
         else:
             joueur = self.joueurs[self.partie.idJoueur]
             return f"C'est au joueur {self.partie.idJoueur+1} de jouer ({f'<@{joueur}>' if joueur else 'IA'})" + (f"\nDernier coup de l'IA : {self.dernierCoupIa}" if self.dernierCoupIa and joueur else "")
 
     def joueursHumains(self) -> List[JoueurId]:
-        return (x for x in self.joueurs if x)
+        return [x for x in self.joueurs if x]
+
+    def gagnant(self) -> Tuple[bool, Optional[JoueurId]]:
+        if self.partie.gagnant:
+            return (True, self.joueurs[self.partie.gagnant])
+        else:
+            return (False, None)

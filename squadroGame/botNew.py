@@ -8,6 +8,7 @@ from random import randint
 from time import sleep
 from typing import Optional, Union, Dict, Set, Tuple, Union
 from partieBot import PartieBot
+from tournoi import Tournoi, Elo
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -33,6 +34,12 @@ REFRESH_CHANNEL = 847488864713048144
 if "PARTIES" not in INFOS: INFOS["PARTIES"]: Dict[Union[JoueurId, MessageId], PartieBot] = dict()
 PARTIES = INFOS["PARTIES"]
 
+if "TOURNOIS" not in INFOS: INFOS["TOURNOIS"]: Dict[Union[int, MessageId], Tournoi] = dict()
+TOURNOIS = INFOS["TOURNOIS"]
+
+if "ELO" not in INFOS: INFOS["ELO"]: Elo = Elo()
+ELO = INFOS["ELO"]
+
 def save(): pickle.dump(INFOS, open(cheminPickle, "wb"))
 def estAdmin(usrId): return usrId in ADMINS
 
@@ -41,7 +48,7 @@ async def dmChannelUser(user: Union[discord.Member, discord.User]) -> 'discord.C
         await user.create_dm() #crée le dm channel, et après user.dm_channel est remplacé par l'objet représentant le dm channel
     return user.dm_channel
 ################################################################################
-#UTILE #########################################################################
+#UTILE POUR JOUER ##############################################################
 async def traitementRawReact(payload, bot) -> dict:
     if payload.user_id != bot.user.id: #sinon, on est dans le cas d'une réaction en dm
         messageId = payload.message_id
@@ -131,6 +138,12 @@ def finPartie(partie: PartieBot) -> None:
     for trucId in toDelete:
         del PARTIES[trucId]
 
+    partieGagnee, gagnant = partie.gagnant()
+    if partieGagnee:
+        ELO.addPartie(*partie.joueursHumains(), gagnant)
+
+    save()
+
 async def affichePlateau(bot, partie: PartieBot) -> None:
     if partie.salon:
         channel = await bot.fetch_channel(partie.salon)
@@ -178,6 +191,30 @@ async def affichePlateau(bot, partie: PartieBot) -> None:
             finPartie(partie)
     else:
         await channel.send("Euh il y a un problème d'affichage, là :sweat_smile:")
+
+################################################################################
+#UTILE POUR TOURNOI ############################################################
+async def demandePlanning(bot, tournoi: Tournoi) -> None:
+    txt = "Vous êtes dispos à quelles heures demain ?\n" + " ".join(f"<@{jId}>" for jId in tournoi.participants) + "\n\n" + "\n".join(f":regional_indicator_{chr(97+i)}: {creneau}h" for i, creneau in enumerate(tournoi.creneauxPossibles))
+    channel = await bot.fetch_channel(tournoi.salon)
+
+    msgPlanning = await channel.send(txt)
+
+    tournoi.addMsgPlanning(msgPlanning.id)
+    TOURNOIS[msgPlanning.id] = tournoi
+
+    for i in range(len(tournoi.creneauxPossibles)):
+        await msgPlanning.add_reaction(chr(127462+i))
+
+
+async def react_planning(bot, messageId, user, channel, emojiHash) -> None:
+    if messageId in TOURNOIS:
+        tournoi = TOURNOIS[messageId]
+        reac2creneau = {chr(127462+i): creneau for i, creneau in enumerate(tournoi.creneauxPossibles)}
+
+        if user.id in tournoi.participants and emojiHash in reac2creneau:
+            tournoi.addDispo(user.id, reac2creneau[emojiHash])
+################################################################################
 #MAIN ##########################################################################
 def main():
     bot = commands.Bot(command_prefix = prefixeBot, help_command = None, intents = discord.Intents.all())
@@ -200,6 +237,7 @@ def main():
 
             await react_start(bot, messageId, user, channel, emojiHash)
             await react_jeu(bot, messageId, user, channel, emojiHash)
+            await react_planning(bot, messageId, user, channel, emojiHash)
 
     @bot.event
     async def on_raw_reaction_remove(payload):
@@ -261,6 +299,33 @@ def main():
                 await channel.send(f"<@{ctx.author.id}> a déclaré forfait !")
 
         finPartie(partie)
+
+    @bot.command(name = "start_tournoi")
+    async def startTournoi(ctx, channel: discord.TextChannel, *participants: discord.Member):
+        idTournoi = randint(1000000, 9999999)
+        tournoi = Tournoi([x.id for x in participants], channel.id, idTournoi)
+        TOURNOIS[idTournoi] = tournoi
+
+        await ctx.send(f"idTournoi : {idTournoi}")
+        await demandePlanning(bot, tournoi)
+        save()
+
+    @bot.command(name = "elo")
+    async def scoreElo(ctx, someone: Optional[Union[discord.User, str]]):
+        if isinstance(someone, str):
+            someone = None
+        elif someone is None:
+            someone = ctx.author
+
+        await ctx.send(f"{someone.mention if someone else 'Monte Squadro'} a un score Elo de {ELO.score(someone.id if someone else None)} pour Squadro")
+
+    @bot.command(name = "add_elo")
+    async def add_elo(ctx, someone: discord.Member, elo: float):
+        if estAdmin(ctx.author.id):
+            ELO.setScore(someone.id, elo)
+
+            await ctx.message.add_reaction("👌")
+            save()
 
     return bot, TOKEN
 
