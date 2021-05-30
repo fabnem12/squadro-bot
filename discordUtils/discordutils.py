@@ -108,7 +108,7 @@ if True:
     if "CLOSE" not in INFOS: INFOS["CLOSE"] = set()
     CLOSE = INFOS["CLOSE"]
 
-    INFOS["MODO"] = {753312911274934345: 805389165788528650, 690209463369859129: 619574125622722560}
+    if "MODO" not in INFOS: INFOS["MODO"] = dict()()
     MODO = INFOS["MODO"]
 
 def save():
@@ -721,20 +721,20 @@ def main():
         await ctx.send(embed=embed, reference = ref)
 
 
-    @bot.command(name="toto")
-    async def toto(ctx, channelId: int = 753333174364274768):
-        channelAdmin = await bot.fetch_channel(channelId)
+    @bot.command(name="redirMsg")
+    async def toto(ctx, guildId: int):
+        guild = bot.get_guild(guildId)
+        if guild:
+            member = await guild.fetch_member(ctx.author.id)
 
-        txt = ""
-        i = 0
-        async for msg in channelAdmin.history(limit = 1000):
-            if i % 100 == 0: print(i)
-            i += 1
-            txt += f"{str(msg.created_at)} - {msg.author.nick or msg.author.name} : {msg.content}\n"
-            print(f"{str(msg.created_at)} - {msg.author.nick or msg.author.name} : {msg.content}\n")
+            if member.guild_permissions.administrator:
+                if guildId not in MODO:
+                    MODO[guildId] = ctx.channel.id
+                else:
+                    del MODO[guildId]
+                await ctx.message.add_reaction("👌")
 
-        with open("res.txt", "w") as f:
-            f.write(txt)
+                save()
 
     return bot, TOKEN
 
