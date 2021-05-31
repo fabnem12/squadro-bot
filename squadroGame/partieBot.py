@@ -9,7 +9,7 @@ situationsConnues: Dict[int, List[int]] = dict()
 class PartieBot:
     def __init__(self, ia: Optional[int] = None, refresh: bool = True, salon: Optional[ChannelId] = None, moutons: bool = False):
         self.ia = ia
-        self.dernierCoupIa: Optional[int] = None
+        self.dernierCoup: Optional[int] = None
         self.joueurs: List[Optional[JoueurId]] = []
         self.partie: Partie = Partie(situationsConnues, "10000000000", True, False, False, False, True)
         self.refresh = refresh
@@ -48,8 +48,7 @@ class PartieBot:
         if self.partie.idJoueur == 0 and self.ia != 0:
             coup = 6 - coup
 
-        if self.ia == self.partie.idJoueur:
-            self.dernierCoupIa = coup if self.ia else 6 - coup
+        self.dernierCoup = coup
 
         self.partie.interaction(coup) #suppose que le coup est valide
         self.situations.append(self.partie.mini())
@@ -75,7 +74,7 @@ class PartieBot:
             return f"Le joueur {self.partie.gagnant+1} ({f'<@{joueur}>' if joueur else 'IA'}) a cordialement écrasé son adversaire !!!"
         else:
             joueur = self.joueurs[self.partie.idJoueur]
-            return f"C'est au joueur {self.partie.idJoueur+1} de jouer ({f'<@{joueur}>' if joueur else 'IA'})" + (f"\nDernier coup de l'IA : {self.dernierCoupIa}" if self.dernierCoupIa and joueur else "")
+            return f"C'est au joueur {self.partie.idJoueur+1} de jouer ({f'<@{joueur}>' if joueur else 'IA'})\nDernier coup de l'adversaire : {self.dernierCoup}"
 
     def joueursHumains(self) -> List[JoueurId]:
         return [x for x in self.joueurs if x]
