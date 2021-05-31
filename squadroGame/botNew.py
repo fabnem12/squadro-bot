@@ -3,7 +3,8 @@ import discord
 import os
 import pickle
 import sys
-from discord.ext import commands
+from arrow import get as arrowGet, utcnow
+from discord.ext import commands, tasks
 from random import randint
 from time import sleep
 from typing import Optional, Union, Dict, Set, Tuple, Union
@@ -195,17 +196,27 @@ async def affichePlateau(bot, partie: PartieBot) -> None:
 ################################################################################
 #UTILE POUR TOURNOI ############################################################
 async def demandePlanning(bot, tournoi: Tournoi) -> None:
-    txt = "Vous êtes dispos à quelles heures demain ?\n" + " ".join(f"<@{jId}>" for jId in tournoi.participants) + "\n\n" + "\n".join(f":regional_indicator_{chr(97+i)}: {creneau}h" for i, creneau in enumerate(tournoi.creneauxPossibles))
-    channel = await bot.fetch_channel(tournoi.salon)
+    if tournoi.duelsAFaire == []:
+        nouveauxDuels = tournoi.faitTour()
 
-    msgPlanning = await channel.send(txt)
+        if nouveauxDuels != []:
+            txtDuels = "Voilà les duels pour demain :\n\n"
+            txtDuels += "\n".join(f"{f'<@{a}>' if a else 'Monte Squadro'} VS {f'<@{b}>' if b else 'Monte Squadro'}" for a, b in nouveauxDuels)
 
-    tournoi.addMsgPlanning(msgPlanning.id)
-    TOURNOIS[msgPlanning.id] = tournoi
+            txt = "Vous êtes dispos à quelles heures demain ?\n" + " ".join(f"<@{jId}>" for jId in tournoi.participants) + "\n\n" + "\n".join(f":regional_indicator_{chr(97+i)}: {creneau}h" for i, creneau in enumerate(tournoi.creneauxPossibles))
+            channel = await bot.fetch_channel(tournoi.salon)
 
-    for i in range(len(tournoi.creneauxPossibles)):
-        await msgPlanning.add_reaction(chr(127462+i))
+            await channel.send(txtDuels) #on envoie l'annonce des duels
+            msgPlanning = await channel.send(txt)
 
+            tournoi.addMsgPlanning(msgPlanning.id)
+            TOURNOIS[msgPlanning.id] = tournoi
+
+            for i in range(len(tournoi.creneauxPossibles)):
+                await msgPlanning.add_reaction(chr(127462+i))
+        else:
+            channel = await bot.fetch_channel(tournoi.salon)
+            await channel.send("Il n'y a plus de duel à faire selon le bot.")
 
 async def react_planning(bot, messageId, user, channel, emojiHash) -> None:
     if messageId in TOURNOIS:
@@ -214,6 +225,61 @@ async def react_planning(bot, messageId, user, channel, emojiHash) -> None:
 
         if user.id in tournoi.participants and emojiHash in reac2creneau:
             tournoi.addDispo(user.id, reac2creneau[emojiHash])
+
+async def trucsAFaireTournoi(bot):
+    tournois = []
+    for tournoi in TOURNOIS.values():
+        if tournoi not in tournois: tournois.append(tournoi)
+
+    now = utcnow().to("Europe/Brussels")
+    if now.minute != 2:
+        return
+
+    #on regarde s'il faut lancer des matchs
+    for tournoi in tournois:
+        matchsHeure = tournoi.matchsHeure(now.hour)
+
+        if matchsHeure != []:
+            for index, (a, b) in enumerate(matchsHeure):
+                salonId = tournoi.salon2 if index else tournoi.salon #a priori il n'y a pas plus de deux matchs en même temps…
+                salon = await bot.fetch_channel(salonId)
+
+                if a is None:
+                    partie = PartieBot(refresh = True, salon = salonId, ia = 0)
+                    partie.addJoueur(b)
+                    await salon.send(f"<@{b}> c'est l'heure de jouer contre l'IA ! Tu seras joueur 2 (avec les pions rouges)")
+                elif a is None:
+                    partie = PartieBot(refresh = True, salon = salonId, ia = 1)
+                    partie.addJoueur(a)
+                    await salon.send(f"<@{a}> c'est l'heure de jouer contre l'IA ! Tu seras joueur 1 (avec les pions jaunes)")
+                else:
+                    partie = PartieBot(refresh = True, salon = salonId)
+                    partie.addJoueur(a)
+                    partie.addJoueur(b)
+                    await salon.send(f"<@{a}> et <@{b}>, c'est l'heure de votre match !")
+
+                tournoi.addPartie(partie, (a, b))
+                await debutPartie(bot, partie)
+
+    #on lance le calcul du planning pour chaque tournoi à 8h
+    if now.hour == 19:
+        print(tournois)
+        for tournoi in tournois:
+            planningOk = tournoi.calculPlanning()
+            print(planningOk)
+            print(tournoi.planning)
+            save()
+
+            salon = await bot.fetch_channel(tournoi.salon)
+
+            if planningOk:
+                txtPlanning = "Voilà le planning des matchs de la journée :\n\n"
+                txtPlanning += "\n".join(f"{f'<@{a}>' if a else 'Monte Squadro'} VS {f'<@{b}>' if b else 'Monte Squadro'} à {tournoi.heureMatch((a,b))}h" for a, b in tournoi.planning)
+
+                await salon.send(txtPlanning)
+            else:
+                await salon.send("Je n'ai pas réussi à faire moi-même le planning. Help me <@619574125622722560> :pray:")
+
 ################################################################################
 #MAIN ##########################################################################
 def main():
@@ -224,6 +290,17 @@ def main():
         if isinstance(error, commands.CommandNotFound):
             return
         raise error
+
+    @tasks.loop(minutes = 1.0)
+    async def plannifTournoi():
+        await trucsAFaireTournoi(bot)
+
+    @bot.event
+    async def on_ready():
+        try:
+            plannifTournoi.start()
+        except RuntimeError:
+            pass
 
     @bot.event
     async def on_raw_reaction_add(payload):
@@ -301,14 +378,23 @@ def main():
         finPartie(partie)
 
     @bot.command(name = "start_tournoi")
-    async def startTournoi(ctx, channel: discord.TextChannel, *participants: discord.Member):
+    async def startTournoi(ctx, channel: discord.TextChannel, channel2: discord.TextChannel, *participants: discord.Member):
         idTournoi = randint(1000000, 9999999)
-        tournoi = Tournoi([x.id for x in participants], channel.id, idTournoi)
+        tournoi = Tournoi([x.id for x in participants], channel.id, channel2.id, idTournoi, ELO)
         TOURNOIS[idTournoi] = tournoi
 
         await ctx.send(f"idTournoi : {idTournoi}")
         await demandePlanning(bot, tournoi)
         save()
+
+    @bot.command(name = "del_tournoi")
+    async def delTournoi(ctx, idTournoi: int):
+        print(idTournoi, TOURNOIS)
+        if estAdmin(ctx.author.id) and idTournoi in TOURNOIS:
+            del TOURNOIS[idTournoi]
+
+            await ctx.message.add_reaction("👌")
+            save()
 
     @bot.command(name = "elo")
     async def scoreElo(ctx, someone: Optional[Union[discord.User, str]]):

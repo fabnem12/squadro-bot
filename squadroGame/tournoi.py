@@ -1,44 +1,79 @@
-from typing import List, Set, Tuple, Optional
+from typing import List, Set, Tuple, Optional, Dict
+from partieBot import PartieBot
 
-Participant = int
+Participant = Optional[int]
 Heure = int
 ChannelId = int
 MessageId = int
 Duel = Tuple[Participant, Participant]
 
+class Elo:
+    def __init__(self):
+        self.scores: Dict[Participant, float] = dict()
+
+    def addPartie(self, j1: Participant, j2: Participant, gagnant: Participant) -> None:
+        scores = self.scores
+        if j1 not in scores: scores[j1] = 1500
+        if j2 not in scores: scores[j2] = 1500
+        perdant = j2 if j1 == gagnant else j1
+
+        probaGain = 1 / (1 + 10**(-(scores[gagnant]-scores[perdant]) / 400))
+
+        scores[gagnant] += 40 * (1-probaGain)
+        scores[perdant] -= 40 * (1-probaGain)
+
+    def score(self, joueur: Participant) -> float:
+        if joueur not in self.scores:
+            self.scores[joueur] = 1500
+
+        return self.scores[joueur]
+
+    def leaderBoard(self) -> List[Tuple[Participant, float]]:
+        return sorted(self.scores.items(), key=lambda x: x[1])
+
+    def setScore(self, joueur: Participant, newScore: float) -> None:
+        self.scores[joueur] = newScore
+
 class Tournoi:
     creneauxPossibles: List[Heure] = [13, 14, 15, 16, 17, 18, 19, 20]
 
-    def __init__(self, participants: List[Participant], salon: ChannelId, ident: int):
+    def __init__(self, participants: List[Participant], salon: ChannelId, salon2: ChannelId, ident: int, elo: Elo):
         self.participants = participants
-        self.nbVictoires: Dict[Participant, int] = {x: 0 for x in participants}
-        self.vus: Dict[Participant, Set[Participant]] = {x: set() for x in participants}
-        self.couleurs: Dict[Participant, List[int]] = {x: [] for x in participants}
-        self.dispos: Dict[Participant, Set[int]] = {x: set() for x in participants}
-        self.duelsAFaire: List[Duel] = []
-        self.planning: Dict[Heure, Duel] = dict()
         self.salon = salon
-        self.msgPlanning: Optional[MessageId] = None
-
+        self.salon2 = salon2
+        self.elo = elo
         self.id = ident
 
+        self.nbVictoires: Dict[Participant, int] = {x: 0 for x in participants + [None]}
+        self.vus: Dict[Participant, Set[Participant]] = {x: set() for x in participants + [None]}
+        self.couleurs: Dict[Participant, List[int]] = {x: [] for x in participants + [None]}
+        self.dispos: Dict[Participant, Set[int]] = {x: set() for x in participants}
+        self.duelsAFaire: List[Duel] = []
+        self.planning: Dict[Duel, Heure] = dict()
+        self.msgPlanning: Optional[MessageId] = None
+        self.partiesEnCours: Dict[PartieBot, Duel] = dict()
+
     def faitTour(self) -> List[Duel]:
-        participants = self.participants
+        participants = self.participants.copy()
         nbVictoires = self.nbVictoires
         vus = self.vus
         couleurs = self.couleurs
+
+        if len(participants) % 2 != 0: #on a un nombre impair de participants, on rajoute l'ia pour revenir à un nombre pair
+            participants.append(None)
 
         if sum(self.nbVictoires.values()) == 0: #aucun match n'a été fait, on reprend l'ordre initial
             nbParticipants = len(participants)
             moitie = nbParticipants // 2
 
-            return [(p, participants[moitie + i]) for i, p in enumerate(participants[:moitie])]
+            self.duelsAFaire = [(p, participants[moitie + i]) for i, p in enumerate(participants[:moitie])]
+            return self.duelsAFaire
         else:
             def poidsDuel(a: Participant, b: Participant) -> int:
                 couleurA, couleurB = 0, 1
 
                 if len(couleurs[a]) > 0:
-                    return abs(nbVictoires[a] - nbVictoires[b]) + 5*(couleurs[a][-1] == couleurA) + 5*(couleurs[b][-1] == couleurB)
+                    return abs(nbVictoires[a] - nbVictoires[b]) + 5*(couleurs[a][-1] == couleurA) + 5*(couleurs[b][-1] == couleurB) + abs(self.elo(a) - self.elo(b)) / 1500
                 else: #on est au premier tour, tous les duels sont possibles
                     return 0
 
@@ -102,11 +137,12 @@ class Tournoi:
         self.dispos[userId].add(creneau)
 
     def calculPlanning(self) -> bool:
-        if self.duels != []:
+        if self.duelsAFaire != []:
             tentativePlanning: Dict[Heure, Duel] = dict()
             dispos = self.dispos
+            dispos[None] = set(self.creneauxPossibles)
 
-            possibilites: Dict[Duel, Set[Heure]] = {(a, b): dispos[a] & dispos[b] for a, b in self.duels}
+            possibilites: Dict[Duel, Set[Heure]] = {(a, b): dispos[a] & dispos[b] for a, b in self.duelsAFaire}
             if any(x == set() for x in possibilites.values()):
                 return False
             else:
@@ -149,36 +185,37 @@ class Tournoi:
 
                             return assignation, heures
 
-                config = aux(len(possibilitesBis)-1)[0]
-                if len(config) == len(self.duels):
+                config, _ = aux(len(possibilitesBis)-1)
+                if len(config) == len(self.duelsAFaire):
                     self.planning = config
+                    self.dispos = {x: set() for x in self.participants}
                     return True
                 else:
                     return False
 
-class Elo:
-    def __init__(self):
-        self.scores: Dict[Optional[Participant], float] = dict()
+    def matchsHeure(self, heure: Heure) -> List[Duel]:
+        return [duel for duel, heureDuel in self.planning.items() if heureDuel == heure]
 
-    def addPartie(self, j1: Optional[Participant], j2: Optional[Participant], gagnant: Optional[Participant]) -> None:
-        scores = self.scores
-        if j1 not in scores: scores[j1] = 1500
-        if j2 not in scores: scores[j2] = 1500
-        perdant = j2 if j1 == gagnant else j1
+    def heureMatch(self, duel: Duel) -> Optional[Heure]:
+        return self.planning.get(duel)
 
-        probaGain = 1 / (1 + 10**(-(scores[gagnant]-scores[perdant]) / 400))
+    def addPartie(self, partie: PartieBot, duel: Duel) -> None:
+        self.partiesEnCours[partie] = duel
 
-        scores[gagnant] += 40 * (1-probaGain)
-        scores[perdant] -= 40 * (1-probaGain)
+    def enregistreFinPartie(self, partie: PartieBot) -> bool:
+        #renvoie un booléen indiquant si l'enregistrement a marché
+        if partie in self.partiesEnCours:
+            estGagne, idGagnant = partie.gagnant()
 
-    def score(self, joueur: Optional[Participant]) -> float:
-        if joueur not in self.scores:
-            self.scores[joueur] = 1500
+            if estGagne:
+                a, b = self.partiesEnCours[partie]
+                self.elo.addPartie(a, b, idGagnant)
 
-        return self.scores[joueur]
+                self.vus[a].add(b)
+                self.vus[b].add(a)
+                self.nbVictoires[idGagnant] += 1
 
-    def leaderBoard(self) -> List[Tuple[Optional[Participant], float]]:
-        return sorted(self.scores.items(), key=lambda x: x[1])
+                del self.partiesEnCours[partie]
+                return True
 
-    def setScore(self, joueur: Participant, newScore: float) -> None:
-        self.scores[joueur] = newScore
+        return False
