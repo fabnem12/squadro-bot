@@ -35,7 +35,7 @@ REFRESH_CHANNEL = 847488864713048144
 if "PARTIES" not in INFOS: INFOS["PARTIES"]: Dict[Union[JoueurId, MessageId], PartieBot] = dict()
 PARTIES = INFOS["PARTIES"]
 
-if "TOURNOIS" not in INFOS: INFOS["TOURNOIS"]: Dict[Union[int, MessageId], Tournoi] = dict()
+if "TOURNOIS" not in INFOS or True: INFOS["TOURNOIS"]: Dict[Union[int, MessageId], Tournoi] = dict()
 TOURNOIS = INFOS["TOURNOIS"]
 
 if "ELO" not in INFOS: INFOS["ELO"]: Elo = Elo()
@@ -232,7 +232,7 @@ async def trucsAFaireTournoi(bot):
         if tournoi not in tournois: tournois.append(tournoi)
 
     now = utcnow().to("Europe/Brussels")
-    if now.minute != 2:
+    if now.minute != 0:
         return
 
     #on regarde s'il faut lancer des matchs
@@ -248,7 +248,7 @@ async def trucsAFaireTournoi(bot):
                     partie = PartieBot(refresh = True, salon = salonId, ia = 0)
                     partie.addJoueur(b)
                     await salon.send(f"<@{b}> c'est l'heure de jouer contre l'IA ! Tu seras joueur 2 (avec les pions rouges)")
-                elif a is None:
+                elif b is None:
                     partie = PartieBot(refresh = True, salon = salonId, ia = 1)
                     partie.addJoueur(a)
                     await salon.send(f"<@{a}> c'est l'heure de jouer contre l'IA ! Tu seras joueur 1 (avec les pions jaunes)")
@@ -262,12 +262,9 @@ async def trucsAFaireTournoi(bot):
                 await debutPartie(bot, partie)
 
     #on lance le calcul du planning pour chaque tournoi à 8h
-    if now.hour == 19:
-        print(tournois)
+    if now.hour == 8:
         for tournoi in tournois:
             planningOk = tournoi.calculPlanning()
-            print(planningOk)
-            print(tournoi.planning)
             save()
 
             salon = await bot.fetch_channel(tournoi.salon)
