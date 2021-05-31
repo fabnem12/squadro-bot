@@ -15,7 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # CONSTANTES ###################################################################
 from constantes import ADMINS, TOKEN, prefixeBot
-from utils import stockePID, cheminOutputs
+from utils import stockePID, cheminOutputs, decoupeMessages
 
 stockePID()
 
@@ -160,10 +160,13 @@ async def affichePlateau(bot, partie: PartieBot) -> None:
     img = partie.affi()
     if img:
         if partie.refresh:
-            channelRefresh = await bot.fetch_channel(REFRESH_CHANNEL)
-            msgTmp = await channelRefresh.send(file = discord.File(img))
-            urlImg = msgTmp.attachments[0].url
-            await msgTmp.delete()
+            if url is None:
+                channelRefresh = await bot.fetch_channel(REFRESH_CHANNEL)
+                msgTmp = await channelRefresh.send(file = discord.File(img))
+                urlImg = msgTmp.attachments[0].url
+                await msgTmp.delete()
+            else:
+                urlImg = url
 
             if partie.salon:
                 await update(urlImg, await bot.fetch_channel(partie.salon))
@@ -171,6 +174,11 @@ async def affichePlateau(bot, partie: PartieBot) -> None:
                 for joueurId in partie.joueursHumains():
                     channel = await dmChannelUser(await bot.fetch_user(joueurId))
                     await update(urlImg, channel)
+
+            for observateurId in partie.observateurs:
+                obervateur = await bot.fetch_channel(observateurId)
+                await observateur.send(urlImg)
+                await observateur.send(partie.info())
         else:
             if partie.salon:
                 await channel.send(file = discord.File(img))
@@ -181,7 +189,7 @@ async def affichePlateau(bot, partie: PartieBot) -> None:
                     await channel.send(file = discord.File(img))
                     await channel.send(partie.info())
 
-        if partie.aQuiLeTour() is None and not partie.finie(): #c'est à l'IA de jouer
+        if partie.aQuiLeTour() is None and not partie.finie() and url is None: #c'est à l'IA de jouer. url is None pour ne pas lancer l'ia en mode observateur
             if partie.salon:
                 async with channel.typing():
                     await tourIA(bot, partie)
@@ -259,6 +267,7 @@ async def trucsAFaireTournoi(bot):
                     await salon.send(f"<@{a}> et <@{b}>, c'est l'heure de votre match !")
 
                 tournoi.addPartie(partie, (a, b))
+                partie.addObservateur(tournoi.salonObservateur)
                 await debutPartie(bot, partie)
 
     #on lance le calcul du planning pour chaque tournoi à 8h
@@ -300,7 +309,7 @@ def main():
             pass
 
     @bot.event
-    async def on_raw_reaction_add(payload):
+    async def on_raw_reaction_add(payload, remove = False):
         traitement = await traitementRawReact(payload, bot)
         if traitement:
             messageId = traitement["messageId"]
@@ -309,13 +318,15 @@ def main():
             emojiHash = traitement["emojiHash"]
             channel = traitement["channel"]
 
-            await react_start(bot, messageId, user, channel, emojiHash)
+            if not remove:
+                await react_start(bot, messageId, user, channel, emojiHash)
+
             await react_jeu(bot, messageId, user, channel, emojiHash)
             await react_planning(bot, messageId, user, channel, emojiHash)
 
     @bot.event
     async def on_raw_reaction_remove(payload):
-        await on_raw_reaction_add(payload)
+        await on_raw_reaction_add(payload, remove = True)
 
     @bot.command(name = "start_here") #par défaut : dans le salon courant, avec refresh et sans ia
     async def start(ctx, affiMoutons: Optional[str]):
@@ -375,18 +386,30 @@ def main():
         finPartie(partie)
 
     @bot.command(name = "start_tournoi")
-    async def startTournoi(ctx, channel: discord.TextChannel, channel2: discord.TextChannel, *participants: discord.Member):
+    async def startTournoi(ctx, channel: discord.TextChannel, channel2: discord.TextChannel, channelObservateur: discord.TextChannel, *participants: discord.Member):
         idTournoi = randint(1000000, 9999999)
-        tournoi = Tournoi([x.id for x in participants], channel.id, channel2.id, idTournoi, ELO)
+        tournoi = Tournoi([x.id for x in participants], channel.id, channel2.id, channelObservateur.id, idTournoi, ELO)
         TOURNOIS[idTournoi] = tournoi
 
         await ctx.send(f"idTournoi : {idTournoi}")
         await demandePlanning(bot, tournoi)
         save()
 
+    @bot.command(name = "classement_tournoi")
+    async def classementTournoi(ctx, ident: Optional[int]):
+        if ident is None:
+            tournois = list(set(TOURNOIS.values()))
+            if len(tournois) == 1:
+                ident = tournois[0].id
+
+        if ident in TOURNOIS:
+            tournoi = TOURNOIS[ident]
+
+            txtClassement = "Voici le classement actuel du tournoi :\n\n"
+            txtClassement += "\n".join(f"**{index+1}** {(await ctx.guild.fetch_member(joueurId)).name}" for index, joueurId in enumerate(sorted(tournoi.participants, key=lambda x: (tournoi.nbVictoires[x], ELO.score(x)), reverse = True)))
+
     @bot.command(name = "del_tournoi")
     async def delTournoi(ctx, idTournoi: int):
-        print(idTournoi, TOURNOIS)
         if estAdmin(ctx.author.id) and idTournoi in TOURNOIS:
             del TOURNOIS[idTournoi]
 
@@ -409,6 +432,20 @@ def main():
 
             await ctx.message.add_reaction("👌")
             save()
+
+    @bot.command(name = "liste_tournois")
+    async def listeTournois(ctx):
+        if estAdmin(ctx.author.id):
+            await ctx.send(str(TOURNOIS))
+
+    @bot.command(name = "infos_tournoi")
+    async def infosTournoi(ctx, idTournoi: int):
+        if estAdmin(ctx.author.id) and idTournoi in TOURNOIS:
+            txt = str(TOURNOIS[idTournoi].__dict__)
+            msgs = decoupeMessages([txt])
+
+            for msg in msgs:
+                await ctx.send(msg)
 
     return bot, TOKEN
 

@@ -18,6 +18,7 @@ class PartieBot:
         self.situations: List[str] = ["10000000000"] #stocke les situations sucessives du plateau
 
         self.msgRefresh: Dict[ChannelId, Tuple[MessageId, MessageId]] = dict()
+        self.observateurs: List[ChannelId] = []
 
     def addJoueur(self, idJoueur: JoueurId) -> bool:
         #renvoie un bool disant si la partie peut commencer
@@ -28,6 +29,9 @@ class PartieBot:
             return True
         else:
             return len(self.joueurs) == 2
+
+    def addObservateur(self, channelId: ChannelId) -> None:
+        self.observateurs.add(channelId)
 
     def aQuiLeTour(self) -> Optional[JoueurId]: #None si c'est à l'ia de jouer
         if self.ia and self.partie.idJoueur == self.ia:

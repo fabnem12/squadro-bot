@@ -37,10 +37,11 @@ class Elo:
 class Tournoi:
     creneauxPossibles: List[Heure] = [13, 14, 15, 16, 17, 18, 19, 20]
 
-    def __init__(self, participants: List[Participant], salon: ChannelId, salon2: ChannelId, ident: int, elo: Elo):
+    def __init__(self, participants: List[Participant], salon: ChannelId, salon2: ChannelId, salonObservateur: ChannelId, ident: int, elo: Elo):
         self.participants = participants
         self.salon = salon
         self.salon2 = salon2
+        self.salonObservateur = salonObservateur
         self.elo = elo
         self.id = ident
 
@@ -134,7 +135,11 @@ class Tournoi:
         self.dispos = {x: set() for x in self.participants}
 
     def addDispo(self, userId: Participant, creneau: Heure) -> None:
-        self.dispos[userId].add(creneau)
+        if userId in self.dispos:
+            if creneau not in self.dispos[userId]:
+                self.dispos[userId].add(creneau)
+            else:
+                self.dispos[userId].remove(creneau)
 
     def calculPlanning(self) -> bool:
         if self.duelsAFaire != []:
