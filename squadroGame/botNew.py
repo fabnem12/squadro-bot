@@ -35,7 +35,7 @@ REFRESH_CHANNEL = 847488864713048144
 if "PARTIES" not in INFOS: INFOS["PARTIES"]: Dict[Union[JoueurId, MessageId], PartieBot] = dict()
 PARTIES = INFOS["PARTIES"]
 
-if "TOURNOIS" not in INFOS or True: INFOS["TOURNOIS"]: Dict[Union[int, MessageId], Tournoi] = dict()
+if "TOURNOIS" not in INFOS: INFOS["TOURNOIS"]: Dict[Union[int, MessageId], Tournoi] = dict()
 TOURNOIS = INFOS["TOURNOIS"]
 
 if "ELO" not in INFOS: INFOS["ELO"]: Elo = Elo()
