@@ -918,9 +918,9 @@ def main(idsTraites = set(range(10))):
         if estAdmin(ctx.author):
             from subprocess import Popen, DEVNULL
 
-            Popen(["python3", "maj.py"], stdout = DEVNULL)
-
             await ctx.message.add_reaction("👌")
+            await bot.change_presence(activity=discord.Game(name="en redémarrage"))
+            Popen(["python3", "maj.py"], stdout = DEVNULL)
 
     @bot.command(name = "up_img")
     async def up_img(ctx, name: str):
