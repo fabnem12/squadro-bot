@@ -129,8 +129,8 @@ async def tourIA(bot, partie: PartieBot) -> None:
     coup = partie.coupIA()
     partie.faitCoup(coup)
 
-    if partie.salon:
-        channel = await bot.fetch_channel(partie.salon)
+    #if partie.salon:
+    #    channel = await bot.fetch_channel(partie.salon)
 
     await affichePlateau(bot, partie)
 
@@ -371,16 +371,19 @@ def main():
 
     @bot.command(name = "forfait")
     async def forfait(ctx):
-        partie = PARTIES[ctx.author.id]
-        if partie.salon:
-            channel = await bot.fetch_channel(partie.salon)
-            await channel.send(f"<@{ctx.author.id}> a déclaré forfait !")
-        else:
-            for joueurId in partie.joueursHumains():
-                channel = await dmChannelUser(await bot.fetch_user(joueurId))
+        if ctx.author.id in PARTIES:
+            partie = PARTIES[ctx.author.id]
+            if partie.salon:
+                channel = await bot.fetch_channel(partie.salon)
                 await channel.send(f"<@{ctx.author.id}> a déclaré forfait !")
+            else:
+                for joueurId in partie.joueursHumains():
+                    channel = await dmChannelUser(await bot.fetch_user(joueurId))
+                    await channel.send(f"<@{ctx.author.id}> a déclaré forfait !")
 
-        finPartie(partie)
+            finPartie(partie)
+        else:
+            await ctx.message.add_reaction("❔")
 
     @bot.command(name = "start_tournoi")
     async def startTournoi(ctx, channel: discord.TextChannel, channel2: discord.TextChannel, channelObservateur: discord.TextChannel, *participants: discord.Member):

@@ -78,7 +78,7 @@ class PartieBot:
             return f"Le joueur {self.partie.gagnant+1} ({f'<@{joueur}>' if joueur else 'IA'}) a cordialement écrasé son adversaire !!!"
         else:
             joueur = self.joueurs[self.partie.idJoueur]
-            return f"C'est au joueur {self.partie.idJoueur+1} de jouer ({f'<@{joueur}>' if joueur else 'IA'})\nDernier coup de l'adversaire : {self.dernierCoup}"
+            return f"C'est au joueur {self.partie.idJoueur+1} de jouer ({f'<@{joueur}>' if joueur else 'IA'})" + (f"\nDernier coup de l'adversaire : {self.dernierCoup if self.partie.idJoueur == 0 else 6-self.dernierCoup}" if self.dernierCoup else "")
 
     def joueursHumains(self) -> List[JoueurId]:
         return [x for x in self.joueurs if x]
