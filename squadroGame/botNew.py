@@ -119,6 +119,7 @@ async def react_jeu(bot, messageId, user, channel, emojiHash) -> None:
                 if partie.coupValide(coup): #on joue le coup
                     async with channel.typing():
                         partie.faitCoup(coup)
+                        save()
                         await affichePlateau(bot, partie)
                 else:
                     await channel.send(f"Coup invalide : {coup}. Les seuls coups valides sont : {', '.join(str(x) for x in range(1, 5+1) if partie.coupValide(x))}")
