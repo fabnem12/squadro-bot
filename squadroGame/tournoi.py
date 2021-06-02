@@ -214,7 +214,7 @@ class Tournoi:
 
             if estGagne:
                 a, b = self.partiesEnCours[partie]
-                self.elo.addPartie(a, b, idGagnant)
+                #self.elo.addPartie(a, b, idGagnant) #en fait c'est déjà fait par le bot...
 
                 self.vus[a].add(b)
                 self.vus[b].add(a)

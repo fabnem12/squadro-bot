@@ -84,7 +84,7 @@ class PartieBot:
         return [x for x in self.joueurs if x]
 
     def gagnant(self) -> Tuple[bool, Optional[JoueurId]]:
-        if self.partie.gagnant:
+        if self.partie.gagnant is not None:
             return (True, self.joueurs[self.partie.gagnant])
         else:
             return (False, None)

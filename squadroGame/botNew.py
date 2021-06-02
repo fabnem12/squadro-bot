@@ -267,6 +267,26 @@ async def trucsAFaireTournoi(bot):
                 partie.addObservateur(tournoi.salonObservateur)
                 await debutPartie(bot, partie)
 
+        #on regarde aussi s'il y a des matchs lancés il y a une heure qui n'ont pas avancé d'un iota
+        for partie in tournoi.partiesEnCours:
+            duel = tournoi.partiesEnCours[partie]
+            heureMatch = tournoi.heureMatch(duel)
+            if heureMatch and heureMatch < now.hour:
+                #on regarde si le match a avancé ou pas
+
+                #pas -> cas 1 : toujours au joueur 1, une seule situation (celle de départ)
+                if partie.partie.idJoueur == 0 and len(partie.situations) == 1:
+                    #le joueur 1 est défaillant, on donne la victoire au joueur 2
+                    partie.partie.gagnant = 1
+                    await affichePlateau(bot, partie)
+                elif partie.partie.idJoueur == 1 and len(partie.situations) == 2:
+                    #le joueur 2 est défaillant, on donne la victoire au joueur 1
+                    partie.partie.gagnant = 0
+                    await affichePlateau(bot, partie)
+                elif partie.finie():
+                    #on enregistre les résultats de la partie dans le tournoi
+                    tournoi.enregistreFinPartie(partie)
+
     #on lance le calcul du planning pour chaque tournoi à 8h
     if now.hour == 8:
         for tournoi in tournois:

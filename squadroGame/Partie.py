@@ -67,21 +67,19 @@ class Partie:
         return
 
     def finPartie(self):
-        perdant = self.idJoueur
-        gagnant = 1-perdant
+        if self.gagnant is None:
+            perdant = self.idJoueur
+            gagnant = 1-perdant
+        else:
+            gagnant = self.gagnant
+            perdant = 1-gagnant
 
-        if self.joueurs[gagnant].gagnant():
+        if self.joueurs[gagnant].gagnant() or self.gagnant is not None:
             for joueur in self.joueurs:
                 joueur.enregistreCoups()
             if self.apprentissage: return True
 
             self.gagnant = gagnant
-            if not self.apprentissage:
-                print("Le joueur", gagnant+1, "a cordialement écrasé son adversaire !!!!")
-                self.enregistrement()
-
-            if not self.console:
-                pass
 
             if self.joueurs[0].estIA and not self.joueurs[1].estIA:
                 with open("parties_ia1_humain2.txt", "a") as f:
