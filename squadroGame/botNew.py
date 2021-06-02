@@ -186,7 +186,7 @@ async def affichePlateau(bot, partie: PartieBot) -> None:
                     await channel.send(file = discord.File(img))
                     await channel.send(partie.info())
 
-        if partie.aQuiLeTour() is None and not partie.finie() and url is None: #c'est à l'IA de jouer. url is None pour ne pas lancer l'ia en mode observateur
+        if partie.aQuiLeTour() is None and not partie.finie(): #c'est à l'IA de jouer.
             if partie.salon:
                 async with channel.typing():
                     await tourIA(bot, partie)
