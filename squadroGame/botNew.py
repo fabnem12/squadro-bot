@@ -265,6 +265,8 @@ async def trucsAFaireTournoi(bot):
 
                 tournoi.addPartie(partie, (a, b))
                 partie.addObservateur(tournoi.salonObservateur)
+
+                save()
                 await debutPartie(bot, partie)
 
         #on regarde aussi s'il y a des matchs lancés il y a une heure qui n'ont pas avancé d'un iota
@@ -458,10 +460,24 @@ def main():
         if estAdmin(ctx.author.id):
             await ctx.send(str(TOURNOIS))
 
+    @bot.command(name = "liste_parties")
+    async def listeParties(ctx):
+        if estAdmin(ctx.author.id):
+            await ctx.send(str(PARTIES))
+
     @bot.command(name = "infos_tournoi")
     async def infosTournoi(ctx, idTournoi: int):
         if estAdmin(ctx.author.id) and idTournoi in TOURNOIS:
             txt = str(TOURNOIS[idTournoi].__dict__)
+            msgs = decoupeMessages([txt])
+
+            for msg in msgs:
+                await ctx.send(msg)
+
+    @bot.command(name = "infos_partie")
+    async def infosTournoi(ctx, idPartie: int):
+        if estAdmin(ctx.author.id) and idTournoi in PARTIES:
+            txt = str(PARTIES[idTournoi].__dict__)
             msgs = decoupeMessages([txt])
 
             for msg in msgs:

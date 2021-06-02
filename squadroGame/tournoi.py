@@ -220,7 +220,10 @@ class Tournoi:
                 self.vus[b].add(a)
                 self.nbVictoires[idGagnant] += 1
 
+                self.duelsAFaire.remove((a, b))
+
                 del self.partiesEnCours[partie]
+                del self.planning[(a, b)]
                 return True
 
         return False
