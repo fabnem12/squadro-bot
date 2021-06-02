@@ -160,13 +160,10 @@ async def affichePlateau(bot, partie: PartieBot) -> None:
     img = partie.affi()
     if img:
         if partie.refresh:
-            if url is None:
-                channelRefresh = await bot.fetch_channel(REFRESH_CHANNEL)
-                msgTmp = await channelRefresh.send(file = discord.File(img))
-                urlImg = msgTmp.attachments[0].url
-                await msgTmp.delete()
-            else:
-                urlImg = url
+            channelRefresh = await bot.fetch_channel(REFRESH_CHANNEL)
+            msgTmp = await channelRefresh.send(file = discord.File(img))
+            urlImg = msgTmp.attachments[0].url
+            await msgTmp.delete()
 
             if partie.salon:
                 await update(urlImg, await bot.fetch_channel(partie.salon))
