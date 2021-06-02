@@ -31,7 +31,7 @@ class PartieBot:
             return len(self.joueurs) == 2
 
     def addObservateur(self, channelId: ChannelId) -> None:
-        self.observateurs.add(channelId)
+        self.observateurs.append(channelId)
 
     def aQuiLeTour(self) -> Optional[JoueurId]: #None si c'est à l'ia de jouer
         if self.ia and self.partie.idJoueur == self.ia:

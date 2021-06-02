@@ -173,7 +173,7 @@ async def affichePlateau(bot, partie: PartieBot) -> None:
                     await update(urlImg, channel)
 
             for observateurId in partie.observateurs:
-                obervateur = await bot.fetch_channel(observateurId)
+                observateur = await bot.fetch_channel(observateurId)
                 await observateur.send(urlImg)
                 await observateur.send(partie.info())
         else:
