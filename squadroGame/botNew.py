@@ -176,7 +176,7 @@ async def affichePlateau(bot, partie: PartieBot) -> None:
             for observateurId in partie.observateurs:
                 observateur = await bot.fetch_channel(observateurId)
                 await observateur.send(urlImg)
-                await observateur.send(partie.info())
+                await observateur.send(partie.info(observateur = True))
         else:
             if partie.salon:
                 await channel.send(file = discord.File(img))
