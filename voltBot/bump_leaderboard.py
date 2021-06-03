@@ -207,7 +207,7 @@ def main() -> None:
 
     @bot.event
     async def on_reaction_add(reaction, user): #fabnem can delete the bot's messages with the wastebin emoji
-        if user.id == 845357066263724132 and reaction.emoji == '🗑️':
+        if reaction.message.author.id == 845357066263724132 and reaction.emoji == '🗑️':
             await reaction.message.delete()
 
     async def updateInfoMsg(channel: discord.TextChannel): #info msg: the message with the recap of all teams
