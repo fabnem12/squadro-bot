@@ -9,6 +9,8 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constantes import TOKENVOLT as token, prefixVolt as prefix
 
+#token = "" #bot token
+#prefix = ","
 bumpBot = 302050872383242240 #DISBOARD
 botCommandsChannel = 577955068268249098 #bot-commands
 
@@ -83,41 +85,49 @@ def reset(teamsToo = True):
     save()
     globals().update({"MEMBERS": INFOS["MEMBERS"], "TEAMS": INFOS["TEAMS"]})
 
-if "save-bump-bot.p" not in os.listdir():
+if "save_bump_bot.p" not in os.listdir():
     reset()
 else:
-    INFOS = pickle.load(open("save-bump-bot.p", "rb"))
+    INFOS = pickle.load(open("save_bump_bot.p", "rb"))
     MEMBERS: Dict[int, Member] = INFOS["MEMBERS"]
     TEAMS: Dict[str, Team] = INFOS["TEAMS"]
 
-def messageRank(someone: Union[str, int], isMember = True) -> str: #if member, someone is treated as a discord member id, if not, someone is treated as a team name
-    efficiency = lambda nbPoints, nbAttempts: round(100 * nbPoints / nbAttempts, 2)
-
+def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEfficiency: bool = False) -> str: #if isMember, someone is treated as a discord member id, if not, someone is treated as a team name
     if isMember:
         member = getMember(someone)
-        rankedMembers = sorted(MEMBERS.values(), key=lambda x: x.nbBumps, reverse = True)
+        sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
+        rankedMembers = sorted(MEMBERS.values(), key=sortFunc, reverse = True)
         #nota: member is guaranteed to be in rankedMembers
         index = rankedMembers.index(member)
 
-        return f"<@{member.id}> is **# {index+1}**, {member.nbBumps} (efficiency index: {member.efficiency():.2%})"
+        return f"__{isMember}__ is **#{index+1}**, {member.nbBumps} bumps ({member.nbBumpAttempts} attempts, efficiency index: {member.efficiency():.2%})"
     else: #someone is a team name
         team = getTeam(someone)
-        rankedTeams = sorted(TEAMS.values(), key=lambda x: x.nbBumps(), reverse = True)
+        sortFunc = lambda x: x.efficiency() if byEfficiency else x.nbBumps()
+        rankedTeams = sorted(TEAMS.values(), key=sortFunc, reverse = True)
         #nota: team is guaranteed to be in rankedTeams
         index = rankedTeams.index(team)
 
-        return f"Team '{team.name}' is **# {index+1}** with {team.nbBumps()} bumps."
+        return f"Team '{team.name}' is **#{index+1}** with {team.nbBumps()} bumps."
 
-async def computeStats(guild) -> str:
+async def computeStats(guild, bot, byEfficiency: bool = False) -> str:
+    sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
+    
     response = "__**TOP MEMBERS**__\n"
-    rankedMembers = sorted(MEMBERS.values(), key=lambda x: x.nbBumps(), reverse = True)
+    rankedMembers = sorted(MEMBERS.values(), key=sortFunc, reverse = True)
     for i, memberObj in zip(range(10), rankedMembers):
         try:
             member = await guild.fetch_member(memberObj.id)
             info = member.nick or member.name
         except:
-            info = "???"
-        response += f"**{i+1}** {info}, {memberObj.nbBumps} bump{'' if memberObj.nbBumps == 1 else 's'}\n"
+            try:
+                member = await bot.fetch_user(memberObj.id)
+                info = member.name
+            except:
+                info = "Deleted user"
+        
+        if byEfficiency: response += f"**{i+1}** {info}, {memberObj.efficiency():.2%} efficiency ({memberObj.nbBumps} bump{'' if memberObj.nbBumps == 1 else 's'}, {memberObj.nbBumpAttempts} attempt{'' if memberObj.nbBumpAttempts == 1 else 's'})\n"
+        else: response += f"**{i+1}** {info}, {memberObj.nbBumps} bump{'' if memberObj.nbBumps == 1 else 's'}\n"
     response = response[:-1]
 
     rankedTeams = sorted(TEAMS.values(), key=lambda x: x.nbBumps(), reverse = True)
@@ -128,7 +138,7 @@ async def computeStats(guild) -> str:
 
     return response
 
-async def teamsInfo(guild) -> str:
+async def teamsInfo(guild, bot) -> str:
     response = ""
     rankedTeams = sorted(TEAMS.values(), key=lambda x: len(x.members), reverse = True)
     for team in rankedTeams:
@@ -138,7 +148,11 @@ async def teamsInfo(guild) -> str:
                 member = await guild.fetch_member(memberObj.id)
                 info = member.nick or member.name
             except:
-                info = "???"
+                try:
+                    member = await bot.fetch_user(memberObj.id)
+                    info = member.name
+                except:
+                    info = "Deleted user"
             teamInfo += f"{info}\n"
         teamInfo = teamInfo[:-1]
 
@@ -175,8 +189,10 @@ async def processBumps(msg):
         member = getMember(doneBy)
         if ":thumbsup:" in txt: #it's a successfull bump!
             member.addBump()
+            save()
         elif "wait" in txt: #it's a bump attempt!
             member.addFailedBump()
+            save()
 
 def main() -> None:
     bot = commands.Bot(command_prefix=prefix, help_command=None)
@@ -191,19 +207,19 @@ def main() -> None:
 
     @bot.event
     async def on_reaction_add(reaction, user): #fabnem can delete the bot's messages with the wastebin emoji
-        if reaction.message.author.id == 845357066263724132 and reaction.emoji == '🗑️':
+        if user.id == 845357066263724132 and reaction.emoji == '🗑️':
             await reaction.message.delete()
 
     async def updateInfoMsg(channel: discord.TextChannel): #info msg: the message with the recap of all teams
         if INFOS["INFO_MSG"] is not None: #let's try to update the info msg
             try:
                 infoMsg = await channel.fetch_message(INFOS["INFO_MSG"])
-                await infoMsg.edit(content = await teamsInfo(channel.guild))
+                await infoMsg.edit(content = await teamsInfo(channel.guild, bot))
                 return
             except:
                 pass
 
-        infoMsg = await channel.send(await teamsInfo(channel.guild))
+        infoMsg = await channel.send(await teamsInfo(channel.guild, bot))
         INFOS["INFO_MSG"] = infoMsg.id
         save()
 
@@ -218,13 +234,13 @@ def main() -> None:
 
         ref = discord.MessageReference(channel_id = ctx.channel.id, message_id = ctx.message.id)
         await updateInfoMsg(ctx.channel)
-        await ctx.send(f"{ctx.author.mention}, you successfully joined the team '{teamName}'", reference = ref)
+        await ctx.send(f"__{ctx.author.nick or ctx.author.name}__, you successfully joined the team '{teamName}'", reference = ref)
 
     @bot.command(name = "rank")
     async def rank(ctx, someone: Optional[Union[discord.Member, str]]) -> None:
         if someone is None: #let's send the author's rank
             someone = ctx.author.id
-            await ctx.send(messageRank(someone, True))
+            await ctx.send(messageRank(someone, ctx.author.nick or ctx.author.name))
             try:
                 pass
             except:
@@ -232,13 +248,37 @@ def main() -> None:
         else:
             if isinstance(someone, discord.Member): #-> it's a ping
                 ident = someone.id
+                isMember = someone.nick or someone.name
             else: #ident must be a str -> team name
                 ident = someone
-            await ctx.send(messageRank(ident, isinstance(ident, int)))
+                isMember = None
+            await ctx.send(messageRank(ident, isMember))
+            
+    @bot.command(name = "rank_eff")
+    async def rankEff(ctx, someone: Optional[Union[discord.Member, str]]) -> None:
+        if someone is None: #let's send the author's rank
+            someone = ctx.author.id
+            await ctx.send(messageRank(someone, ctx.author.nick or ctx.author.name, True))
+            try:
+                pass
+            except:
+                await ctx.send("Well the bot almost crashed so ig you are not ranked…")
+        else:
+            if isinstance(someone, discord.Member): #-> it's a ping
+                ident = someone.id
+                isMember = someone.nick or someone.name
+            else: #ident must be a str -> team name
+                ident = someone
+                isMember = None
+            await ctx.send(messageRank(ident, isMember, True))
 
     @bot.command(name = "leaderboard")
     async def stats(ctx) -> None:
-        await ctx.send(await computeStats(ctx.guild))
+        await ctx.send(await computeStats(ctx.guild, bot))
+    
+    @bot.command(name = "leaderboard_eff")
+    async def statsEfficiency(ctx) -> None:
+        await ctx.send(await computeStats(ctx.guild, bot, True))
 
     @bot.command(name = "prerank")
     async def prerank(ctx, teamsToo: Optional[str]):
@@ -255,6 +295,11 @@ def main() -> None:
                     if i % 100 == 0: print(i)
 
             print("fini")
+
+    @bot.command(name = "kill")
+    async def kill(ctx):
+        if ctx.author.id == 619574125622722560: #only fabnem can use this command
+            quit()
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
