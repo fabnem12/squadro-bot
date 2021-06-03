@@ -231,6 +231,7 @@ def main() -> None:
         deletedTeam: Optional[str] = member.joinTeam(team)
         if deletedTeam:
             del TEAMS[deletedTeam]
+        save()
 
         ref = discord.MessageReference(channel_id = ctx.channel.id, message_id = ctx.message.id)
         await updateInfoMsg(ctx.channel)
@@ -299,6 +300,7 @@ def main() -> None:
     @bot.command(name = "kill")
     async def kill(ctx):
         if ctx.author.id == 619574125622722560: #only fabnem can use this command
+            await ctx.message.add_reaction("👌")
             quit()
 
     loop = asyncio.get_event_loop()
