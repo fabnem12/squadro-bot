@@ -8,6 +8,9 @@ from typing import Dict, List, Tuple, Union, Optional, Set
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constantes import TOKENVOLT as token, prefixVolt as prefix
+from utils import stockePID, cheminOutputs as outputsPath
+
+stockePID()
 
 #token = "" #bot token
 #prefix = ","
@@ -103,12 +106,18 @@ def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEffi
         return f"__{isMember}__ is **#{index+1}**, {member.nbBumps} bumps ({member.nbBumpAttempts} attempts, efficiency index: {member.efficiency():.2%})"
     else: #someone is a team name
         team = getTeam(someone)
-        sortFunc = lambda x: x.efficiency() if byEfficiency else x.nbBumps()
-        rankedTeams = sorted(TEAMS.values(), key=sortFunc, reverse = True)
-        #nota: team is guaranteed to be in rankedTeams
-        index = rankedTeams.index(team)
+        if len(team.members) == 0:
+            del TEAMS[team.name]
+            save()
+            
+            return "This team does not exist."
+        else:
+            sortFunc = lambda x: x.efficiency() if byEfficiency else x.nbBumps()
+            rankedTeams = sorted(TEAMS.values(), key=sortFunc, reverse = True)
+            #nota: team is guaranteed to be in rankedTeams
+            index = rankedTeams.index(team)
 
-        return f"Team '{team.name}' is **#{index+1}** with {team.nbBumps()} bumps."
+            return f"Team '{team.name}' is **#{index+1}** with {team.nbBumps()} bumps."
 
 async def computeStats(guild, bot, byEfficiency: bool = False) -> str:
     sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
@@ -130,7 +139,7 @@ async def computeStats(guild, bot, byEfficiency: bool = False) -> str:
         else: response += f"**{i+1}** {info}, {memberObj.nbBumps} bump{'' if memberObj.nbBumps == 1 else 's'}\n"
     response = response[:-1]
 
-    rankedTeams = sorted(TEAMS.values(), key=lambda x: x.nbBumps(), reverse = True)
+    rankedTeams = sorted(TEAMS.values(), key=lambda x: x.efficiency() if byEfficiency else x.nbBumps(), reverse = True)
     if rankedTeams != []:
         response += "\n\n"
         response += "__**TOP TEAMS**__\n"
@@ -143,6 +152,12 @@ async def teamsInfo(guild, bot) -> str:
     rankedTeams = sorted(TEAMS.values(), key=lambda x: len(x.members), reverse = True)
     for team in rankedTeams:
         teamInfo = ""
+        
+        if len(team.members) == 0:
+            del TEAMS[team.name]
+            save()
+            continue
+        
         for memberObj in team.members:
             try:
                 member = await guild.fetch_member(memberObj.id)
