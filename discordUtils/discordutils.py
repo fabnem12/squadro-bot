@@ -698,14 +698,14 @@ def main():
     #fermeture ouverture d'un salon
     @bot.command(name = "open")
     async def open(ctx):
-        if ctx.author.guild_permissions.administrator or ctx.author.guild_permissions.manage_messages or estAdmin(ctx.author.id):
+        if ctx.author.guild_permissions.administrator or ctx.author.guild_permissions.manage_messages:
             CLOSE.remove(ctx.channel.id)
             save()
             await ctx.message.add_reaction("👌")
 
     @bot.command(name = "close")
     async def close(ctx):
-        if ctx.author.guild_permissions.administrator or ctx.author.guild_permissions.manage_messages or estAdmin(ctx.author.id):
+        if ctx.author.guild_permissions.administrator or ctx.author.guild_permissions.manage_messages:
             CLOSE.add(ctx.channel.id)
             save()
             await ctx.message.add_reaction("👌")
