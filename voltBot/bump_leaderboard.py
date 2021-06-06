@@ -226,12 +226,12 @@ def main() -> None:
         if INFOS["INFO_MSG"] is not None: #let's try to update the info msg
             try:
                 infoMsg = await channel.fetch_message(INFOS["INFO_MSG"])
-                await infoMsg.edit(embed = discord.Embed(description = await teamsInfo(channel.guild, bot)), content = "")
+                await infoMsg.edit(embed = discord.Embed(description = teamsInfo(channel.guild, bot)), content = "")
                 return
             except:
                 pass
 
-        infoMsg = await channel.send(embed = discord.Embed(description = await teamsInfo(channel.guild, bot)))
+        infoMsg = await channel.send(embed = discord.Embed(description = teamsInfo(channel.guild, bot)))
         INFOS["INFO_MSG"] = infoMsg.id
         save()
 
