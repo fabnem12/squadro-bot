@@ -628,15 +628,18 @@ def main(idsTraites = set(range(10))):
 
     @bot.command(name="fibotibo")
     async def fibotibo(ctx):
-        from time import sleep
-        a = 1
-        b = 1
-        for _ in range(10):
-            await ctx.send("<:tibovener:684027734103818253>" * a)
-            b += a
-            a = b - a
+        if ctx.guild.id == 603692346273693697:
+            from time import sleep
+            a = 1
+            b = 1
+            for _ in range(10):
+                await ctx.send("<:tibovener:684027734103818253>" * a)
+                b += a
+                a = b - a
 
-            time.sleep(0.4)
+                time.sleep(0.4)
+        else:
+            await ctx.send("Non x) <:tibovener:684027734103818253>")
     ################################################################################
     #RÉCUPÉRATION DU NOTEBOOK SOUS FORME D'UN FICHIER ##############################
     ################################################################################
