@@ -95,6 +95,15 @@ else:
     MEMBERS: Dict[int, Member] = INFOS["MEMBERS"]
     TEAMS: Dict[str, Team] = INFOS["TEAMS"]
 
+#let's make sure empty teams and non-bumpers are removed
+for memberId, member in list(MEMBERS.items()):
+    if member.nbBumps == 0:
+        del MEMBERS[memberId]
+
+for teamName, team in list(TEAMS.items()):
+    if len(team.members) == 0:
+        del TEAMS[teamName]
+
 def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEfficiency: bool = False) -> str: #if isMember, someone is treated as a discord member id, if not, someone is treated as a team name
     if isMember:
         member = getMember(someone)
@@ -109,7 +118,7 @@ def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEffi
         if len(team.members) == 0:
             del TEAMS[team.name]
             save()
-            
+
             return "This team does not exist."
         else:
             sortFunc = lambda x: x.efficiency() if byEfficiency else x.nbBumps()
@@ -121,7 +130,7 @@ def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEffi
 
 async def computeStats(guild, bot, byEfficiency: bool = False) -> str:
     sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
-    
+
     response = "__**TOP MEMBERS**__\n"
     rankedMembers = sorted(MEMBERS.values(), key=sortFunc, reverse = True)
     for i, memberObj in zip(range(10), rankedMembers):
@@ -134,7 +143,7 @@ async def computeStats(guild, bot, byEfficiency: bool = False) -> str:
                 info = member.name
             except:
                 info = "Deleted user"
-        
+
         if byEfficiency: response += f"**{i+1}** {info}, {memberObj.efficiency():.2%} efficiency ({memberObj.nbBumps} bump{'' if memberObj.nbBumps == 1 else 's'}, {memberObj.nbBumpAttempts} attempt{'' if memberObj.nbBumpAttempts == 1 else 's'})\n"
         else: response += f"**{i+1}** {info}, {memberObj.nbBumps} bump{'' if memberObj.nbBumps == 1 else 's'}\n"
     response = response[:-1]
@@ -152,12 +161,12 @@ async def teamsInfo(guild, bot) -> str:
     rankedTeams = sorted(TEAMS.values(), key=lambda x: len(x.members), reverse = True)
     for team in rankedTeams:
         teamInfo = ""
-        
+
         if len(team.members) == 0:
             del TEAMS[team.name]
             save()
             continue
-        
+
         for memberObj in team.members:
             try:
                 member = await guild.fetch_member(memberObj.id)
@@ -180,15 +189,21 @@ async def teamsInfo(guild, bot) -> str:
 
     return response
 
-def getMember(memberId: int) -> Member:
-    if memberId not in MEMBERS:
-        MEMBERS[memberId] = Member(memberId)
-    return MEMBERS[memberId]
+def getMember(memberId: int, isExistsOnly: bool = False) -> Member:
+    if ifExistsOnly:
+        return MEMBERS.get(memberId)
+    else:
+        if memberId not in MEMBERS:
+            MEMBERS[memberId] = Member(memberId)
+        return MEMBERS[memberId]
 
-def getTeam(teamName: str) -> Team:
-    if teamName not in TEAMS:
-        TEAMS[teamName] = Team(teamName)
-    return TEAMS[teamName]
+def getTeam(teamName: str, ifExistsOnly: bool = False) -> Optional[Team]:
+    if ifExistsOnly:
+        return TEAMS.get(teamName)
+    else:
+        if teamName not in TEAMS:
+            TEAMS[teamName] = Team(teamName)
+        return TEAMS[teamName]
 
 async def processBumps(msg):
     author = msg.author.id
@@ -269,7 +284,7 @@ def main() -> None:
                 ident = someone
                 isMember = None
             await ctx.send(messageRank(ident, isMember))
-            
+
     @bot.command(name = "rank_eff")
     async def rankEff(ctx, someone: Optional[Union[discord.Member, str]]) -> None:
         if someone is None: #let's send the author's rank
@@ -291,7 +306,7 @@ def main() -> None:
     @bot.command(name = "leaderboard")
     async def stats(ctx) -> None:
         await ctx.send(await computeStats(ctx.guild, bot))
-    
+
     @bot.command(name = "leaderboard_eff")
     async def statsEfficiency(ctx) -> None:
         await ctx.send(await computeStats(ctx.guild, bot, True))
