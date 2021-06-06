@@ -142,8 +142,8 @@ def computeStats(guild, bot, byEfficiency: bool = False) -> str:
         response += "\n\n"
         response += "__**TOP TEAMS**__\n"
 
-        if byEfficiency: response += "\n".join(f"**{i+1}** Team '{team.name}', {team.nbBumps()} bumps" for i, team in zip(range(10), rankedTeams))
-        else: response += "\n".join(f"**{i+1}** Team '{team.name}', {team.efficiency():.2f} efficiency." for i, team in zip(range(10), rankedTeams))
+        if byEfficiency: response += "\n".join(f"**{i+1}** Team '{team.name}', {team.efficiency():.2%} efficiency." for i, team in zip(range(10), rankedTeams))
+        else: response += "\n".join(f"**{i+1}** Team '{team.name}', {team.nbBumps()} bumps" for i, team in zip(range(10), rankedTeams))
 
     return response
 
