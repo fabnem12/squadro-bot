@@ -253,7 +253,7 @@ def main() -> None:
         await ctx.send(f"__{ctx.author.nick or ctx.author.name}__, you successfully joined the team '{teamName}'", reference = ref)
 
     @bot.command(name = "rank")
-    async def rank(ctx, someone: Optional[Union[discord.Member, str]]) -> None:
+    async def rank(ctx, *, someone: Optional[Union[discord.Member, str]]) -> None:
         if someone is None: #let's send the author's rank
             someone = ctx.author.id
             await ctx.send(messageRank(someone, ctx.author.nick or ctx.author.name))
