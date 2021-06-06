@@ -591,10 +591,12 @@ def main(idsTraites = set(range(10))):
     @tasks.loop(minutes = 10.0)
     async def envoiEDT():
         now = utcnow().to("Europe/Brussels")
-        if True or now.weekday() in {4, 5}: return #on n'envoie pas l'edt le week-end
+        if now.weekday() in {4, 5}: return #on n'envoie pas l'edt le week-end
 
         if now.hour == 18 and now.minute >= 0 and now.minute < 10:
             for groupeId, (channelId, _) in GROUPES_DISCORD.items():
+                if groupeId != "9": continue
+
                 channel = bot.get_channel(channelId)
                 lienImage = genereEDT(groupeId, 1)
 
