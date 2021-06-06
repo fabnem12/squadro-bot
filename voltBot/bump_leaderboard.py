@@ -114,11 +114,8 @@ def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEffi
 
         return f"__{isMember}__ is **#{index+1}**, {member.nbBumps} bumps ({member.nbBumpAttempts} attempts, efficiency index: {member.efficiency():.2%})"
     else: #someone is a team name
-        team = getTeam(someone)
-        if len(team.members) == 0:
-            del TEAMS[team.name]
-            save()
-
+        team: Optional[Team] = getTeam(someone, True)
+        if team is None:
             return "This team does not exist."
         else:
             sortFunc = lambda x: x.efficiency() if byEfficiency else x.nbBumps()
@@ -134,7 +131,7 @@ async def computeStats(guild, bot, byEfficiency: bool = False) -> str:
     response = "__**TOP MEMBERS**__\n"
     rankedMembers = sorted(MEMBERS.values(), key=sortFunc, reverse = True)
     for i, memberObj in zip(range(10), rankedMembers):
-        try:
+        """try:
             member = await guild.fetch_member(memberObj.id)
             info = member.nick or member.name
         except:
@@ -142,7 +139,8 @@ async def computeStats(guild, bot, byEfficiency: bool = False) -> str:
                 member = await bot.fetch_user(memberObj.id)
                 info = member.name
             except:
-                info = "Deleted user"
+                info = "Deleted user" """
+        info = f"<@{memberObj.id}>"
 
         if byEfficiency: response += f"**{i+1}** {info}, {memberObj.efficiency():.2%} efficiency ({memberObj.nbBumps} bump{'' if memberObj.nbBumps == 1 else 's'}, {memberObj.nbBumpAttempts} attempt{'' if memberObj.nbBumpAttempts == 1 else 's'})\n"
         else: response += f"**{i+1}** {info}, {memberObj.nbBumps} bump{'' if memberObj.nbBumps == 1 else 's'}\n"
@@ -168,7 +166,7 @@ async def teamsInfo(guild, bot) -> str:
             continue
 
         for memberObj in team.members:
-            try:
+            """try:
                 member = await guild.fetch_member(memberObj.id)
                 info = member.nick or member.name
             except:
@@ -176,8 +174,8 @@ async def teamsInfo(guild, bot) -> str:
                     member = await bot.fetch_user(memberObj.id)
                     info = member.name
                 except:
-                    info = "Deleted user"
-            teamInfo += f"{info}\n"
+                    info = "Deleted user" """
+            teamInfo += f"<@{memberObj.id}>\n"
         teamInfo = teamInfo[:-1]
 
         response += f"**Team '{team.name}'**:\n{teamInfo}"
@@ -189,7 +187,7 @@ async def teamsInfo(guild, bot) -> str:
 
     return response
 
-def getMember(memberId: int, isExistsOnly: bool = False) -> Member:
+def getMember(memberId: int, ifExistsOnly: bool = False) -> Member:
     if ifExistsOnly:
         return MEMBERS.get(memberId)
     else:
@@ -244,12 +242,12 @@ def main() -> None:
         if INFOS["INFO_MSG"] is not None: #let's try to update the info msg
             try:
                 infoMsg = await channel.fetch_message(INFOS["INFO_MSG"])
-                await infoMsg.edit(content = await teamsInfo(channel.guild, bot))
+                await infoMsg.edit(embed = discord.Embed(description = await teamsInfo(channel.guild, bot)), content = "")
                 return
             except:
                 pass
 
-        infoMsg = await channel.send(await teamsInfo(channel.guild, bot))
+        infoMsg = await channel.send(embed = discord.Embed(description = await teamsInfo(channel.guild, bot)))
         INFOS["INFO_MSG"] = infoMsg.id
         save()
 
@@ -272,10 +270,6 @@ def main() -> None:
         if someone is None: #let's send the author's rank
             someone = ctx.author.id
             await ctx.send(messageRank(someone, ctx.author.nick or ctx.author.name))
-            try:
-                pass
-            except:
-                await ctx.send("Well the bot almost crashed so ig you are not ranked…")
         else:
             if isinstance(someone, discord.Member): #-> it's a ping
                 ident = someone.id
@@ -290,10 +284,6 @@ def main() -> None:
         if someone is None: #let's send the author's rank
             someone = ctx.author.id
             await ctx.send(messageRank(someone, ctx.author.nick or ctx.author.name, True))
-            try:
-                pass
-            except:
-                await ctx.send("Well the bot almost crashed so ig you are not ranked…")
         else:
             if isinstance(someone, discord.Member): #-> it's a ping
                 ident = someone.id
@@ -305,11 +295,11 @@ def main() -> None:
 
     @bot.command(name = "leaderboard")
     async def stats(ctx) -> None:
-        await ctx.send(await computeStats(ctx.guild, bot))
+        await ctx.send(embed = discord.Embed(description = await computeStats(ctx.guild, bot)))
 
     @bot.command(name = "leaderboard_eff")
     async def statsEfficiency(ctx) -> None:
-        await ctx.send(await computeStats(ctx.guild, bot, True))
+        await ctx.send(embed = discord.Embed(description = await computeStats(ctx.guild, bot, True)))
 
     @bot.command(name = "prerank")
     async def prerank(ctx, teamsToo: Optional[str]):
