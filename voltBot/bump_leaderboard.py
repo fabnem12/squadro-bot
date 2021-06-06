@@ -125,21 +125,12 @@ def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEffi
 
             return f"Team '{team.name}' is **#{index+1}** with {team.nbBumps()} bumps."
 
-async def computeStats(guild, bot, byEfficiency: bool = False) -> str:
+def computeStats(guild, bot, byEfficiency: bool = False) -> str:
     sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
 
     response = "__**TOP MEMBERS**__\n"
     rankedMembers = sorted(MEMBERS.values(), key=sortFunc, reverse = True)
     for i, memberObj in zip(range(10), rankedMembers):
-        """try:
-            member = await guild.fetch_member(memberObj.id)
-            info = member.nick or member.name
-        except:
-            try:
-                member = await bot.fetch_user(memberObj.id)
-                info = member.name
-            except:
-                info = "Deleted user" """
         info = f"<@{memberObj.id}>"
 
         if byEfficiency: response += f"**{i+1}** {info}, {memberObj.efficiency():.2%} efficiency ({memberObj.nbBumps} bump{'' if memberObj.nbBumps == 1 else 's'}, {memberObj.nbBumpAttempts} attempt{'' if memberObj.nbBumpAttempts == 1 else 's'})\n"
@@ -150,11 +141,13 @@ async def computeStats(guild, bot, byEfficiency: bool = False) -> str:
     if rankedTeams != []:
         response += "\n\n"
         response += "__**TOP TEAMS**__\n"
-        response += "\n".join("**{}** Team '{}', {} bumps".format(i+1, team.name, team.nbBumps()) for i, team in zip(range(10), rankedTeams))
+
+        if byEfficiency: response += "\n".join(f"**{i+1}** Team '{team.name}', {team.nbBumps()} bumps" for i, team in zip(range(10), rankedTeams))
+        else: response += "\n".join(f"**{i+1}** Team '{team.name}', {team.efficiency():.2f} efficiency." for i, team in zip(range(10), rankedTeams))
 
     return response
 
-async def teamsInfo(guild, bot) -> str:
+def teamsInfo(guild, bot) -> str:
     response = ""
     rankedTeams = sorted(TEAMS.values(), key=lambda x: len(x.members), reverse = True)
     for team in rankedTeams:
@@ -166,15 +159,6 @@ async def teamsInfo(guild, bot) -> str:
             continue
 
         for memberObj in team.members:
-            """try:
-                member = await guild.fetch_member(memberObj.id)
-                info = member.nick or member.name
-            except:
-                try:
-                    member = await bot.fetch_user(memberObj.id)
-                    info = member.name
-                except:
-                    info = "Deleted user" """
             teamInfo += f"<@{memberObj.id}>\n"
         teamInfo = teamInfo[:-1]
 
@@ -295,11 +279,11 @@ def main() -> None:
 
     @bot.command(name = "leaderboard")
     async def stats(ctx) -> None:
-        await ctx.send(embed = discord.Embed(description = await computeStats(ctx.guild, bot)))
+        await ctx.send(embed = discord.Embed(description = computeStats(ctx.guild, bot)))
 
     @bot.command(name = "leaderboard_eff")
     async def statsEfficiency(ctx) -> None:
-        await ctx.send(embed = discord.Embed(description = await computeStats(ctx.guild, bot, True)))
+        await ctx.send(embed = discord.Embed(description = computeStats(ctx.guild, bot, True)))
 
     @bot.command(name = "prerank")
     async def prerank(ctx, teamsToo: Optional[str]):

@@ -90,7 +90,7 @@ def main():
             return
         raise error
 
-    async def affi_stats(guild, nbAffi = 20, parXp = True, parRapport = False):
+    def affi_stats(guild, nbAffi = 20, parXp = True, parRapport = False):
         guildId = guild.id
 
         infosGuild = infos[guildId]
@@ -101,15 +101,10 @@ def main():
 
         txt = "**Personnes les plus actives sur le serveur :**\n"
         for index, usrId in zip(range(nbAffi + (not parXp and guildId == 753312911274934345)), classement):
-            if not parXp and usrId == 577237503057330196 and guildId == 753312911274934345: continue
-            try:
-                usr = await guild.fetch_member(usrId)
-                info = usr.nick or usr.name
-            except:
-                info = "???"
+            info = f"<@{usrId}>"
             nbPoints, nbMessages, _ = infosGuild[usrId]
 
-            txt += "**{}** {} avec {} XP ({} messages)\n".format((index+1) if parXp else index, info, nbPoints, nbMessages)
+            txt += "**#{}** {} avec {} XP ({} messages)\n".format((index+1) if parXp else index, info, nbPoints, nbMessages)
 
         res = txt
         if len(res) < 1950:
@@ -197,27 +192,27 @@ def main():
     async def stats(ctx, nbAffi: Optional[int]):
         if nbAffi is None: nbAffi = 20
 
-        listRes = await affi_stats(ctx.guild, nbAffi)
+        listRes = affi_stats(ctx.guild, nbAffi)
         for res in listRes:
-            await ctx.send(res)
+            await ctx.send(embed = discord.Embed(description = res))
             sleep(0.4)
 
     @bot.command(name = "stats_msg")
     async def statsMsg(ctx, nbAffi: Optional[int]):
         if nbAffi is None: nbAffi = 20
 
-        listRes = await affi_stats(ctx.guild, nbAffi, False)
+        listRes = affi_stats(ctx.guild, nbAffi, False)
         for res in listRes:
-            await ctx.send(res)
+            await ctx.send(embed = discord.Embed(description = res))
             sleep(0.4)
 
     @bot.command(name = "stats_spam")
     async def statsRap(ctx, nbAffi: Optional[int]):
         if nbAffi is None: nbAffi = 20
 
-        listRes = await affi_stats(ctx.guild, nbAffi, True, True)
+        listRes = affi_stats(ctx.guild, nbAffi, True, True)
         for res in listRes:
-            await ctx.send(res)
+            await ctx.send(embed = discord.Embed(description = res))
             sleep(0.4)
 
     @bot.command(name = "top_salons")
