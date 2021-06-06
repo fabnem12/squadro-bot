@@ -95,24 +95,19 @@ else:
     MEMBERS: Dict[int, Member] = INFOS["MEMBERS"]
     TEAMS: Dict[str, Team] = INFOS["TEAMS"]
 
-#let's make sure empty teams and non-bumpers are removed
-for memberId, member in list(MEMBERS.items()):
-    if member.nbBumps == 0:
-        del MEMBERS[memberId]
-
-for teamName, team in list(TEAMS.items()):
-    if len(team.members) == 0:
-        del TEAMS[teamName]
-
 def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEfficiency: bool = False) -> str: #if isMember, someone is treated as a discord member id, if not, someone is treated as a team name
     if isMember:
-        member = getMember(someone)
-        sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
-        rankedMembers = sorted(MEMBERS.values(), key=sortFunc, reverse = True)
-        #nota: member is guaranteed to be in rankedMembers
-        index = rankedMembers.index(member)
+        member = getMember(someone, True)
 
-        return f"__{isMember}__ is **#{index+1}**, {member.nbBumps} bumps ({member.nbBumpAttempts} attempts, efficiency index: {member.efficiency():.2%})"
+        if member is None:
+            return "This member never attempted to bump the server."
+        else:
+            sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
+            rankedMembers = sorted(MEMBERS.values(), key=sortFunc, reverse = True)
+            #nota: member is guaranteed to be in rankedMembers
+            index = rankedMembers.index(member)
+
+            return f"__{isMember}__ is **#{index+1}**, {member.nbBumps} bumps ({member.nbBumpAttempts} attempts, efficiency index: {member.efficiency():.2%})"
     else: #someone is a team name
         team: Optional[Team] = getTeam(someone, True)
         if team is None:
