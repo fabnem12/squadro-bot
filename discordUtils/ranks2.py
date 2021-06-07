@@ -228,7 +228,7 @@ def save():
 
 def main():
     from discord.ext import commands, tasks
-    bot = commands.Bot(command_prefix="T.", help_command=None)
+    bot = commands.Bot(command_prefix="Test.", help_command=None)
 
     @bot.event
     async def on_command_error(ctx, error):
@@ -265,11 +265,14 @@ def main():
 
         if server.euro:
             iter, tot, tot2, sal = server.euro
-            resGlobaux, resDernierSalon = next(iter)
-            resGlobauxNew = decoupeMessages([resGlobaux])
-            await (await ctx.channel.fetch_message(tot)).edit(content = "", embed = discord.Embed(description = resGlobauxNew[0]))
-            if len(resGlobauxNew) > 1: await (await ctx.channel.fetch_message(tot2)).edit(content = "", embed = discord.Embed(description = resGlobauxNew[1]))
-            await (await ctx.channel.fetch_message(sal)).edit(content = "", embed = discord.Embed(description = resDernierSalon))
+            try:
+                resGlobaux, resDernierSalon = next(iter)
+                resGlobauxNew = decoupeMessages([resGlobaux])
+                await (await ctx.channel.fetch_message(tot)).edit(content = "", embed = discord.Embed(description = resGlobauxNew[0]))
+                if len(resGlobauxNew) > 1: await (await ctx.channel.fetch_message(tot2)).edit(content = "", embed = discord.Embed(description = resGlobauxNew[1]))
+                await (await ctx.channel.fetch_message(sal)).edit(content = "", embed = discord.Embed(description = resDernierSalon))
+            except:
+                server.euro = None
 
     @bot.command(name = "prerank")
     async def prerank(ctx):
@@ -285,7 +288,7 @@ def main():
         for channel in ctx.guild.text_channels:
             try:
                 await msgAnnonce.edit(content = f"**Calculs en cours…**\nLecture de <#{channel.id}>")
-                async for msg in channel.history(limit = 500):
+                async for msg in channel.history(limit = None):
                     server.ajoutMsg(msg)
                     for reac in msg.reactions:
                         async for user in reac.users():
