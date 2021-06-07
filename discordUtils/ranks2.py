@@ -241,7 +241,7 @@ def main():
         server = getServer(msg.guild.id)
         server.ajoutMsg(msg)
 
-        await bot.process_commands()
+        await bot.process_commands(msg)
 
     @bot.event
     async def on_reaction_add(reaction, user):
