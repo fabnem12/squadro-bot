@@ -228,7 +228,7 @@ def save():
 
 def main():
     from discord.ext import commands, tasks
-    bot = commands.Bot(command_prefix="Test.", help_command=None)
+    bot = commands.Bot(command_prefix="T.", help_command=None)
 
     @bot.event
     async def on_command_error(ctx, error):
@@ -240,6 +240,8 @@ def main():
     async def on_message(msg):
         server = getServer(msg.guild.id)
         server.ajoutMsg(msg)
+
+        await bot.process_commands()
 
     @bot.event
     async def on_reaction_add(reaction, user):
