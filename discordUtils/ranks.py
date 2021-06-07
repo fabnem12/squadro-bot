@@ -14,8 +14,6 @@ from constantes import ADMINS, prefixeBot, TOKEN
 from utils import cheminOutputs, stockePID
 stockePID()
 
-dossierOutputs = ""
-
 if "ranks.p" not in os.listdir(cheminOutputs):
     infos = dict()
 else:
