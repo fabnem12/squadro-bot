@@ -288,8 +288,8 @@ def main():
         server = getServer(ctx.guild.id)
 
         for channel in ctx.guild.text_channels:
+            await msgAnnonce.edit(content = f"**Calculs en cours…**\nLecture de <#{channel.id}>")
             try:
-                await msgAnnonce.edit(content = f"**Calculs en cours…**\nLecture de <#{channel.id}>")
                 async for msg in channel.history(limit = None):
                     server.ajoutMsg(msg)
                     for reac in msg.reactions:
