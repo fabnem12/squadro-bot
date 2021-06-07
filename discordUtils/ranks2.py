@@ -228,7 +228,7 @@ def save():
 
 def main():
     from discord.ext import commands, tasks
-    bot = commands.Bot(command_prefix=prefixeBot, help_command=None)
+    bot = commands.Bot(command_prefix="T.", help_command=None)
 
     @bot.event
     async def on_command_error(ctx, error):
