@@ -124,7 +124,7 @@ def computeStats(guild, bot, byEfficiency: bool = False, fromRank: int = 1) -> s
     sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
 
     response = "__**TOP MEMBERS**__\n"
-    rankedMembers = sorted(MEMBERS.values(), key=sortFunc, reverse = True)
+    rankedMembers = sorted((x for x in MEMBERS.values() if x.nbBumpAttempts >= 5), key=sortFunc, reverse = True)
     for i in range(fromRank-1, min(fromRank+9, len(rankedMembers))):
         memberObj = rankedMembers[i]
         info = f"<@{memberObj.id}>"
