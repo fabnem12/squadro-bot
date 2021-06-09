@@ -275,7 +275,7 @@ def main() -> None:
 
     @bot.command(name = "leaderboard")
     async def stats(ctx, fromRank: int = 1) -> None:
-        await ctx.send(embed = discord.Embed(description = computeStats(ctx.guild, bot, fromRank)))
+        await ctx.send(embed = discord.Embed(description = computeStats(ctx.guild, bot, False, fromRank)))
 
     @bot.command(name = "leaderboard_eff")
     async def statsEfficiency(ctx, fromRank: int = 1) -> None:
