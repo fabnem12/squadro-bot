@@ -50,31 +50,44 @@ class Member:
         else:
             return None
 
+    def reset(self) -> None:
+        self.nbBumpAttempts = 0
+        self.nbBumps = 0
+
+MEMBERS: Dict[int, Member] = dict()
+def getMember(memberId: int, ifExistsOnly: bool = False) -> Member:
+    if ifExistsOnly:
+        return MEMBERS.get(memberId)
+    else:
+        if memberId not in MEMBERS:
+            MEMBERS[memberId] = Member(memberId)
+        return MEMBERS[memberId]
+
 class Team:
     def __init__(self, name: str):
         self.name = name
-        self.members: Set[Member] = set()
+        self.members: Set[int] = set() #self.members contains the discord ids of the members of the team
 
     def join(self, member: Member) -> None:
-        self.members.add(member)
+        self.members.add(member.id)
 
     def leave(self, member: Member) -> Optional[str]:
         #returns self.name if the team has no members left
-        if member in self.members:
-            self.members.remove(member)
+        if member.id in self.members:
+            self.members.remove(member.id)
 
         if len(self.members) == 0:
             return self.name
 
     def nbBumps(self) -> int:
-        return sum((x.nbBumps for x in self.members), 0)
+        return sum((getMember(memberId).nbBumps for memberId in self.members), 0)
 
     def efficiency(self) -> float:
-        nbAttempts = sum((x.nbBumpAttempts for x in self.members), 0)
+        nbAttempts = sum((getMember(memberId).nbBumpAttempts for memberId in self.members), 0)
         if nbAttempts == 0:
             return 0
         else:
-            return sum((x.nbBumps for x in self.members), 0) / nbAttempts
+            return sum((getMember(memberId).nbBumps for memberId in self.members), 0) / nbAttempts
 
 INFOS: Dict[str, Union[Set[Member], Set[Team], Optional[int]]] = dict()
 def save() -> None:
@@ -153,8 +166,8 @@ def teamsInfo(guild, bot) -> str:
             save()
             continue
 
-        for memberObj in team.members:
-            teamInfo += f"<@{memberObj.id}>\n"
+        for memberId in team.members:
+            teamInfo += f"<@{memberId}>\n"
         teamInfo = teamInfo[:-1]
 
         response += f"**Team '{team.name}'**:\n{teamInfo}"
@@ -165,14 +178,6 @@ def teamsInfo(guild, bot) -> str:
     if response == "": response = "."
 
     return response
-
-def getMember(memberId: int, ifExistsOnly: bool = False) -> Member:
-    if ifExistsOnly:
-        return MEMBERS.get(memberId)
-    else:
-        if memberId not in MEMBERS:
-            MEMBERS[memberId] = Member(memberId)
-        return MEMBERS[memberId]
 
 def getTeam(teamName: str, ifExistsOnly: bool = False) -> Optional[Team]:
     if ifExistsOnly:
@@ -202,7 +207,8 @@ async def processBumps(msg):
             save()
 
 def main() -> None:
-    bot = commands.Bot(command_prefix=prefix, help_command=None)
+    #bot = commands.Bot(command_prefix=prefix, help_command=None)
+    bot = commands.Bot(command_prefix="T.", help_command=None)
 
     @bot.event
     async def on_message(msg) -> None:
@@ -221,6 +227,7 @@ def main() -> None:
         if INFOS["INFO_MSG"] is not None: #let's try to update the info msg
             try:
                 infoMsg = await channel.fetch_message(INFOS["INFO_MSG"])
+                print(teamsInfo(channel.guild, bot))
                 await infoMsg.edit(embed = discord.Embed(description = teamsInfo(channel.guild, bot)), content = "")
                 return
             except:
@@ -295,6 +302,22 @@ def main() -> None:
                     if i % 100 == 0: print(i)
 
             print("fini")
+
+    @bot.command(name = "reset")
+    async def resetBot(ctx):
+        if ctx.author.id == 619574125622722560:
+            await ctx.message.add_reaction("👌")
+            reset()
+
+    @bot.command(name = "add_member_team")
+    async def addMemberTeam(ctx, teamName: str, memberId: int):
+        if ctx.author.id == 619574125622722560:
+            member = getMember(memberId)
+            team = getTeam(teamName)
+
+            member.joinTeam(team)
+
+            await ctx.message.add_reaction("👌")
 
     @bot.command(name = "kill")
     async def kill(ctx):
