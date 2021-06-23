@@ -133,12 +133,13 @@ def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEffi
 
             return f"Team '{team.name}' is **#{index+1}** with {team.nbBumps()} bumps."
 
-def computeStats(guild, bot, byEfficiency: bool = False) -> str:
+def computeStats(guild, bot, byEfficiency: bool = False, fromRank: int = 1) -> str:
     sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
 
     response = "__**TOP MEMBERS**__\n"
-    rankedMembers = sorted(MEMBERS.values(), key=sortFunc, reverse = True)
-    for i, memberObj in zip(range(10), rankedMembers):
+    rankedMembers = sorted((x for x in MEMBERS.values() if x.nbBumpAttempts >= 5), key=sortFunc, reverse = True)
+    for i in range(fromRank-1, min(fromRank+9, len(rankedMembers))):
+        memberObj = rankedMembers[i]
         info = f"<@{memberObj.id}>"
 
         if byEfficiency: response += f"**{i+1}** {info}, {memberObj.efficiency():.2%} efficiency ({memberObj.nbBumps} bump{'' if memberObj.nbBumps == 1 else 's'}, {memberObj.nbBumpAttempts} attempt{'' if memberObj.nbBumpAttempts == 1 else 's'})\n"
@@ -150,8 +151,8 @@ def computeStats(guild, bot, byEfficiency: bool = False) -> str:
         response += "\n\n"
         response += "__**TOP TEAMS**__\n"
 
-        if byEfficiency: response += "\n".join(f"**{i+1}** Team '{team.name}', {team.efficiency():.2%} efficiency." for i, team in zip(range(10), rankedTeams))
-        else: response += "\n".join(f"**{i+1}** Team '{team.name}', {team.nbBumps()} bumps" for i, team in zip(range(10), rankedTeams))
+        if byEfficiency: response += "\n".join(f"**{i+1}** Team '{team.name}', {team.efficiency():.2%} efficiency." for i, team in zip(range(len(rankedTeams)), rankedTeams))
+        else: response += "\n".join(f"**{i+1}** Team '{team.name}', {team.nbBumps()} bumps" for i, team in zip(range(len(rankedTeams)), rankedTeams))
 
     return response
 
@@ -280,12 +281,12 @@ def main() -> None:
             await ctx.send(messageRank(ident, isMember, True))
 
     @bot.command(name = "leaderboard")
-    async def stats(ctx) -> None:
-        await ctx.send(embed = discord.Embed(description = computeStats(ctx.guild, bot)))
+    async def stats(ctx, fromRank: int = 1) -> None:
+        await ctx.send(embed = discord.Embed(description = computeStats(ctx.guild, bot, False, fromRank)))
 
     @bot.command(name = "leaderboard_eff")
-    async def statsEfficiency(ctx) -> None:
-        await ctx.send(embed = discord.Embed(description = computeStats(ctx.guild, bot, True)))
+    async def statsEfficiency(ctx, fromRank: int = 1) -> None:
+        await ctx.send(embed = discord.Embed(description = computeStats(ctx.guild, bot, True, fromRank)))
 
     @bot.command(name = "prerank")
     async def prerank(ctx, teamsToo: Optional[str]):
