@@ -211,6 +211,9 @@ def main() -> None:
     #bot = commands.Bot(command_prefix=prefix, help_command=None)
     bot = commands.Bot(command_prefix=prefix, help_command=None)
 
+    def isBotAdmin(user: discord.Member) -> bool:
+        return user.guild_permissions.manage_channels or user.id == 619574125622722560
+
     @bot.event
     async def on_message(msg) -> None:
         if msg.channel.id != botCommandsChannel:
@@ -220,8 +223,8 @@ def main() -> None:
         await bot.process_commands(msg)
 
     @bot.event
-    async def on_reaction_add(reaction, user): #fabnem can delete the bot's messages with the wastebin emoji
-        if reaction.message.author.id == 845357066263724132 and reaction.emoji == '🗑️':
+    async def on_reaction_add(reaction, user): #one can delete messages sent by the bot with the wastebin emoji
+        if reaction.message.author.id == 845357066263724132 and reaction.emoji == '🗑️' and reaction.message.id != INFOS["INFO_MSG"]:
             await reaction.message.delete()
 
     async def updateInfoMsg(channel: discord.TextChannel): #info msg: the message with the recap of all teams
@@ -312,11 +315,12 @@ def main() -> None:
 
     @bot.command(name = "add_member_team")
     async def addMemberTeam(ctx, teamName: str, memberId: int):
-        if ctx.author.id == 619574125622722560:
+        if isBotAdmin(ctx.author):
             member = getMember(memberId)
             team = getTeam(teamName)
 
             member.joinTeam(team)
+            await updateInfoMsg(ctx.channel)
 
             await ctx.message.add_reaction("👌")
 
