@@ -209,7 +209,7 @@ async def processBumps(msg):
 
 def main() -> None:
     #bot = commands.Bot(command_prefix=prefix, help_command=None)
-    bot = commands.Bot(command_prefix="T.", help_command=None)
+    bot = commands.Bot(command_prefix=prefix, help_command=None)
 
     @bot.event
     async def on_message(msg) -> None:
