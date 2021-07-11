@@ -39,6 +39,14 @@ def main():
 
         MSG2DUEL[msg.id] = (votant, (opt1, opt2))
 
+    async def ajoutSumaut(votant, listeOptions, channel):
+        nombres = ("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten")
+        msg = await channel.send("\n".join(f':{nombres[i]}: {candidat}' for i, candidat in enumerate(listeOptions)))
+        for i, _ in enumerate(listeOptions):
+            await msg.add_reaction(chr(49+i)+chr(65039)+chr(8419))
+
+        MSG2DUEL[msg.id] = (votant, (listeOptions, None))
+
     async def majDuel(msg, votant, opt1, opt2):
         await msg.edit(content = f":arrow_left: {opt1} ou {opt2} :arrow_right: ?")
         MSG2DUEL[msg.id] = (votant, (opt1, opt2))
@@ -58,41 +66,66 @@ def main():
                 await channel.send("Désolé, le dépouillement a déjà eu lieu")
                 return
 
-            votant = election.getVotant(userId)
+            if not election.isVotant(userId) or emoji == "🔂":
+                votant = election.getVotant(userId, reset = True)
 
-            opt1, opt2 = votant.duelAFaire()
-            if len(election.candidats) > 2:
-                await channel.send("Pour enregistrer ton vote, j'ai besoin d'un ordre de préférence complet.\nComme c'est un peu relou de le faire soi-même, je vais juste te demander qui tu préfères dans quelques duels d'options, et j'en déduirai ton ordre de préférence complet.")
-            else:
-                await channel.send("Pour enregistrer ton vote, t'as juste à préciser avec :arrow_left: ou :arrow_right: ta préférence.")
+                opt1, opt2 = votant.optionAFaire()
+                if opt2: #c'est un vote par classement
+                    if len(election.candidats) > 2:
+                        await channel.send("Pour enregistrer ton vote, j'ai besoin d'un ordre de préférence complet.\nComme c'est un peu relou de le faire soi-même, je vais juste te demander qui tu préfères dans quelques duels d'options, et j'en déduirai ton ordre de préférence complet.")
+                    else:
+                        await channel.send("Pour enregistrer ton vote, t'as juste à préciser avec :arrow_left: ou :arrow_right: ta préférence.")
 
-            await ajoutDuel(votant, opt1, opt2, channel)
+                    await ajoutDuel(votant, opt1, opt2, channel)
+                else: #sumaut, opt1 représente alors la liste des noms des options
+                    await channel.send("Pour enregistrer ton vote, t'as juste à mettre une réaction sur ton option préférée.")
+                    await ajoutSumaut(votant, opt1, channel)
 
         elif message.id in MSG2DUEL: #on a voté sur un duel
             votant, (opt1, opt2) = MSG2DUEL[message.id]
 
-            if emoji in ("⬅️", "➡️", "↔️"):
-                if emoji == "↔️":
-                    prefere = None
-                else:
-                    prefere = opt1 if emoji == "⬅️" else opt2
-                votant.ajoutPreference(opt1, opt2, prefere)
+            if opt2: #vote par classement
+                if emoji in ("⬅️", "➡️", "↔️"):
+                    if emoji == "↔️":
+                        prefere = None
+                    else:
+                        prefere = opt1 if emoji == "⬅️" else opt2
+                    votant.ajoutPreference(opt1, opt2, prefere)
 
-                if prefere is None: prefere = "Neutre" #pour un affichage plus parlant que None
-                #await message.edit(content = ":arrow_left: {} ou {} :arrow_right:\n**Vote enregistré : {}**".format(opt1, opt2, prefere))
+                    if prefere is None: prefere = "Neutre" #pour un affichage plus parlant que None
+                    #await message.edit(content = ":arrow_left: {} ou {} :arrow_right:\n**Vote enregistré : {}**".format(opt1, opt2, prefere))
 
-                nouvDuel = votant.duelAFaire()
-                if nouvDuel: #on doit faire un nouveau duel pour avoir le classement complet, on l'envoie
-                    opt1, opt2 = nouvDuel
+                    nouvDuel = votant.optionAFaire()
+                    if nouvDuel: #on doit faire un nouveau duel pour avoir le classement complet, on l'envoie
+                        opt1, opt2 = nouvDuel
 
-                    await majDuel(message, votant, opt1, opt2)
+                        await majDuel(message, votant, opt1, opt2)
 
-                else: #pas besoin d'un nouveau duel, on a fini !
-                    classement = votant.calculClassement()
-                    affi = "Ton classement :\n"
-                    affi += "\n".join(f"**{index+1}** {opt}" for (opt, index) in classement)
+                    else: #pas besoin d'un nouveau duel, on a fini !
+                        classement = votant.calculClassement()
+                        affi = "Ton classement :\n"
+                        affi += "\n".join(f"**{index+1}** {opt}" for (index, opt) in classement)
 
+                        await channel.send(affi)
+                        msgReplay = await channel.send("**Ton vote a été enregistré.**\nPour changer ton vote, réagis à ce message avec 🔂")
+                        await msgReplay.add_reaction("🔂") #réaction pour changer le vote
+                        MSG2VOTE[msgReplay.id] = votant.election
+
+                        #on change l'affichage du nombre de votants
+                        nbVotants = votant.election.nbVotesValides()
+                        for msg in votant.election.msgInfo:
+                            await msg.edit(content = "**Réagissez à ce message pour participer au vote.**\n {} votes ont été enregistrés pour le moment.".format(nbVotants))
+            else: #sumaut
+                listeOptions = opt1
+                reac2choix = {chr(49+k)+chr(65039)+chr(8419): k for k in range(min(10, len(listeOptions)))}
+
+                if emoji in reac2choix:
+                    prefere = listeOptions[reac2choix[emoji]]
+                    votant.setPrefere(prefere)
+
+                    affi = f"Ton vote : {prefere}"
                     await channel.send(affi)
+
                     msgReplay = await channel.send("**Ton vote a été enregistré.**\nPour changer ton vote, réagis à ce message avec 🔂")
                     await msgReplay.add_reaction("🔂") #réaction pour changer le vote
                     MSG2VOTE[msgReplay.id] = votant.election
@@ -179,22 +212,6 @@ def main():
             else:
                 await ctx.send("Il n'y a pas assez d'options dans l'élection, impossible de lancer le vote dans ces conditions… (il en faut au moins 2...)")
 
-    @bot.command(name="vote_end") #pour lancer le dépouillement
-    async def endvote(ctx, idElection):
-        if idElection not in ELECTIONS:
-            await ctx.send("L'identifiant d'élection n'est pas valide…")
-        else:
-            election, auteurId = ELECTIONS[idElection]
-            if auteurId != ctx.author.id:
-                return
-
-            election.calculVote()
-            for msg in election.msgInfo:
-                txt = msg.content
-                await msg.edit(content = txt + "\nLE VOTE EST MAINTENANT CLOS")
-
-            await affires(ctx, idElection)
-
     @bot.command(name="vote_affires") #pour afficher les résultats une fois le dépouillement fait
     async def affires(ctx, idElection):
         if idElection not in ELECTIONS:
@@ -220,6 +237,22 @@ def main():
                 for fichier in fichiers:
                     await ctx.send(file = discord.File(fichier))
                     sleep(0.5)
+
+    @bot.command(name="vote_end") #pour lancer le dépouillement
+    async def endvote(ctx, idElection):
+        if idElection not in ELECTIONS:
+            await ctx.send("L'identifiant d'élection n'est pas valide…")
+        else:
+            election, auteurId = ELECTIONS[idElection]
+            if auteurId != ctx.author.id:
+                return
+
+            election.calculVote()
+            for msg in election.msgInfo:
+                txt = msg.content
+                await msg.edit(content = txt + "\nLE VOTE EST MAINTENANT CLOS")
+
+            await affires(ctx, idElection)
 
     @bot.command(name="vote_addalias") #pour mettre un autre message pour lancer le vote, par exemple dans un autre salon
     async def addalias(ctx, idElection):

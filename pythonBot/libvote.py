@@ -8,11 +8,19 @@ from typing import List, Dict, Optional, Tuple
 
 class Votant:
     def __init__(self, election, optionsVote: List[str]):
-        self.classements: Dict[str, int] = dict()
         self.election = election
-
         self.listeCandidats = optionsVote.copy()
         shuffle(self.listeCandidats)
+
+    #méthodes à définir
+    # def prefere(self):
+    # def resumePref(self):
+    # def optionAFaire(self):
+
+class VotantRank(Votant):
+    def __init__(self, election, optionsVote: List[str]):
+        super().__init__(election, optionsVote)
+        self.classements: Dict[str, int] = dict()
         self.duels: Dict[Tuple[str, str], Optional[str]] = {(x, x): None for x in optionsVote}
         #gagnants des duels
 
@@ -37,7 +45,7 @@ class Votant:
     def resumePref(self): #résumé de l'ordre de préférence du votant
         return "\n".join("**{}** {}".format(b, a) for a, b in sorted(self.classements.items(), key = lambda x: x[1]))
 
-    def duelAFaire(self):
+    def optionAFaire(self):
         tab = self.listeCandidats.copy()
 
         def separe(low, high):
@@ -81,16 +89,30 @@ class Votant:
         if not ret: self.listeCandidats = tab
         return ret
 
-    def classementStandard():
-        pass
-
     def ajoutPreference(self, opt1, opt2, prefere):
         self.duels[opt1, opt2] = prefere
         self.duels[opt2, opt1] = prefere
 
     def calculClassement(self):
         self.classements = {x: i for i, x in enumerate(self.listeCandidats)}
-        return list((y, x) for x, y in enumerate(self.listeCandidats))
+        return list(enumerate(self.listeCandidats))
+
+class VotantUninominal(Votant):
+    def __init__(self, election, optionsVote: List[str]):
+        super().__init__(election, optionsVote)
+        self.candidatPrefere: Optional[str] = None
+
+    def prefere(self):
+        return self.candidatPrefere
+
+    def setPrefere(self, candidat):
+        self.candidatPrefere = candidat
+
+    def resumePref(self):
+        return f"**1** {self.candidatPrefere if self.candidatPrefere else 'Vote blanc'}"
+
+    def optionAFaire(self):
+        return sorted(self.listeCandidats), None
 
 class Election:
     sysVotes = {"Borda", "sumaut", "approbation", "Copeland", "RankedPairs"}
@@ -117,7 +139,8 @@ class Election:
 
         #on vérifie d'abord que tous les votes sont valides (en éliminant ceux qui ne le sont pas)
         nbOptions = len(self.candidats)
-        self.votants = [x for x in self.votants if len(x.classements.values()) == nbOptions]
+        if self.votants != [] and isinstance(self.votants[0], VotantRank):
+            self.votants = [x for x in self.votants if len(x.classements.values()) == nbOptions]
 
         if self.sysVote == "Borda":
             points = {candidat: 0 for candidat in self.candidats} #on initialise les compteurs de points
@@ -133,6 +156,8 @@ class Election:
 
         elif self.sysVote == "sumaut":
             points = {candidat: 0 for candidat in self.candidats} #on initialise les compteurs de points
+            points[None] = 0
+
             for votant in self.votants: #on demande à chaque votant son candidat préféré
                 points[votant.prefere()] += 1
 
@@ -238,13 +263,16 @@ class Election:
         else:
             return self.resultats
 
-    def getVotant(self, userId):
+    def getVotant(self, userId, reset = False):
         userHash = hash(userId) #on fait un hashage de l'id d'utilisateur
 
-        if userHash not in self.votants:
-            self.votants[userHash] = Votant(self, list(self.candidats))
+        if reset or userHash not in self.votants:
+            self.votants[userHash] = VotantRank(self, list(self.candidats)) if self.sysVote in {"Borda", "Copeland", "RankedPairs"} else VotantUninominal(self, list(self.candidats))
 
         return self.votants[userHash]
+
+    def isVotant(self, userId: int) -> bool:
+        return hash(userId) in self.votants
 
     def affi(self):
         if self.sysVote in ("Copeland", "RankedPairs"):
@@ -279,11 +307,18 @@ def resume(election):
         classements = dict()
 
         for votant in election.votants:
-            clsVotant = tuple(sorted(votant.classements.items(), key=lambda x: (x[1], x[0])))
-            if clsVotant not in classements:
-                classements[clsVotant] = 1
-            else:
-                classements[clsVotant] += 1
+            if isinstance(votant, VotantRank):
+                clsVotant = tuple(sorted(votant.classements.items(), key=lambda x: (x[1], x[0])))
+                if clsVotant not in classements:
+                    classements[clsVotant] = 1
+                else:
+                    classements[clsVotant] += 1
+            else: #votant est un VotantUninominal
+                prefere = votant.prefere()
+                if prefere not in classements:
+                    classements[prefere] = 1
+                else:
+                    classements[prefere] += 1
 
         with open("resume.txt", "w") as f:
             infosVotes = list(classements.items())
