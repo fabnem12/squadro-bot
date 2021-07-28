@@ -325,7 +325,7 @@ def resume(election):
             shuffle(infosVotes)
 
             for classement, nbVotants in infosVotes:
-                f.write("{}:{}\n".format(nbVotants, ">".join(x[0] for x in classement)))
+                f.write(f"{nbVotants}:{'>'.join(x[0] for x in classement) if isinstance(classement, tuple) else '>'+classement}\n")
 
         return "resume.txt"
 
