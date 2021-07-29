@@ -71,12 +71,6 @@ async def countMessages(guild):
                 else:
                     dico[key] += 1
 
-            with open(pathSave, "a") as f:
-                f.write("Top countries (with mono-nationals only) so far:\n\n")
-                f.write("\n".join(f"{country} {nbMsgs}" for country, nbMsgs in sorted(nbMsgPerCountry.items(), key=lambda x: x[1], reverse = True)))
-                f.write("\n\nTop multi-national users so far:\n")
-                f.write("\n".join(f"{name} {nbMsgs}" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
-
         except: pass
 
     with open(pathSave, "w") as f:
