@@ -21,20 +21,9 @@ async def countMessages(guild):
     previousMonth = (currentMonth - 1) if currentMonth != 1 else 12
     yearOfPrevMonth = now.year if currentMonth != 1 else now.year -1
 
-    def numberOfDays(month):
-        if month in {1, 3, 5, 7, 8, 10, 12}:
-            return 31
-        elif month == 2:
-            if yearOfPrevMonth % 4 == 0 and (yearOfPrevMonth % 400 == 0 or yearOfPrevMonth % 100 != 0):
-                return 29
-            else:
-                return 28
-        else:
-            return 30
-
     #let's find the beginning and the end of the previous month according to UTC
     timeLimitEarly = datetime(yearOfPrevMonth, previousMonth, 1) - timedelta(hours = 2)
-    timeLimitLate = datetime(yearOfPrevMonth, previousMonth, numberOfDays(previousMonth)) - timedelta(hours = 2)
+    timeLimitLate = datetime(yearOfPrevMonth, currentMonth, 1) - timedelta(hours = 2)
 
     #the file will be stored here… the bot will send the txt file when the counting is done
     pathSave = os.path.join(outputsPath, "infoTopCountries.txt")
@@ -59,6 +48,8 @@ async def countMessages(guild):
                 try:
                     if author.id not in keyDicoByAuthorId:
                         author = await guild.fetch_member(author.id)
+
+                        if author.bot: continue
                 except: #the author left the server, there is no way to know their country roles…
                     continue
 
@@ -80,7 +71,12 @@ async def countMessages(guild):
                 else:
                     dico[key] += 1
 
-            #if input() != "": break
+            with open(pathSave, "a") as f:
+                f.write("Top countries (with mono-nationals only) so far:\n\n")
+                f.write("\n".join(f"{country} {nbMsgs}" for country, nbMsgs in sorted(nbMsgPerCountry.items(), key=lambda x: x[1], reverse = True)))
+                f.write("\n\nTop multi-national users so far:\n")
+                f.write("\n".join(f"{name} {nbMsgs}" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
+
         except: pass
 
     with open(pathSave, "w") as f:

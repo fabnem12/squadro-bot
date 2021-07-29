@@ -324,6 +324,28 @@ def main() -> None:
 
             await ctx.message.add_reaction("👌")
 
+    @bot.command(name = "top_of_month")
+    async def topOfMonth(ctx):
+        if isBotAdmin(ctx.author):
+            from subprocess import Popen
+            import os
+
+            Popen(["python3", os.path.join(os.path.dirname(__file__), "top_countries_month.py")])
+            await ctx.message.add_reaction("👌")
+
+    @bot.command(name = "read_top_of_month")
+    async def readTopOfMonth(ctx):
+        if isBotAdmin(ctx.author):
+            import os
+
+            ref = discord.Reference(channel_id = ctx.channel.id, message_id = ctx.message.id)
+
+            pathTop = os.path.join(outputsPath, "infoTopCountries.txt")
+            if os.path.exists(pathTop):
+                await ctx.send(file = discord.File(pathTop), reference = ref)
+            else:
+                await ctx.send("Someone has to start the count!", reference = ref)
+
     @bot.command(name = "kill")
     async def kill(ctx):
         if ctx.author.id == 619574125622722560: #only fabnem can use this command
