@@ -12,8 +12,6 @@ from utils import stockePID, cheminOutputs as outputsPath
 
 #token = "" #bot token
 #prefix = ","
-bumpBot = 302050872383242240 #DISBOARD
-botCommandsChannel = 577955068268249098 #bot-commands
 
 async def countMessages(guild):
     now = datetime.now()

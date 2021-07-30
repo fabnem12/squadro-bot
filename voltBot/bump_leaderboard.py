@@ -116,7 +116,7 @@ def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEffi
             return "This member never attempted to bump the server."
         else:
             sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
-            rankedMembers = sorted(MEMBERS.values(), key=sortFunc, reverse = True)
+            rankedMembers = sorted((x for x in MEMBERS.values() if x.nbBumpAttempts >= 5), key=sortFunc, reverse = True)
             #nota: member is guaranteed to be in rankedMembers
             index = rankedMembers.index(member)
 
