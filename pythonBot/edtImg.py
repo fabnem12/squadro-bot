@@ -159,3 +159,14 @@ def genereEDT(groupeId, shift = 0):
     lienImage = dessine(couleur, toute_journee, cours, COULEUR_PRESENTIEL, COULEUR_DISTANCIEL, COULEUR_PARTIEL)
 
     return lienImage
+
+def genereEDTNew(urlAgenda, couleur, shift):
+    COULEUR_PRESENTIEL = "#00AA00"
+    COULEUR_DISTANCIEL = "#AA8800"
+    COULEUR_PARTIEL    = "#F4511E"
+
+    agenda = chargeAgenda(urlAgenda)
+    toute_journee, cours = lectureEventsJournee(agenda, shift)
+    lienImage = dessine(couleur, toute_journee, cours, COULEUR_PRESENTIEL, COULEUR_DISTANCIEL, COULEUR_PARTIEL)
+
+    return lienImage, cours != []
