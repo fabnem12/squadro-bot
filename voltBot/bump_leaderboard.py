@@ -224,7 +224,6 @@ def main() -> None:
         if msg.channel.id != botCommandsChannel:
             return
 
-        await msg.add_reaction("kekw:732674441577889994")
         await processBumps(msg)
         await bot.process_commands(msg)
 
