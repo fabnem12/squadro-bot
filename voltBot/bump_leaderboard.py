@@ -197,7 +197,7 @@ async def processBumps(msg):
         if len(txt) <= 20: return
         doneBy = txt[2:20]
         if not doneBy.isdigit(): return
-        doneBy = int(doneBy) #user id of the member who successfully bumped the server
+        doneBy = int(doneBy) #user id of the member who tried to bump the server
 
         member = getMember(doneBy)
         if ":thumbsup:" in txt: #it's a successfull bump!
@@ -206,6 +206,11 @@ async def processBumps(msg):
         elif "wait" in txt: #it's a bump attempt!
             member.addFailedBump()
             save()
+    elif msg.content.startswith("!b dump"):
+        member = getMember(author.id)
+        for _ in range(10): member.addFailedBump()
+        save()
+        await msg.add_reaction("kekw:732674441577889994")
 
 def main() -> None:
     #bot = commands.Bot(command_prefix=prefix, help_command=None)
@@ -219,6 +224,7 @@ def main() -> None:
         if msg.channel.id != botCommandsChannel:
             return
 
+        await msg.add_reaction("kekw:732674441577889994")
         await processBumps(msg)
         await bot.process_commands(msg)
 
