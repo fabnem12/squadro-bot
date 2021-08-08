@@ -207,7 +207,7 @@ async def processBumps(msg):
             member.addFailedBump()
             save()
     elif msg.content.startswith("!b dump"):
-        member = getMember(author.id)
+        member = getMember(author)
         for _ in range(10): member.addFailedBump()
         save()
         await msg.add_reaction("kekw:732674441577889994")
