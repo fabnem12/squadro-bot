@@ -116,7 +116,7 @@ def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEffi
             return "This member never attempted to bump the server."
         else:
             sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
-            rankedMembers = sorted((x for x in MEMBERS.values() if x.nbBumpAttempts >= 5), key=sortFunc, reverse = True)
+            rankedMembers = sorted((x for x in MEMBERS.values() if x.nbBumps >= 15), key=sortFunc, reverse = True)
             #nota: member is guaranteed to be in rankedMembers
             index = rankedMembers.index(member)
 
@@ -137,7 +137,7 @@ def computeStats(guild, bot, byEfficiency: bool = False, fromRank: int = 1) -> s
     sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
 
     response = "__**TOP MEMBERS**__\n"
-    rankedMembers = sorted((x for x in MEMBERS.values() if x.nbBumpAttempts >= 5), key=sortFunc, reverse = True)
+    rankedMembers = sorted((x for x in MEMBERS.values() if x.nbBumps >= 15), key=sortFunc, reverse = True)
     for i in range(fromRank-1, min(fromRank+9, len(rankedMembers))):
         memberObj = rankedMembers[i]
         info = f"<@{memberObj.id}>"
