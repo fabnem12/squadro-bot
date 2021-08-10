@@ -31,7 +31,7 @@ async def countMessages(guild):
     nbMsgPerMultinational = dict()
     keyDicoByAuthorId = dict()
 
-    countries = {"United Kingdom", "Ireland", "Portugal", "Spain", "France", "Belgium", "Netherlands", "Luxembourg", "Germany", "Italy", "Switzerland", "Malta", "Norway", "Sweden", "Denmark", "Finland", "Estonia", "Latvia", "Lithuania", "Poland", "Belarus", "Czechia", "Slovakia", "Austria", "Slovenia", "Croatia", "Greece", "Bulgaria", "Romania", "Ukraine", "Turkey", "Cyprus", "Russia", "Armenia", "Azerbaijan", "Israel", "Georgia", "Lebanon", "North America", "South America", "Africa", "Asia", "Oceania", "Kazakhstan"}
+    countries = {"United Kingdom", "Ireland", "Portugal", "Spain", "France", "Belgium", "Netherlands", "Luxembourg", "Germany", "Italy", "Switzerland", "Malta", "Norway", "Sweden", "Denmark", "Finland", "Estonia", "Latvia", "Lithuania", "Poland", "Belarus", "Czechia", "Slovakia", "Austria", "Slovenia", "Croatia", "Greece", "Bulgaria", "Romania", "Ukraine", "Turkey", "Cyprus", "Russia", "Armenia", "Azerbaijan", "Israel", "Georgia", "Lebanon", "North America", "South America", "Africa", "Asia", "Oceania", "Kazakhstan", "San Marino"}
     for channel in guild.text_channels: #let's read all the channels
         try: #discord raises Forbidden errors if the bot is not allowed to read messages in "channel"
             with open(pathSave, "w") as f: f.write(f"Counting in <#{channel.id}>")
