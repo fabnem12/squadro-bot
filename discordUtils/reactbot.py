@@ -3,6 +3,8 @@ import discord
 from discord.ext import commands
 from typing import Union
 
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constantes import tokenReact
 
 def main() -> None:
