@@ -203,6 +203,7 @@ async def processBumps(msg):
         if ":thumbsup:" in txt: #it's a successfull bump!
             member.addBump()
             save()
+            await msg.add_reaction("volt_cool_glasses:819137584722345984")
         elif "wait" in txt: #it's a bump attempt!
             member.addFailedBump()
             save()
