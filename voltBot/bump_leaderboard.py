@@ -206,6 +206,7 @@ async def processBumps(msg):
         elif "wait" in txt: #it's a bump attempt!
             member.addFailedBump()
             save()
+            await msg.add_reaction("kekw:732674441577889994")
     elif msg.content.startswith("!b dump"):
         await msg.add_reaction("kekw:732674441577889994")
 
