@@ -188,7 +188,7 @@ def getTeam(teamName: str, ifExistsOnly: bool = False) -> Optional[Team]:
             TEAMS[teamName] = Team(teamName)
         return TEAMS[teamName]
 
-async def processBumps(msg):
+async def processBumps(msg, recount=False):
     author = msg.author.id
     if author == bumpBot and len(msg.embeds) != 0:
         e = msg.embeds[0]
@@ -203,11 +203,11 @@ async def processBumps(msg):
         if ":thumbsup:" in txt: #it's a successfull bump!
             member.addBump()
             save()
-            await msg.add_reaction("volt_cool_glasses:819137584722345984")
+            if not recount: await msg.add_reaction("volt_cool_glasses:819137584722345984")
         elif "wait" in txt: #it's a bump attempt!
             member.addFailedBump()
             save()
-            await msg.add_reaction("kekw:732674441577889994")
+            if not recount: await msg.add_reaction("kekw:732674441577889994")
     elif msg.content.startswith("!b dump"):
         await msg.add_reaction("kekw:732674441577889994")
 
@@ -304,7 +304,7 @@ def main() -> None:
             i = 0
             async for message in ctx.channel.history(limit = None):
                 if True:
-                    await processBumps(message)
+                    await processBumps(message, True)
                     i += 1
 
                     if i % 100 == 0: print(i)
