@@ -947,6 +947,24 @@ def main(idsTraites = set(range(10))):
 
             await ctx.message.add_reaction("👌")
 
+    @bot.command(name = "dl_ctes")
+    async def dlCtes(ctx):
+        if estAdmin(ctx.author):
+            await ctx.send(file = discord.File("constantes.py"))
+
+    @bot.command(name = "update_ctes")
+    async def updateCtes(ctx):
+        import requests
+
+        if estAdmin(ctx.author) and ctx.message.attachments != []:
+            urlNouvConstantes = ctx.message.attachments[0].url
+
+            r = requests.get(urlNouvConstantes)
+            with open("constantes.py", "wb") as f:
+                f.write(r.content)
+
+            await ctx.message.add_reaction("👌")
+
     return bot, TOKEN
 
 if __name__ == "__main__":
