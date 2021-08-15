@@ -711,7 +711,7 @@ def main():
             await ctx.message.add_reaction("👌")
 
     @bot.command(name = "avatar")
-    async def avatar(ctx, someone: Optional[discord.Member]):
+    async def avatar(ctx, someone: Optional[discord.User]):
         if someone is None:
             someone = ctx.author
 
