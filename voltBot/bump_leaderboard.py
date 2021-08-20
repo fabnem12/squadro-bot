@@ -122,7 +122,7 @@ def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEffi
                 index = rankedMembers.index(member)
                 return f"__{isMember}__ is **#{index+1}**, {member.nbBumps} bumps ({member.nbBumpAttempts} attempts, efficiency index: {member.efficiency():.2%})"
             except:
-                return f"__{isMember}__ is not ranked ({member.nbBumps} bumps, {member.nbBumpAttempts-member.nbBumps} failed attemps, {member.nbBumpAttempts} attempts)"
+                return f"__{isMember}__ is not ranked ({member.nbBumps} bumps, {member.nbBumpAttempts-member.nbBumps} failed attemps, {member.nbBumpAttempts} attempts, efficiency index: {member.efficiency():.2%})"
     else: #someone is a team name
         team: Optional[Team] = getTeam(someone, True)
         if team is None:
