@@ -207,12 +207,10 @@ async def processBumps(msg, recount=False):
             save()
             if not recount:
                 await msg.add_reaction("volt_cool_glasses:819137584722345984")
-                if member.id == 180333726306140160: #Clus
-                    await msg.channel.send("bruh")
         elif "wait" in txt: #it's a bump attempt!
             member.addFailedBump()
             save()
-            if not recount: await msg.add_reaction("kekw:732674441577889994")
+            if not recount: await msg.add_reaction("kekw:732674441577889994" if member.id != 375638655403950080 else "🫂")
     elif msg.content.startswith("!b dump"):
         await msg.add_reaction("kekw:732674441577889994")
 
