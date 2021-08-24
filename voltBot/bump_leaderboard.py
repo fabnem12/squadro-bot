@@ -205,7 +205,10 @@ async def processBumps(msg, recount=False):
         if ":thumbsup:" in txt: #it's a successfull bump!
             member.addBump()
             save()
-            if not recount: await msg.add_reaction("volt_cool_glasses:819137584722345984")
+            if not recount:
+                await msg.add_reaction("volt_cool_glasses:819137584722345984")
+                if member.id == 180333726306140160: #Clus
+                    await msg.channel.send("bruh")
         elif "wait" in txt: #it's a bump attempt!
             member.addFailedBump()
             save()
