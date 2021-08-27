@@ -190,7 +190,7 @@ def getTeam(teamName: str, ifExistsOnly: bool = False) -> Optional[Team]:
             TEAMS[teamName] = Team(teamName)
         return TEAMS[teamName]
 
-async def processBumps(msg, recount=False):
+async def processBumps(msg, recount=False, pourDeFaux=False):
     author = msg.author.id
     if author == bumpBot and len(msg.embeds) != 0:
         e = msg.embeds[0]
@@ -203,16 +203,23 @@ async def processBumps(msg, recount=False):
 
         member = getMember(doneBy)
         if ":thumbsup:" in txt: #it's a successfull bump!
-            member.addBump()
-            save()
-            if not recount:
-                await msg.add_reaction("volt_cool_glasses:819137584722345984")
+            if pourDeFaux:
+                return (1, 1)
+            else:
+                member.addBump()
+                save()
+                if not recount:
+                    await msg.add_reaction("volt_cool_glasses:819137584722345984")
         elif "wait" in txt: #it's a bump attempt!
-            member.addFailedBump()
-            save()
-            if not recount: await msg.add_reaction("kekw:732674441577889994" if member.id != 375638655403950080 else "🫂")
+            if pourDeFaux:
+                return (0, 1)
+            else:
+                member.addFailedBump()
+                save()
+                if not recount: await msg.add_reaction("kekw:732674441577889994" if member.id != 375638655403950080 else "🫂")
     elif msg.content.startswith("!b dump"):
         await msg.add_reaction("kekw:732674441577889994")
+        return (0, 0)
 
 def main() -> None:
     #bot = commands.Bot(command_prefix=prefix, help_command=None)
@@ -339,6 +346,24 @@ def main() -> None:
 
             Popen(["python3", os.path.join(os.path.dirname(__file__), "top_countries_month.py")])
             await ctx.message.add_reaction("👌")
+
+    @bot.command(name = "top_bumps_month")
+    async def topBumpsMonth(ctx):
+        points = dict()
+        from datetime import datetime, timedelta
+
+        async for msg in ctx.channel.history(limit = None, after = datetime.now() - timedelta(days = 30)):
+            successfullBumps, attempts = await processBumps(msg, True, True)
+            authorId = msg.author.id
+
+            if successfullBumps:
+                if authorId not in points:
+                    points[authorId] = successfullBumps
+                else:
+                    points[authorId] += successfullBumps
+
+        topBumps = sorted(points.items(), key=lambda x: x[1], reverse = True)
+        await ctx.send(embed = discord.Embed(content = "\n".join(f"**#{i+1}** <@{authorId}> with {nbBumps} successfull bumps" for i, (authorId, nbBumps) in enumerate(topBumps))), reference = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id))
 
     @bot.command(name = "read_top_of_month")
     async def readTopOfMonth(ctx):
