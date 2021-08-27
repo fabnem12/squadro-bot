@@ -13,7 +13,38 @@ from utils import stockePID, cheminOutputs as outputsPath
 #token = "" #bot token
 #prefix = ","
 
-async def countMessages(guild):
+def eurovisionPoints(topPerChannel, keyDicoByAuthorId):
+    print(len(topPerChannel), len(keyDicoByAuthorId))
+    points = dict()
+    affi = ""
+
+    def addPoints(key, nbPoints):
+        if key not in points:
+            points[key] = nbPoints
+        else:
+            points[key] += nbPoints
+
+    for channel, (top, channelName) in topPerChannel.items():
+        rankedTop = sorted(top.items(), key=lambda x: x[1], reverse = True)
+
+        if len(rankedTop) >= 10 and rankedTop[9][1] >= 10: #if not, let's just ignore this channel for the eurovision points, it's not relevant
+            #recap of the channel
+            affiChannel = f"Top in #{channelName}\n"
+            affiChannel += "\n".join(f"#{i+1} {keyDicoByAuthorId[authorId][2]}" for i, (authorId, _) in zip(range(10), rankedTop))
+            affiChannel += "\n\n"
+
+            affi += affiChannel
+
+            #let's add eurovision points
+            for nbPoints, (authorId, _) in zip((12, 10, 8, 7, 6, 5, 4, 3, 2, 1), rankedTop):
+                addPoints(authorId, nbPoints)
+
+    topPoints = f"Top users eurovision style:\n"
+    topPoints += "\n".join(f"#{i+1} {keyDicoByAuthorId[authorId][2]} with {nbPoints} points" for i, (authorId, nbPoints) in enumerate(sorted(points.items(), key=lambda x: x[1], reverse=True)))
+
+    return topPoints + "\n\n" + affi
+
+async def countMessages(guild, bot):
     now = datetime.now()
     currentMonth = now.month
     previousMonth = (currentMonth - 1) if currentMonth != 1 else 12
@@ -29,19 +60,19 @@ async def countMessages(guild):
 
     nbMsgPerCountry = dict()
     nbMsgPerMultinational = dict()
+    nbMsgPerPerson = dict()
+    topPerChannel = dict()
     keyDicoByAuthorId = dict()
 
     countries = {"United Kingdom", "Ireland", "Portugal", "Spain", "France", "Belgium", "Netherlands", "Luxembourg", "Germany", "Italy", "Switzerland", "Malta", "Norway", "Sweden", "Denmark", "Finland", "Estonia", "Latvia", "Lithuania", "Poland", "Belarus", "Czechia", "Slovakia", "Austria", "Slovenia", "Croatia", "Greece", "Bulgaria", "Romania", "Ukraine", "Turkey", "Cyprus", "Russia", "Armenia", "Azerbaijan", "Israel", "Georgia", "Lebanon", "North America", "South America", "Africa", "Asia", "Oceania", "Kazakhstan", "San Marino"}
-    for channel in guild.text_channels: #let's read all the channels
-        try: #discord raises Forbidden errors if the bot is not allowed to read messages in "channel"
-            with open(pathSave, "w") as f: f.write(f"Counting in <#{channel.id}>")
-            #print(channel.name)
+    for channel in (guild.get_channel(800171310940291103), guild.get_channel(577955068268249098), guild.get_channel(805823395191193640)):# guild.text_channels[:25]: #let's read all the channels
+        try: #discord raises Forbidden error if the bot is not allowed to read messages in "channel"
+            await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name}"))
 
-            #i = 0
+            topChannel = dict()
+            topPerChannel[channel.id] = (topChannel, channel.name)
+
             async for msg in channel.history(limit = None, after = timeLimitEarly, before = timeLimitLate): #let's read the messages sent last month in the current channel
-                #i += 1
-                #if i % 100 == 0: print(i)
-
                 author = msg.author
                 try:
                     if author.id not in keyDicoByAuthorId:
@@ -57,26 +88,42 @@ async def countMessages(guild):
                         key = authorsCountries[0]
                         dico = nbMsgPerCountry
                     else: #the author has several country roles, it's up to Isak!
-                        key = author.nick or author.name
+                        key = f"{author.nick} ({author.name})" if author.nick else author.name
                         dico = nbMsgPerMultinational
 
-                    keyDicoByAuthorId[author.id] = (key, dico)
+                    keyDicoByAuthorId[author.id] = (key, dico, f"{author.nick} ({author.name})" if author.nick else author.name)
                 else:
-                    key, dico = keyDicoByAuthorId[author.id]
+                    key, dico, authorNick = keyDicoByAuthorId[author.id]
 
                 if key not in dico: #increase the count of messages
                     dico[key] = 1
                 else:
                     dico[key] += 1
 
-        except: pass
+                if author.id not in nbMsgPerPerson:
+                    nbMsgPerPerson[author.id] = 1
+                else:
+                    nbMsgPerPerson[author.id] += 1
+
+                if author.id not in topChannel:
+                    topChannel[author.id] = 1
+                else:
+                    topChannel[author.id] += 1
+
+        except Exception as e:
+            print(e)
 
     with open(pathSave, "w") as f:
         f.write("Top countries (with mono-nationals only):\n\n")
         f.write("\n".join(f"{country} {nbMsgs}" for country, nbMsgs in sorted(nbMsgPerCountry.items(), key=lambda x: x[1], reverse = True)))
         f.write("\n\nTop multi-national users:\n")
-        f.write("\n".join(f"{name} {nbMsgs}" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
+        f.write("\n".join(f"{name} with {nbMsgs} messages" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
+        f.write("\n\nTop 100 users of the month:\n")
+        f.write("\n".join(f"#{i+1} {keyDicoByAuthorId[authId][2]} with {nbMsgs} messages" for i, (authId, nbMsgs) in zip(range(100), sorted(nbMsgPerPerson.items(), key=lambda x: x[1], reverse = True))))
+        f.write("\n\n")
+        f.write(eurovisionPoints(topPerChannel, keyDicoByAuthorId))
 
+    await bot.change_presence()
     quit()
 
 def main() -> None:
@@ -85,7 +132,7 @@ def main() -> None:
     @bot.event
     async def on_ready():
         print("toto")
-        await countMessages(bot.get_guild(567021913210355745))
+        await countMessages(bot.get_guild(567021913210355745), bot)
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
