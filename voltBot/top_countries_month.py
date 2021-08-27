@@ -64,7 +64,7 @@ async def countMessages(guild, bot):
     keyDicoByAuthorId = dict()
 
     countries = {"United Kingdom", "Ireland", "Portugal", "Spain", "France", "Belgium", "Netherlands", "Luxembourg", "Germany", "Italy", "Switzerland", "Malta", "Norway", "Sweden", "Denmark", "Finland", "Estonia", "Latvia", "Lithuania", "Poland", "Belarus", "Czechia", "Slovakia", "Austria", "Slovenia", "Croatia", "Greece", "Bulgaria", "Romania", "Ukraine", "Turkey", "Cyprus", "Russia", "Armenia", "Azerbaijan", "Israel", "Georgia", "Lebanon", "North America", "South America", "Africa", "Asia", "Oceania", "Kazakhstan", "San Marino"}
-    for channel in guild.text_channels: #let's read all the channels
+    for channel in filter((lambda x: "logs" not in x.name), guild.text_channels): #let's read all the channels
         try: #discord raises Forbidden error if the bot is not allowed to read messages in "channel"
             await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name}"))
 
@@ -81,6 +81,8 @@ async def countMessages(guild, bot):
                 except: #the author left the server, there is no way to know their country roles…
                     continue
 
+                msgLength = len(msg.content)
+
                 if author.id not in keyDicoByAuthorId:
                     authorsCountries = tuple(role.name for role in author.roles if role.name in countries)
                     if len(authorsCountries) == 1: #the author has only 1 country role: easy
@@ -95,30 +97,30 @@ async def countMessages(guild, bot):
                     key, dico, authorNick = keyDicoByAuthorId[author.id]
 
                 if key not in dico: #increase the count of messages
-                    dico[key] = 1
+                    dico[key] = msgLength
                 else:
-                    dico[key] += 1
+                    dico[key] += msgLength
 
                 if author.id not in nbMsgPerPerson:
-                    nbMsgPerPerson[author.id] = 1
+                    nbMsgPerPerson[author.id] = msgLength
                 else:
-                    nbMsgPerPerson[author.id] += 1
+                    nbMsgPerPerson[author.id] += msgLength
 
                 if author.id not in topChannel:
-                    topChannel[author.id] = 1
+                    topChannel[author.id] = msgLength
                 else:
-                    topChannel[author.id] += 1
+                    topChannel[author.id] += msgLength
 
         except Exception as e:
             print(e)
 
     with open(pathSave, "w") as f:
         f.write("Top countries (with mono-nationals only):\n\n")
-        f.write("\n".join(f"{country} {nbMsgs}" for country, nbMsgs in sorted(nbMsgPerCountry.items(), key=lambda x: x[1], reverse = True)))
+        f.write("\n".join(f"{country} with {nbMsgs // 20}x20 letters" for country, nbMsgs in sorted(nbMsgPerCountry.items(), key=lambda x: x[1], reverse = True)))
         f.write("\n\nTop multi-national users:\n")
-        f.write("\n".join(f"{name} with {nbMsgs} messages" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
+        f.write("\n".join(f"{name} with {nbMsgs // 20}x20 letters" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
         f.write("\n\nTop 100 users of the month:\n")
-        f.write("\n".join(f"#{i+1} {keyDicoByAuthorId[authId][2]} with {nbMsgs} messages" for i, (authId, nbMsgs) in zip(range(100), sorted(nbMsgPerPerson.items(), key=lambda x: x[1], reverse = True))))
+        f.write("\n".join(f"#{i+1} {keyDicoByAuthorId[authId][2]} with {nbMsgs // 20}x20 letters" for i, (authId, nbMsgs) in zip(range(100), sorted(nbMsgPerPerson.items(), key=lambda x: x[1], reverse = True))))
         f.write("\n\n")
         f.write(eurovisionPoints(topPerChannel, keyDicoByAuthorId))
 
