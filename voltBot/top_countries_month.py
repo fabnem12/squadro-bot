@@ -56,7 +56,6 @@ async def countMessages(guild, bot):
 
     #the file will be stored here… the bot will send the txt file when the counting is done
     pathSave = os.path.join(outputsPath, "infoTopCountries.txt")
-    with open(pathSave, "w") as f: f.write("Work in progress…")
 
     nbMsgPerCountry = dict()
     nbMsgPerMultinational = dict()
@@ -65,7 +64,7 @@ async def countMessages(guild, bot):
     keyDicoByAuthorId = dict()
 
     countries = {"United Kingdom", "Ireland", "Portugal", "Spain", "France", "Belgium", "Netherlands", "Luxembourg", "Germany", "Italy", "Switzerland", "Malta", "Norway", "Sweden", "Denmark", "Finland", "Estonia", "Latvia", "Lithuania", "Poland", "Belarus", "Czechia", "Slovakia", "Austria", "Slovenia", "Croatia", "Greece", "Bulgaria", "Romania", "Ukraine", "Turkey", "Cyprus", "Russia", "Armenia", "Azerbaijan", "Israel", "Georgia", "Lebanon", "North America", "South America", "Africa", "Asia", "Oceania", "Kazakhstan", "San Marino"}
-    for channel in (guild.get_channel(800171310940291103), guild.get_channel(577955068268249098), guild.get_channel(805823395191193640)):# guild.text_channels[:25]: #let's read all the channels
+    for channel in guild.text_channels: #let's read all the channels
         try: #discord raises Forbidden error if the bot is not allowed to read messages in "channel"
             await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name}"))
 
