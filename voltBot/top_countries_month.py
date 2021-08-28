@@ -63,15 +63,21 @@ async def countMessages(guild, bot):
     topPerChannel = dict()
     keyDicoByAuthorId = dict()
 
+    totalNbMsgs = 0
     countries = {"United Kingdom", "Ireland", "Portugal", "Spain", "France", "Belgium", "Netherlands", "Luxembourg", "Germany", "Italy", "Switzerland", "Malta", "Norway", "Sweden", "Denmark", "Finland", "Estonia", "Latvia", "Lithuania", "Poland", "Belarus", "Czechia", "Slovakia", "Austria", "Slovenia", "Croatia", "Greece", "Bulgaria", "Romania", "Ukraine", "Turkey", "Cyprus", "Russia", "Armenia", "Azerbaijan", "Israel", "Georgia", "Lebanon", "North America", "South America", "Africa", "Asia", "Oceania", "Kazakhstan", "San Marino"}
     for channel in filter((lambda x: "logs" not in x.name), guild.text_channels): #let's read all the channels
         try: #discord raises Forbidden error if the bot is not allowed to read messages in "channel"
-            await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name}"))
+            await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name} - {totalNbMsgs}+ messages counted so far"))
 
             topChannel = dict()
             topPerChannel[channel.id] = (topChannel, channel.name)
 
             async for msg in channel.history(limit = None, after = timeLimitEarly, before = timeLimitLate): #let's read the messages sent last month in the current channel
+                totalNbMsgs += 1
+
+                if totalNbMsgs % 200 == 0:
+                    await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name} - {totalNbMsgs}+ messages counted so far"))
+
                 author = msg.author
                 try:
                     if author.id not in keyDicoByAuthorId:
