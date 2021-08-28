@@ -27,7 +27,7 @@ def eurovisionPoints(topPerChannel, keyDicoByAuthorId):
     for channel, (top, channelName) in topPerChannel.items():
         rankedTop = sorted(top.items(), key=lambda x: x[1], reverse = True)
 
-        if len(rankedTop) >= 10 and rankedTop[9][1] >= 10: #if not, let's just ignore this channel for the eurovision points, it's not relevant
+        if len(rankedTop) >= 10 and rankedTop[9][1] >= 150: #if not, let's just ignore this channel for the eurovision points, it's not relevant
             #recap of the channel
             affiChannel = f"Top in #{channelName}\n"
             affiChannel += "\n".join(f"#{i+1} {keyDicoByAuthorId[authorId][2]}" for i, (authorId, _) in zip(range(10), rankedTop))
@@ -132,7 +132,6 @@ def main() -> None:
 
     @bot.event
     async def on_ready():
-        print("toto")
         await countMessages(bot.get_guild(567021913210355745), bot)
 
     loop = asyncio.get_event_loop()

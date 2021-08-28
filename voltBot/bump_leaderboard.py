@@ -196,15 +196,15 @@ async def processBumps(msg, recount=False, pourDeFaux=False):
         e = msg.embeds[0]
         txt = e.description
 
-        if len(txt) <= 20: return
+        if len(txt) <= 20: return (0, 0)
         doneBy = txt[2:20]
-        if not doneBy.isdigit(): return
+        if not doneBy.isdigit(): return (0, 0)
         doneBy = int(doneBy) #user id of the member who tried to bump the server
 
         member = getMember(doneBy)
         if ":thumbsup:" in txt: #it's a successfull bump!
             if pourDeFaux:
-                return (1, 1)
+                return (1, member.id)
             else:
                 member.addBump()
                 save()
@@ -212,14 +212,15 @@ async def processBumps(msg, recount=False, pourDeFaux=False):
                     await msg.add_reaction("volt_cool_glasses:819137584722345984")
         elif "wait" in txt: #it's a bump attempt!
             if pourDeFaux:
-                return (0, 1)
+                return (0, member.id)
             else:
                 member.addFailedBump()
                 save()
                 if not recount: await msg.add_reaction("kekw:732674441577889994" if member.id != 375638655403950080 else "🫂")
     elif msg.content.startswith("!b dump"):
         await msg.add_reaction("kekw:732674441577889994")
-        return (0, 0)
+
+    return (0, 0)
 
 def main() -> None:
     #bot = commands.Bot(command_prefix=prefix, help_command=None)
@@ -227,6 +228,10 @@ def main() -> None:
 
     def isBotAdmin(user: discord.Member) -> bool:
         return user.guild_permissions.manage_channels or user.id == 619574125622722560
+
+    @bot.command(name = "u_ok?")
+    async def uok(ctx):
+        await ctx.send("yeah <:volt_cool_glasses:819137584722345984>")
 
     @bot.event
     async def on_message(msg) -> None:
@@ -319,8 +324,6 @@ def main() -> None:
 
                     if i % 100 == 0: print(i)
 
-            print("fini")
-
     @bot.command(name = "reset")
     async def resetBot(ctx):
         if ctx.author.id == 619574125622722560:
@@ -352,9 +355,10 @@ def main() -> None:
         points = dict()
         from datetime import datetime, timedelta
 
+        await ctx.message.add_reaction("👌")
+
         async for msg in ctx.channel.history(limit = None, after = datetime.now() - timedelta(days = 30)):
-            successfullBumps, attempts = await processBumps(msg, True, True)
-            authorId = msg.author.id
+            successfullBumps, authorId = await processBumps(msg, True, True)
 
             if successfullBumps:
                 if authorId not in points:
@@ -363,10 +367,10 @@ def main() -> None:
                     points[authorId] += successfullBumps
 
         topBumps = sorted(points.items(), key=lambda x: x[1], reverse = True)
-        await ctx.send(embed = discord.Embed(content = "\n".join(f"**#{i+1}** <@{authorId}> with {nbBumps} successfull bumps" for i, (authorId, nbBumps) in enumerate(topBumps))), reference = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id))
+        await ctx.send(embed = discord.Embed(description = "\n".join(f"**#{i+1}** <@{authorId}> with {nbBumps} successfull bumps" for i, (authorId, nbBumps) in enumerate(topBumps))), reference = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id))
 
     @bot.command(name = "read_top_of_month")
-    async def readTopOfMonth(ctx):
+    async def topOfMonth(ctx):
         if isBotAdmin(ctx.author):
             import os
 
