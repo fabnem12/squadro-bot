@@ -374,7 +374,7 @@ def main() -> None:
         if isBotAdmin(ctx.author):
             import os
 
-            ref = discord.Reference(channel_id = ctx.channel.id, message_id = ctx.message.id)
+            ref = discord.MessageReference(channel_id = ctx.channel.id, message_id = ctx.message.id)
 
             pathTop = os.path.join(outputsPath, "infoTopCountries.txt")
             if os.path.exists(pathTop):

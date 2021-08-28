@@ -75,7 +75,7 @@ async def countMessages(guild, bot):
             async for msg in channel.history(limit = None, after = timeLimitEarly, before = timeLimitLate): #let's read the messages sent last month in the current channel
                 totalNbMsgs += 1
 
-                if totalNbMsgs % 200 == 0:
+                if totalNbMsgs % 2000 == 0:
                     await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name} - {totalNbMsgs}+ messages counted so far"))
 
                 author = msg.author
@@ -122,11 +122,11 @@ async def countMessages(guild, bot):
 
     with open(pathSave, "w") as f:
         f.write("Top countries (with mono-nationals only):\n\n")
-        f.write("\n".join(f"{country} with {nbMsgs // 20}x20 letters" for country, nbMsgs in sorted(nbMsgPerCountry.items(), key=lambda x: x[1], reverse = True)))
+        f.write("\n".join(f"{country} with {nbMsgs} letters" for country, nbMsgs in sorted(nbMsgPerCountry.items(), key=lambda x: x[1], reverse = True)))
         f.write("\n\nTop multi-national users:\n")
-        f.write("\n".join(f"{name} with {nbMsgs // 20}x20 letters" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
+        f.write("\n".join(f"{name} with {nbMsgs}x20 letters" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
         f.write("\n\nTop 100 users of the month:\n")
-        f.write("\n".join(f"#{i+1} {keyDicoByAuthorId[authId][2]} with {nbMsgs // 20}x20 letters" for i, (authId, nbMsgs) in zip(range(100), sorted(nbMsgPerPerson.items(), key=lambda x: x[1], reverse = True))))
+        f.write("\n".join(f"#{i+1} {keyDicoByAuthorId[authId][2]} with {nbMsgs} letters" for i, (authId, nbMsgs) in zip(range(100), sorted(nbMsgPerPerson.items(), key=lambda x: x[1], reverse = True))))
         f.write("\n\n")
         f.write(eurovisionPoints(topPerChannel, keyDicoByAuthorId))
 
