@@ -53,12 +53,12 @@ def dessine(couleurDefaut, toute_journee, liste_cours, COULEUR_PRESENTIEL, COULE
 
     #l'évènement toute la journée (présentiel/distanciel)
     txtPresentiel = toute_journee[0]["SUMMARY"]
-    presentiel = False #"PRÉSENTIEL" in txtPresentiel - pendant le confinement la question ne se pose pas
+    presentiel = "PRÉSENTIEL" in txtPresentiel
     couleur = COULEUR_PRESENTIEL if presentiel else COULEUR_DISTANCIEL
 
     dateJour = liste_cours[0]["DTSTART"].dt if len(liste_cours) > 0 else None
 
-    printF("<rect x='0' y='0' width='{}' height='100' fill='{}' />".format(LARGEUR, couleur))
+    printF("<rect x='0' y='15' width='{}' height='100' fill='{}' />".format(LARGEUR, couleur))
     if dateJour:
         titre = "Cours du {} {}".format(NOMS_JOURS[dateJour.isoweekday() - 1], dateJour.strftime("%d/%m"))
     else:
@@ -68,7 +68,7 @@ def dessine(couleurDefaut, toute_journee, liste_cours, COULEUR_PRESENTIEL, COULE
     #affichage des heures
     offsetY = 100
     for heure in range(8, 20):
-        printF("<text x='10' y='{}' font-size='30'>{}:00</text>".format(offsetY + 35 + (heure - 8) * HAUTEUR_COURS, str(heure).zfill(2)))
+        printF(f"<text x='8' y='{offsetY + 35 + (heure - 8) * HAUTEUR_COURS}' font-size='30'>{str(heure).zfill(2))}:00</text>")
         printF("<line x1='0' y1='{y}' x2='{largeur}' y2='{y}' style='stroke: #000; stroke-width: 1;' />".format(y = offsetY + (heure - 8) * HAUTEUR_COURS, largeur = LARGEUR))
 
     offsetX = 100
@@ -162,7 +162,7 @@ def genereEDT(groupeId, shift = 0):
 
 def genereEDTNew(urlAgenda, couleur, shift):
     COULEUR_PRESENTIEL = "#00AA00"
-    COULEUR_DISTANCIEL = "#AA8800"
+    COULEUR_DISTANCIEL = "#AAAA00"
     COULEUR_PARTIEL    = "#F4511E"
 
     agenda = chargeAgenda(urlAgenda)
