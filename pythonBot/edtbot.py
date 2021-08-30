@@ -95,7 +95,7 @@ async def setAgenda(msg):
         elif fonc is setSalon:
             tronque = msg.content[2:-1]
             if not tronque.isdigit():
-                await msg.channel.send("Euh on ne dirait pas un nom de salon…")
+                await msg.channel.send("Euh on ne dirait pas une mention de salon…")
                 return
             else:
                 info = int(tronque)
@@ -134,7 +134,7 @@ def main():
 
         for agenda in infos.values():
             if agenda.valide():
-                if now.hour == agenda.heure and now.minute >= 0 and now.minute < 30:
+                if (now.hour == agenda.heure and now.minute < 5) or (now.hour == agenda.heure-1 and now.minute >= 55):
                     channel = await bot.fetch_channel(agenda.salon)
                     lienImage, aDesCours = genereEDTNew(agenda.url, agenda.couleur, 1)
 
@@ -144,6 +144,12 @@ def main():
     @bot.event
     async def on_ready():
         envoiEDT.start()
+
+    @bot.event #pour ne pas afficher les messages d'erreur de commande inexistante (typiquement si on utilise une commande du bot squadro qui est gérée par un autre script)
+    async def on_command_error(ctx, error):
+        if isinstance(error, commands.CommandNotFound):
+            return
+        raise error
 
     @bot.event
     async def on_message(msg):
