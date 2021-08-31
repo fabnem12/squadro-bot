@@ -12,6 +12,7 @@ from utils import stockePID, cheminOutputs as outputsPath
 
 #token = "" #bot token
 #prefix = ","
+byLength = False
 
 def eurovisionPoints(topPerChannel, keyDicoByAuthorId):
     print(len(topPerChannel), len(keyDicoByAuthorId))
@@ -87,7 +88,7 @@ async def countMessages(guild, bot):
                 except: #the author left the server, there is no way to know their country roles…
                     continue
 
-                msgLength = len(msg.content)
+                msgLength = len(msg.content) if byLength else 1
 
                 if author.id not in keyDicoByAuthorId:
                     authorsCountries = tuple(role.name for role in author.roles if role.name in countries)
@@ -122,11 +123,11 @@ async def countMessages(guild, bot):
 
     with open(pathSave, "w") as f:
         f.write("Top countries (with mono-nationals only):\n\n")
-        f.write("\n".join(f"{country} with {nbMsgs} letters" for country, nbMsgs in sorted(nbMsgPerCountry.items(), key=lambda x: x[1], reverse = True)))
+        f.write("\n".join(f"{country} with {nbMsgs} {'letters' if byLength else 'words'}" for country, nbMsgs in sorted(nbMsgPerCountry.items(), key=lambda x: x[1], reverse = True)))
         f.write("\n\nTop multi-national users:\n")
-        f.write("\n".join(f"{name} with {nbMsgs} letters" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
+        f.write("\n".join(f"{name} with {nbMsgs} {'letters' if byLength else 'words'}" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
         f.write("\n\nTop 100 users of the month:\n")
-        f.write("\n".join(f"#{i+1} {keyDicoByAuthorId[authId][2]} with {nbMsgs} letters" for i, (authId, nbMsgs) in zip(range(100), sorted(nbMsgPerPerson.items(), key=lambda x: x[1], reverse = True))))
+        f.write("\n".join(f"#{i+1} {keyDicoByAuthorId[authId][2]} with {nbMsgs} {'letters' if byLength else 'words'}" for i, (authId, nbMsgs) in zip(range(100), sorted(nbMsgPerPerson.items(), key=lambda x: x[1], reverse = True))))
         f.write("\n\n")
         f.write(eurovisionPoints(topPerChannel, keyDicoByAuthorId))
 
