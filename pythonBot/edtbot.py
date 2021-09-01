@@ -144,7 +144,6 @@ def main():
     @bot.event
     async def on_ready():
         envoiEDT.start()
-        print(infos.keys())
 
     @bot.event #pour ne pas afficher les messages d'erreur de commande inexistante (typiquement si on utilise une commande du bot squadro qui est gérée par un autre script)
     async def on_command_error(ctx, error):

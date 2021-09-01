@@ -58,12 +58,12 @@ def dessine(couleurDefaut, toute_journee, liste_cours, COULEUR_PRESENTIEL, COULE
 
     dateJour = liste_cours[0]["DTSTART"].dt if len(liste_cours) > 0 else None
 
-    printF("<rect x='0' y='15' width='{}' height='100' fill='{}' />".format(LARGEUR, couleur))
+    printF("<rect x='0' y='0' width='{}' height='100' fill='{}' />".format(LARGEUR, couleur))
     if dateJour:
         titre = "Cours du {} {}".format(NOMS_JOURS[dateJour.isoweekday() - 1], dateJour.strftime("%d/%m"))
     else:
         titre = "Pas de cours demain !"
-    printF("<text x='{}' y='50' font-size='50' fill='white' text-anchor='middle'>{}</text>".format(LARGEUR / 2, titre))
+    printF("<text x='{}' y='65' font-size='50' fill='white' text-anchor='middle'>{}</text>".format(LARGEUR / 2, titre))
 
     #affichage des heures
     offsetY = 100
