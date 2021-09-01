@@ -144,6 +144,7 @@ def main():
     @bot.event
     async def on_ready():
         envoiEDT.start()
+        print(infos.keys())
 
     @bot.event #pour ne pas afficher les messages d'erreur de commande inexistante (typiquement si on utilise une commande du bot squadro qui est gérée par un autre script)
     async def on_command_error(ctx, error):
@@ -177,7 +178,7 @@ def main():
             agenda = infos[agendaId]
             lienImage, _ = genereEDTNew(agenda.url, agenda.couleur, 1)
 
-            await channel.send("Voici l'emploi du temps pour demain :", file = discord.File(lienImage))
+            await ctx.channel.send("Voici l'emploi du temps pour demain :", file = discord.File(lienImage))
         else:
             await ctx.message.add_reaction("❔")
 

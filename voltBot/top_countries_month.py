@@ -15,7 +15,6 @@ from utils import stockePID, cheminOutputs as outputsPath
 byLength = False
 
 def eurovisionPoints(topPerChannel, keyDicoByAuthorId):
-    print(len(topPerChannel), len(keyDicoByAuthorId))
     points = dict()
     affi = ""
 
