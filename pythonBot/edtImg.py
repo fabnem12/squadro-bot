@@ -68,7 +68,7 @@ def dessine(couleurDefaut, toute_journee, liste_cours, COULEUR_PRESENTIEL, COULE
     #affichage des heures
     offsetY = 100
     for heure in range(8, 20):
-        printF(f"<text x='8' y='{offsetY + 35 + (heure - 8) * HAUTEUR_COURS}' font-size='30'>{str(heure).zfill(2))}:00</text>")
+        printF(f"<text x='8' y='{offsetY + 35 + (heure - 8) * HAUTEUR_COURS}' font-size='30'>{str(heure).zfill(2)}:00</text>")
         printF("<line x1='0' y1='{y}' x2='{largeur}' y2='{y}' style='stroke: #000; stroke-width: 1;' />".format(y = offsetY + (heure - 8) * HAUTEUR_COURS, largeur = LARGEUR))
 
     offsetX = 100

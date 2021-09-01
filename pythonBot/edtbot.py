@@ -171,6 +171,16 @@ def main():
         else:
             await ctx.channel.send("https://tenor.com/view/omg-no-stop-please-pleasestop-gif-16120177")
 
+    @bot.command(name = "renvoi")
+    async def renvoi(ctx, agendaId: AgendaId):
+        if agendaId in infos:
+            agenda = infos[agendaId]
+            lienImage, _ = genereEDTNew(agenda.url, agenda.couleur, 1)
+
+            await channel.send("Voici l'emploi du temps pour demain :", file = discord.File(lienImage))
+        else:
+            await ctx.message.add_reaction("❔")
+
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(tokenEdt))
     loop.run_forever()
