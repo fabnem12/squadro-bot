@@ -28,7 +28,7 @@ def eurovisionPoints(topPerChannel, keyDicoByAuthorId):
     for channel, (top, channelName) in topPerChannel.items():
         rankedTop = sorted(top.items(), key=lambda x: x[1], reverse = True)
 
-        if len(rankedTop) >= 10 and rankedTop[9][1] >= 150: #if not, let's just ignore this channel for the eurovision points, it's not relevant
+        if len(rankedTop) >= 10 and rankedTop[9][1] >= (150 if byLength else 10): #if not, let's just ignore this channel for the eurovision points, it's not relevant
             #recap of the channel
             affiChannel = f"Top in #{channelName}\n"
             affiChannel += "\n".join(f"#{i+1} {keyDicoByAuthorId[authorId][2]}" for i, (authorId, _) in zip(range(10), rankedTop))
@@ -123,11 +123,11 @@ async def countMessages(guild, bot):
 
     with open(pathSave, "w") as f:
         f.write("Top countries (with mono-nationals only):\n\n")
-        f.write("\n".join(f"{country} with {nbMsgs} {'letters' if byLength else 'words'}" for country, nbMsgs in sorted(nbMsgPerCountry.items(), key=lambda x: x[1], reverse = True)))
+        f.write("\n".join(f"{country} with {nbMsgs} {'letters' if byLength else 'messages'}" for country, nbMsgs in sorted(nbMsgPerCountry.items(), key=lambda x: x[1], reverse = True)))
         f.write("\n\nTop multi-national users:\n")
-        f.write("\n".join(f"{name} with {nbMsgs} {'letters' if byLength else 'words'}" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
+        f.write("\n".join(f"{name} with {nbMsgs} {'letters' if byLength else 'messages'}" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
         f.write("\n\nTop 100 users of the month:\n")
-        f.write("\n".join(f"#{i+1} {keyDicoByAuthorId[authId][2]} with {nbMsgs} {'letters' if byLength else 'words'}" for i, (authId, nbMsgs) in zip(range(100), sorted(nbMsgPerPerson.items(), key=lambda x: x[1], reverse = True))))
+        f.write("\n".join(f"#{i+1} {keyDicoByAuthorId[authId][2]} with {nbMsgs} {'letters' if byLength else 'messages'}" for i, (authId, nbMsgs) in zip(range(100), sorted(nbMsgPerPerson.items(), key=lambda x: x[1], reverse = True))))
         f.write("\n\n")
         f.write(eurovisionPoints(topPerChannel, keyDicoByAuthorId))
 
