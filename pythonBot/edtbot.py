@@ -106,20 +106,20 @@ async def setAgenda(msg):
         if succes and fonc is not setUrl:
             txt = "C'est noté !\n"
             if fonc is setSalon:
-                txt += "À quelle heure faut-il envoyer l'emploi du temps ? Donne-moi juste un entier, j'enverrai autour de l'heure pile"
+                txt += "À quelle heure faut-il envoyer l'emploi du temps ? Donne-moi juste un entier, j'enverrai l'emploi du temps autour de l'heure pile. À noter que le bot envoie toujours l'emploi du temps du lendemain de l'envoi"
                 newFonc = setHeure
             elif fonc is setHeure:
                 txt += "De quelle couleur doit être l'emploi du temps ? Il faut un code de couleur hexadécimal (du style #CC00CC, sans oublier le #)"
                 newFonc = setCouleur
             elif fonc is setCouleur:
-                txt += "Une dernière chose : l'url publique du Google Agenda"
+                txt += "Une dernière chose : l'adresse publique iCal de l'agenda (ça doit finir par .ics). Attention, il faut que la case 'Rendre disponible publiquement' dans les paramètres soit bien cochée pour que ça marche."
                 newFonc = setUrl
             #else n'est pas possible
 
             await msg.channel.send(txt)
             editMsg[msg.channel.id, msg.author.id] = (newFonc, agendaId)
         elif fonc is setUrl:
-            await msg.channel.send(f"C'est bon, l'agenda est prêt à être envoyé quotidiennement. Pour modifier les paramètres d'envoi automatique, il faut supprimer l'agenda avec `A.del {agendaId}` et recréer un envoi automatique avec `A.create`.")
+            await msg.channel.send(f"C'est bon, l'agenda est prêt à être envoyé quotidiennement (si l'url a bien été renseignée…). Pour modifier les paramètres d'envoi automatique, il faut supprimer l'agenda avec `A.del {agendaId}` et recréer un envoi automatique avec `A.create`.")
             del editMsg[msg.channel.id, msg.author.id]
         else:
             await msg.channel.send("Euh il y a un problème quelque part :sweat_smile:")
@@ -159,7 +159,7 @@ def main():
     @bot.command(name = "create")
     async def create(ctx):
         agendaId = creeAgenda(ctx.author.id)
-        await ctx.send("Dans quel salon faudra-t-il envoyer l'emploi du temps ?")
+        await ctx.send("Dans quel salon faudra-t-il envoyer l'emploi du temps ? (il faut une mention de salon)")
         editMsg[ctx.channel.id, ctx.author.id] = (setSalon, agendaId)
 
     @bot.command(name = "del")
