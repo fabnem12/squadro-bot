@@ -52,8 +52,11 @@ def dessine(couleurDefaut, toute_journee, liste_cours, COULEUR_PRESENTIEL, COULE
     printF('<rect width="100%" height="100%" fill="white" />') #pour le fond blanc
 
     #l'évènement toute la journée (présentiel/distanciel)
-    txtPresentiel = toute_journee[0]["SUMMARY"]
-    presentiel = "PRÉSENTIEL" in txtPresentiel
+    if toute_journee != []:
+        txtPresentiel = toute_journee[0]["SUMMARY"]
+        presentiel = "PRÉSENTIEL" in txtPresentiel
+    else:
+        presentiel = True
     couleur = COULEUR_PRESENTIEL if presentiel else COULEUR_DISTANCIEL
 
     dateJour = liste_cours[0]["DTSTART"].dt if len(liste_cours) > 0 else None
