@@ -133,7 +133,7 @@ async def setAgenda(msg):
             await msg.channel.send("Euh il y a un problème quelque part :sweat_smile:")
 
 def main():
-    bot = commands.Bot(command_prefix="A,", help_command = None)
+    bot = commands.Bot(command_prefix="A.", help_command = None)
 
     @tasks.loop(minutes = 10.0)
     async def envoiEDT():
