@@ -29,6 +29,11 @@ class Agenda:
         self.url: Optional[str] = None
         self.proprio = proprio
 
+    def __str__(self):
+        return f"Agenda dans <#{self.salon}> à {self.heure}h, proprio : <@{self.proprio}>"
+    def __repr__(self):
+        return str(self)
+
     def valide(self) -> bool:
         return self.salon is not None and self.heure is not None and self.couleur is not None and self.url is not None
 
@@ -183,6 +188,11 @@ def main():
             await ctx.channel.send("Voici l'emploi du temps pour demain :", file = discord.File(lienImage))
         else:
             await ctx.message.add_reaction("❔")
+
+    @bot.command(name = "debug")
+    async def debug(ctx):
+        if ctx.author.id == 619574125622722560:
+            await ctx.send(str(infos.items()))
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(tokenEdt))
