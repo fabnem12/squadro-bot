@@ -33,7 +33,10 @@ class Agenda:
         return self.salon is not None and self.heure is not None and self.couleur is not None and self.url is not None
 
 if os.path.exists(cheminPickle):
-    infos: Dict[AgendaId, Agenda] = pickle.load(open(cheminPickle, "rb"))
+    try:
+        infos: Dict[AgendaId, Agenda] = pickle.load(open(cheminPickle, "rb"))
+    except:
+        infos: Dict[AgendaId, Agenda] = dict()
 else:
     infos: Dict[AgendaId, Agenda] = dict()
     #dictionnaire qui à chaque nom de groupe associe un dictionnaire décrivant :
@@ -125,7 +128,7 @@ async def setAgenda(msg):
             await msg.channel.send("Euh il y a un problème quelque part :sweat_smile:")
 
 def main():
-    bot = commands.Bot(command_prefix="A.", help_command = None)
+    bot = commands.Bot(command_prefix="A,", help_command = None)
 
     @tasks.loop(minutes = 10.0)
     async def envoiEDT():
