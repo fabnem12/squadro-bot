@@ -658,10 +658,11 @@ def main():
                     await message.add_reaction(emoji)
                 except:
                     pass
-                await ctx.send("Autorole activé")
+                await ctx.message.add_reaction("👌")
             else:
                 del AUTO_ROLE[messageId, emojiHash]
-                await ctx.send("Autorole désactivé")
+                await ctx.message.add_reaction("👌")
+                await ctx.message.add_reaction("❌")
 
                 try:
                     await message.remove_reaction(emoji, bot.user)
