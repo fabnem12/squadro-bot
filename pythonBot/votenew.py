@@ -72,14 +72,19 @@ def main():
                 opt1, opt2 = votant.optionAFaire()
                 if opt2: #c'est un vote par classement
                     if len(election.candidats) > 2:
-                        await channel.send("Pour enregistrer ton vote, j'ai besoin d'un ordre de préférence complet.\nComme c'est un peu relou de le faire soi-même, je vais juste te demander qui tu préfères dans quelques duels d'options, et j'en déduirai ton ordre de préférence complet.")
+                        await channel.send("Pour enregistrer ton vote, j'ai besoin d'un ordre de préférence complet.\nComme c'est un peu relou de le faire soi-même, je vais juste te demander qui tu préfères dans quelques duels d'options, et j'en déduirai ton ordre de préférence complet.\nSi tu ne fais rien de plus / ne réponds pas à tous les duels (ça ne prend pas plus de quelques secondes), ton vote comptera blanc.")
                     else:
-                        await channel.send("Pour enregistrer ton vote, t'as juste à préciser avec :arrow_left: ou :arrow_right: ta préférence.")
+                        await channel.send("Pour enregistrer ton vote, t'as juste à préciser avec :arrow_left: ou :arrow_right: ta préférence. Tu peux aussi ne rien faire, pour voter blanc")
 
                     await ajoutDuel(votant, opt1, opt2, channel)
                 else: #sumaut, opt1 représente alors la liste des noms des options
-                    await channel.send("Pour enregistrer ton vote, t'as juste à mettre une réaction sur ton option préférée.")
+                    await channel.send("Pour enregistrer ton vote, t'as juste à mettre une réaction sur ton option préférée. (ou ne fais rien, si tu veux voter blanc)")
                     await ajoutSumaut(votant, opt1, channel)
+
+                #on change l'affichage du nombre de votants (vu qu'en arrivant là on considère que le votant a mis un bulletin blanc, quitte à mettre un autre bulletin plus tard)
+                nbVotants = votant.election.nbVotesValides()
+                for msg in votant.election.msgInfo:
+                    await msg.edit(content = "**Réagissez à ce message pour participer au vote.**\n {} votes ont été enregistrés pour le moment.".format(nbVotants))
 
         elif message.id in MSG2DUEL: #on a voté sur un duel
             votant, (opt1, opt2) = MSG2DUEL[message.id]
@@ -111,10 +116,6 @@ def main():
                         await msgReplay.add_reaction("🔂") #réaction pour changer le vote
                         MSG2VOTE[msgReplay.id] = votant.election
 
-                        #on change l'affichage du nombre de votants
-                        nbVotants = votant.election.nbVotesValides()
-                        for msg in votant.election.msgInfo:
-                            await msg.edit(content = "**Réagissez à ce message pour participer au vote.**\n {} votes ont été enregistrés pour le moment.".format(nbVotants))
             else: #sumaut
                 listeOptions = opt1
                 reac2choix = {chr(49+k)+chr(65039)+chr(8419): k for k in range(min(10, len(listeOptions)))}
@@ -131,7 +132,7 @@ def main():
                     MSG2VOTE[msgReplay.id] = votant.election
 
                     #on change l'affichage du nombre de votants
-                    nbVotants = votant.election.nbVotesValides()
+                    nbVotants = votant.election.nbVotesValidesé()
                     for msg in votant.election.msgInfo:
                         await msg.edit(content = "**Réagissez à ce message pour participer au vote.**\n {} votes ont été enregistrés pour le moment.".format(nbVotants))
 

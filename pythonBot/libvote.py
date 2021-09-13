@@ -325,7 +325,7 @@ def resume(election):
             shuffle(infosVotes)
 
             for classement, nbVotants in infosVotes:
-                f.write(f"{nbVotants}:{'>'.join(x[0] for x in classement) if isinstance(classement, tuple) else '>'+classement}\n")
+                f.write(f"{nbVotants}:{'>'.join(x[0] for x in classement) if isinstance(classement, tuple) else classement}\n")
 
         return "resume.txt"
 
@@ -357,11 +357,13 @@ def affiPoints(election):
     nbExaequo = 0
     pointsPrec = -1000
     for index, (candidat, points) in enumerate(election.resultats):
+        if candidat is None: candidat = "Vote blanc"
+
         if points == pointsPrec: nbExaequo += 1
         else: nbExaequo = 0
         numero = index+1-nbExaequo
 
-        msgs.append("**{}{}** {} avec {} votes".format(numero, "e" if numero-1 else "er", candidat, points))
+        msgs.append(f"**{numero}{'e' if numero == 1 else 'er'}** {candidat} avec {points} voix")
 
         pointsPrec = points
 
