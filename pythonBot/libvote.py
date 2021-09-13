@@ -285,7 +285,7 @@ class Election:
             return len(self.votants)
         else:
             nbCandidats = len(self.candidats)
-            return len(tuple(x for x in self.votants.values() if len(x.classements) == nbCandidats))
+            return len(tuple(x for x in self.votants.values() if True or len(x.classements) == nbCandidats))
 
 def graphe(election):
     g = nx.DiGraph()

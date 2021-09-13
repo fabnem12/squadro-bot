@@ -132,7 +132,7 @@ def main():
                     MSG2VOTE[msgReplay.id] = votant.election
 
                     #on change l'affichage du nombre de votants
-                    nbVotants = votant.election.nbVotesValidesé()
+                    nbVotants = votant.election.nbVotesValides()
                     for msg in votant.election.msgInfo:
                         await msg.edit(content = "**Réagissez à ce message pour participer au vote.**\n {} votes ont été enregistrés pour le moment.".format(nbVotants))
 
