@@ -133,7 +133,7 @@ async def setAgenda(msg):
             await msg.channel.send("Euh il y a un problème quelque part :sweat_smile:")
 
 def main():
-    bot = commands.Bot(command_prefix="A,", help_command = None)
+    bot = commands.Bot(command_prefix="A.", help_command = None)
 
     @tasks.loop(minutes = 10.0)
     async def envoiEDT():
@@ -174,6 +174,7 @@ def main():
     async def editColor(ctx, agendaId: AgendaId, newColor: str):
         if agendaId in infos and infos[agendaId].proprio == ctx.author.id:
             infos[agendaId].couleur = newColor
+            save()
             await ctx.message.add_reaction("👌")
         else:
             await ctx.channel.send("https://tenor.com/view/omg-no-stop-please-pleasestop-gif-16120177")
