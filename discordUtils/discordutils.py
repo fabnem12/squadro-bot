@@ -311,8 +311,12 @@ async def autoroleconf_react_add(messageId, member, guild, emoji):
                 serveurAuto = bot.get_guild(serveurAutoId)
                 roleAuto = serveurAuto.get_role(roleAutoId)
 
-                memberAutreServeur = await serveurAuto.fetch_member(member.id)
-                roleConfirme = memberAutreServeur and roleAuto in memberAutreServeur.roles
+                try:
+                    memberAutreServeur = await serveurAuto.fetch_member(member.id)
+                except: #le membre n'est pas dans l'autre serveur
+                    roleConfirme = False
+                else:
+                    roleConfirme = memberAutreServeur and roleAuto in memberAutreServeur.roles
 
         if roleConfirme:
             if toWhoId:
