@@ -319,7 +319,7 @@ async def autoroleconf_react_add(messageId, member, guild, emoji):
                 dm = await dmChannelUser(member)
 
             await member.add_roles(role)
-            await dm.send(f"**__Arrivée sur le serveur {guild.name}__**\nC'est bon, ton groupe de TD est confirmé !")
+            await dm.send(f"**__Serveur {guild.name}__**\nC'est bon, ton rôle est confirmé !")
 
             if toWhoId:
                 del AUTO_ROLE_CONF[messageId, emoji]
@@ -472,6 +472,9 @@ def main():
             await autoasso_react_add(messageId, user, guild, emojiHash)
             await autoroleconf_react_add(messageId, user, guild, emojiHash)
             await autopin_react_add(messageId, user, guild, emojiHash, channel)
+
+            if messageId == 887388588738748466: #grosse flemmardise pour ajouter le rôle L3 automatiquement
+                await user.add_roles(guild.get_role(772745936291102730))
 
     @bot.event
     async def on_raw_reaction_remove(payload):
