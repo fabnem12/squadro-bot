@@ -306,12 +306,13 @@ async def autoroleconf_react_add(messageId, member, guild, emoji):
         dm = await dmChannelUser(member)
 
         roleConfirme = toWhoId is not None
-        if serveurAutoId is not None:
-            serveurAuto = bot.get_guild(serveurAutoId)
-            roleAuto = serveurAuto.get_role(roleAutoId)
+        if not roleConfirme:
+            if serveurAutoId is not None:
+                serveurAuto = bot.get_guild(serveurAutoId)
+                roleAuto = serveurAuto.get_role(roleAutoId)
 
-            memberAutreServeur = await serveurAuto.fetch_member(member.id)
-            roleConfirme = memberAutreServeur and roleAuto in memberAutreServeur.roles
+                memberAutreServeur = await serveurAuto.fetch_member(member.id)
+                roleConfirme = memberAutreServeur and roleAuto in memberAutreServeur.roles
 
         if roleConfirme:
             if toWhoId:
@@ -323,7 +324,6 @@ async def autoroleconf_react_add(messageId, member, guild, emoji):
 
             if toWhoId:
                 del AUTO_ROLE_CONF[messageId, emoji]
-
                 save()
         else:
             channelConf = guild.get_channel(channelConfId)
@@ -335,7 +335,7 @@ async def autoroleconf_react_add(messageId, member, guild, emoji):
 
             save()
 
-            await dm.send(f"**__Arrivée sur le serveur {guild.name}__**\nBienvenue sur le serveur ! Tu as dit être dans le groupe {role.name}, ce sera confirmé par les admins bientôt.")
+            await dm.send(f"**__Serveur {guild.name}__**\nTu as dit être dans le groupe {role.name}, ce sera confirmé par les admins bientôt.")
 
 async def autoasso_react_add(messageId, member, guild, emoji):
     messagesVerifies = (813413525560361010, 813413830918406224) #questions entrée
