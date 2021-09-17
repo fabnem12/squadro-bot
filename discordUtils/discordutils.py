@@ -307,7 +307,9 @@ async def autoroleconf_react_add(messageId, member, guild, emoji):
 
         roleConfirme = toWhoId is not None
         if not roleConfirme:
-            if serveurAutoId is not None:
+            if role in member.roles: #si le membre a déjà le rôle, ça vaut comme une confirmation automatique
+                roleConfirme = True
+            elif serveurAutoId is not None:
                 serveurAuto = bot.get_guild(serveurAutoId)
                 roleAuto = serveurAuto.get_role(roleAutoId)
 
