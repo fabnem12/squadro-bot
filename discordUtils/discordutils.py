@@ -316,7 +316,7 @@ async def autoroleconf_react_add(messageId, member, guild, emoji):
                 except: #le membre n'est pas dans l'autre serveur
                     roleConfirme = False
                 else:
-                    roleConfirme = memberAutreServeur and roleAuto in memberAutreServeur.roles
+                    roleConfirme = roleAuto in memberAutreServeur.roles
 
         if roleConfirme:
             if toWhoId:
@@ -476,9 +476,6 @@ def main():
             await autoasso_react_add(messageId, user, guild, emojiHash)
             await autoroleconf_react_add(messageId, user, guild, emojiHash)
             await autopin_react_add(messageId, user, guild, emojiHash, channel)
-
-            if messageId == 887388588738748466: #grosse flemmardise pour ajouter le rôle L3 automatiquement
-                await user.add_roles(guild.get_role(772745936291102730))
 
     @bot.event
     async def on_raw_reaction_remove(payload):
