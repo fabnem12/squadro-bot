@@ -221,7 +221,7 @@ def main() -> None:
         #print(day, CONTEST_STATE, now)
 
         if day == 0:
-            if CONTEST_STATE[0] and now.hour == 23 and now.minute == 15:
+            if CONTEST_STATE[0] and now.hour == 23 and now.minute == 20:
                 #print(listOfChannels)
                 for channelId in listOfChannels:
                     channel = bot.get_channel(channelId)
