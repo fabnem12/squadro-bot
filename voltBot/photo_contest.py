@@ -221,29 +221,30 @@ def main() -> None:
         #print(day, CONTEST_STATE, now)
 
         if day == 0:
-            if CONTEST_STATE[0] and now.hour == 22 and now.minute == 28:
+            if CONTEST_STATE[0] and now.hour == 23 and now.minute == 15:
                 #print(listOfChannels)
                 for channelId in listOfChannels:
                     channel = bot.get_channel(channelId)
                     await channel.send(f"THIS IS A TEST\n**Hey! The photo contest is starting now!**\n\nPlease read the submission rules in <#889538982931755088>.\nYou can vote for as many proposals as you want, the 3 photos with most up votes from each category (food, art/architecture/monuments, nature/landscapes) will reach the finals.")
-        #elif day == 2:
-            if CONTEST_STATE[0] and now.hour == 22 and now.minute == 30:
+        elif day == 1:
+            if CONTEST_STATE[0] and now.hour == 0 and now.minute == 0:
                 await endsemis()
-            if now.hour == 22 and now.minute == 31:
+            if now.hour == 8 and now.minute == 0:
                 await startcateg(None, "nature")
                 await startcateg(None, "food")
-            elif now.hour == 20 and now.minute == 0:
-                pass #await stopcateg(None, "food") #stopcateg still has to be implemented…
-        elif day == 3:
+            elif now.hour == 11 and now.minute == 0:
+                await stopcateg(None, "nature")
+                await stopcateg(None, "food")
+        """elif day == 3:
             if now.hour == 8 and now.minute == 0:
                 await startcateg(None, "art")
             elif now.hour == 20 and now.minute == 0:
-                pass #await stopcateg(None, "art")
+                await stopcateg(None, "art")
         elif day == 4:
             if now.hour == 8 and now.minute == 0:
                 await startcateg(None, "nature")
             elif now.hour == 20 and now.minute == 0:
-                pass #await stopcateg(None, "nature")
+                await stopcateg(None, "nature")"""
 
     @bot.event
     async def on_ready():
