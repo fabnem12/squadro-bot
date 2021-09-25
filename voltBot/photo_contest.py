@@ -145,12 +145,13 @@ async def submit_react_add(messageId, user, guild, emojiHash, channel):
             msgFrom = await channel.fetch_message(messageId)
 
             if step == 1:
+                msg2submission[messageId] = (date, channelId, submittedBy, url, 2)
+
                 await msgFrom.edit(content = "Which category fits the most this photo?\n🧀 for food, 🎨 for Art/Architecture/Monuments 🍂 Nature/Landscapes")
                 await msgFrom.add_reaction("🧀")
                 await msgFrom.add_reaction("🎨")
                 await msgFrom.add_reaction("🍂")
 
-                msg2submission[messageId] = (date, channelId, submittedBy, url, 2)
                 save()
             elif step == 2:
                 await msgFrom.delete()
@@ -227,13 +228,13 @@ def main() -> None:
                     channel = bot.get_channel(channelId)
                     await channel.send(f"**Hey! The photo contest is starting now!**\n\nPlease read the submission rules in <#889538982931755088>.\nYou can upvote **as many proposals as you want**, the 3 photos with most upvotes from each category will reach the finals.\nThe 3 categories are: food, art-architecture-monuments and nature-landscapes).")
         elif day == 1:
-            if CONTEST_STATE[0] and now.hour == 12 and now.minute == 0:
+            if CONTEST_STATE[0] and now.hour == 6 and now.minute == 0:
                 await endsemis()
                 await startcateg(None, "nature")
                 #if now.hour == 8 and now.minute == 0:
                 await startcateg(None, "food")
                 await startcateg(None, "art")
-            elif now.hour == 16 and now.minute == 0:
+            elif now.hour == 12 and now.minute == 0:
                 await stopcateg(None, "nature")
                 await stopcateg(None, "food")
                 await stopcateg("art")
@@ -324,10 +325,10 @@ def main() -> None:
 
                         return newUrl
 
+                    msg2submission[msgConfirm.id] = (ctx.message.created_at, ctx.channel.id, ctx.author.id, await resendFile(url), 1)
+
                     msgConfirm = await ctx.send("Are you sure that:\n- you took this photo yourself?\n- that it is somewhat related with this channel?\nIf yes, you can confirm the submission with <:eurolike:759798224764141628>", reference = ref)
                     await msgConfirm.add_reaction("eurolike:759798224764141628")
-
-                    msg2submission[msgConfirm.id] = (ctx.message.created_at, ctx.channel.id, ctx.author.id, await resendFile(url), 1)
             else:
                 await ctx.send("Sorry, the submission period is over…")
         else:
