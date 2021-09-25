@@ -103,9 +103,9 @@ if "save_photo_contest.p" in os.listdir() and pickle.load(open("save_photo_conte
     globals().update(pickle.load(open("save_photo_contest.p", "rb")))
 else:
     CATEGORIES = {
-        "food": Category("food", 889539051659624488),
-        "art": Category("Art / Architecture / Monuments", 889539083561484328),
-        "nature": Category("Nature / Landscapes", 889539111629783042)
+        "food": Category("Food", 889539051659624488),
+        "art": Category("Art - Architecture - Monuments", 889539083561484328),
+        "nature": Category("Nature - Landscapes", 889539111629783042)
     }
     CATEGORIES[889539051659624488] = CATEGORIES["food"]
     CATEGORIES[889539083561484328] = CATEGORIES["art"]
@@ -145,10 +145,10 @@ async def submit_react_add(messageId, user, guild, emojiHash, channel):
             msgFrom = await channel.fetch_message(messageId)
 
             if step == 1:
-                await msgFrom.edit(content = "Which category fits the most this photo?\n🧀 for food, 🎨 for Art/Architecture/Monuments 🌳 Nature/Landscapes")
+                await msgFrom.edit(content = "Which category fits the most this photo?\n🧀 for food, 🎨 for Art/Architecture/Monuments 🍂 Nature/Landscapes")
                 await msgFrom.add_reaction("🧀")
                 await msgFrom.add_reaction("🎨")
-                await msgFrom.add_reaction("🌳")
+                await msgFrom.add_reaction("🍂")
 
                 msg2submission[messageId] = (date, channelId, submittedBy, url, 2)
                 save()
@@ -160,7 +160,7 @@ async def submit_react_add(messageId, user, guild, emojiHash, channel):
                     category = CATEGORIES["food"]
                 elif emote == "🎨":
                     category = CATEGORIES["art"]
-                elif emote == "🌳":
+                elif emote == "🍂":
                     category = CATEGORIES["nature"]
                 else:
                     return
@@ -221,20 +221,22 @@ def main() -> None:
         #print(day, CONTEST_STATE, now)
 
         if day == 0:
-            if CONTEST_STATE[0] and now.hour == 23 and now.minute == 20:
+            if CONTEST_STATE[0] and now.hour == 22 and now.minute == 35:
                 #print(listOfChannels)
                 for channelId in listOfChannels:
                     channel = bot.get_channel(channelId)
-                    await channel.send(f"THIS IS A TEST\n**Hey! The photo contest is starting now!**\n\nPlease read the submission rules in <#889538982931755088>.\nYou can vote for as many proposals as you want, the 3 photos with most up votes from each category (food, art/architecture/monuments, nature/landscapes) will reach the finals.")
+                    await channel.send(f"**Hey! The photo contest is starting now!**\n\nPlease read the submission rules in <#889538982931755088>.\nYou can upvote **as many proposals as you want**, the 3 photos with most upvotes from each category will reach the finals.\nThe 3 categories are: food, art-architecture-monuments and nature-landscapes).")
         elif day == 1:
-            if CONTEST_STATE[0] and now.hour == 0 and now.minute == 0:
+            if CONTEST_STATE[0] and now.hour == 12 and now.minute == 0:
                 await endsemis()
-            if now.hour == 8 and now.minute == 0:
                 await startcateg(None, "nature")
+                #if now.hour == 8 and now.minute == 0:
                 await startcateg(None, "food")
-            elif now.hour == 11 and now.minute == 0:
+                await startcateg(None, "art")
+            elif now.hour == 16 and now.minute == 0:
                 await stopcateg(None, "nature")
                 await stopcateg(None, "food")
+                await stopcateg("art")
         """elif day == 3:
             if now.hour == 8 and now.minute == 0:
                 await startcateg(None, "art")
@@ -305,10 +307,27 @@ def main() -> None:
                     human = getHuman(ctx.author)
                     ref = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id)
 
+                    async def resendFile(url): #renvoi chez le serveur squadro pour avoir une image quelque part
+                        import requests
+
+                        filename = "-".join(url.replace(":","").split("/"))
+                        savePath = os.path.join(outputsPath, filename)
+                        r = requests.get(url)
+                        with open(savePath, "wb") as f:
+                            f.write(r.content)
+
+                        channelRefresh = await bot.fetch_channel(847488864713048144) #a channel on my test server -> store the image
+                        msgTmp = await channelRefresh.send(file = discord.File(savePath))
+                        newUrl = msgTmp.attachments[0].url
+
+                        os.remove(savePath)
+
+                        return newUrl
+
                     msgConfirm = await ctx.send("Are you sure that:\n- you took this photo yourself?\n- that it is somewhat related with this channel?\nIf yes, you can confirm the submission with <:eurolike:759798224764141628>", reference = ref)
                     await msgConfirm.add_reaction("eurolike:759798224764141628")
 
-                    msg2submission[msgConfirm.id] = (ctx.message.created_at, ctx.channel.id, ctx.author.id, url, 1)
+                    msg2submission[msgConfirm.id] = (ctx.message.created_at, ctx.channel.id, ctx.author.id, await resendFile(url), 1)
             else:
                 await ctx.send("Sorry, the submission period is over…")
         else:
@@ -349,7 +368,7 @@ def main() -> None:
                 #print(categ.proposals)
                 channel = bot.get_channel(categ.channelId)
 
-                await channel.send("These are the photos that reached the final in this category\nYou can upvote as many photos as you want\n||Upvotes will be converted into points (number of upvotes + 3 * number of country roles of the voters), the top 3 will reach the superfinal.||")
+                await channel.send("**You can upvote as many photos as you want**\n||Upvotes will be converted into points (number of upvotes + 3 * number of country roles of the voters)||\n\n**The top 3 photos will reach the <#889539190449131551>**")
 
                 for proposal in categ.proposals:
                     e = discord.Embed(description = "React with 👍 to upvote this photo ")
@@ -377,7 +396,7 @@ def main() -> None:
                 channelSuperFinal = bot.get_channel(SUPERFINAL)
 
                 for i, proposal in enumerate(categ.top3ofCategory()):
-                    e = discord.Embed(description = f"Photo #{i+1}")
+                    e = discord.Embed(description = f"Photo #{i+1} for {categ.name}")
                     e.set_image(url = proposal.url)
                     await channelSuperFinal.send(embed = e)
 
