@@ -378,6 +378,7 @@ def main() -> None:
                     await msgVote.add_reaction("👍")
 
                     categ.setMsgProposal(proposal, msgVote.id)
+                    save()
 
     @bot.command(name = "stop_categ")
     async def stopcateg(ctx, categname: str):
@@ -402,11 +403,13 @@ def main() -> None:
                     await channelSuperFinal.send(embed = e)
 
                 await channelSuperFinal.send("The superfinal will be held Saturday")
+                save()
 
     @bot.command(name = "reset")
     async def reset(ctx):
         if ctx.author.id == 619574125622722560:
             pickle.dump(None, open("save_photo_contest.p", "wb"))
+            await ctx.message.add_reaction("👍")
 
     @bot.command(name = "ayo")
     async def ayo(ctx):
