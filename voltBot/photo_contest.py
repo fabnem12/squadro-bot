@@ -116,6 +116,7 @@ else:
     LANGUAGE_CHANNELS = dict()
 
     CONTEST_STATE = [False, False, 0] #0 -> submissions opened? 1 -> contest in progress? 2 -> first day of the contest
+    msg2submission = dict()
     save()
 
 def countryRolesUser(user):
@@ -135,7 +136,6 @@ def getLanguageChannel(channel):
     else:
         return None
 
-msg2submission = dict()
 async def submit_react_add(messageId, user, guild, emojiHash, channel):
     if messageId in msg2submission:
         date, channelId, submittedBy, url, step = msg2submission[messageId]
