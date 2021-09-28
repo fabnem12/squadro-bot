@@ -134,6 +134,8 @@ class Election:
         return self.resultats != []
 
     def calculVote(self):
+        if isinstance(self.votants, list):
+            self.votants = tuple(self.votants)
         if not isinstance(self.votants, tuple):
             self.votants = tuple(self.votants.values())
         #on anonymise le vote : désormais on ne peut plus identifier les bulletins de vote
@@ -323,7 +325,7 @@ def affiCondorcet(election):
         else: nbExaequo = 0
         numero = index+1-nbExaequo
 
-        msgs.append(f"#**{numero}** {election.candidat2nom[candidat]} won {len(duels)} duels :\n")
+        msgs.append(f"#**{numero}** {election.candidat2nom[candidat]} won {len(duels)} duels:\n")
         for (perdant, ptsA, ptsB, ptsNone) in duels:
             msgDuel = f"- against {election.candidat2nom[perdant]} ({ptsA} - {ptsB} votes)"
             msgs[-1] += msgDuel + "\n"
