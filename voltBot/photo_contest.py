@@ -402,8 +402,9 @@ def main() -> None:
                     msgConfirm = await ctx.send("Are you sure that:\n- you took this photo yourself?\n- that it is somewhat related with this channel?\nIf yes, you can confirm the submission with <:eurolike:759798224764141628>", reference = ref)
                     try:
                         msg2submission[msgConfirm.id] = (ctx.message.created_at, ctx.channel.id, ctx.author.id, await resendFile(url), 1)
-                    except:
+                    except Exception as e:
                         await msgConfirm.edit(content = "I'm sorry, it seems that this file is too big, I can't handle it :sweat_smile:")
+                        await (await dmChannelUser(ADMIN_ID)).send(str(e))
                     else:
                         await msgConfirm.add_reaction("eurolike:759798224764141628")
                         save()
