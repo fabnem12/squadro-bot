@@ -298,7 +298,9 @@ def main() -> None:
             if CONTEST_STATE[1] and now.hour == 8 and now.minute == 0:
                 await startsemis()
         elif day == 2:
-            if CONTEST_STATE[1] and now.hour == 23 and now.minute == 59:
+            if CONTEST_STATE[1] and now.hour == 8 and now.minute == 0:
+                await recap_semis()
+            elif CONTEST_STATE[1] and now.hour == 23 and now.minute == 59:
                 await endsemis()
         elif day == 3:
             if now.hour == 8 and now.minute == 0:
@@ -523,9 +525,9 @@ def main() -> None:
                 affi = f"**Recap of the submissions as of Thursday, 8.00 CEST** in <#{channelObj.channelId}>\n"
 
                 for categ in (y for x, y in CATEGORIES.items() if isinstance(x, str)):
-                    affi += f"{len(x for x in channelObj.proposals if x.category is categ)} photos for the category {categ.name}\n"
+                    affi += f"{sum((x.category is categ for x in channelObj.proposals), 0)} photos for the category {categ.name}\n"
 
-                await (bog.get_channel(889250102596743198)).send(affi)
+                await (bot.get_channel(channelObj.channelId)).send(affi)
 
     @bot.command(name = "start_gf1")
     async def startgf1(ctx):
