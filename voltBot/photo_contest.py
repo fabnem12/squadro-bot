@@ -12,6 +12,8 @@ from constantes import TOKENVOLT as token, prefixVolt as prefix
 from utils import stockePID, cheminOutputs as outputsPath
 from libvote import Votant, Election
 
+stockePID()
+
 #token = "" #bot token
 #prefix = ","
 print(prefix)
