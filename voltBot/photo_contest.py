@@ -154,12 +154,17 @@ async def submit_react_add(messageId, user, guild, emojiHash, channel):
             msgFrom = await channel.fetch_message(messageId)
 
             if step == 1:
-                msg2submission[messageId] = (date, channelId, submittedBy, url, 2)
+                emote = str(emojiHash)
+                if emote == "807609057380794398":
+                    msg2submission[messageId] = (date, channelId, submittedBy, url, 2)
 
-                await msgFrom.edit(content = "Which category fits the most this photo?\n🧀 for Food, 🎨 for Art - Architecture - Monuments 🍂 Nature - Landscapes")
-                await msgFrom.add_reaction("🧀")
-                await msgFrom.add_reaction("🎨")
-                await msgFrom.add_reaction("🍂")
+                    await msgFrom.edit(content = "Which category fits the most this photo?\n🧀 for Food, 🎨 for Art - Architecture - Monuments 🍂 Nature - Landscapes")
+                    await msgFrom.add_reaction("🧀")
+                    await msgFrom.add_reaction("🎨")
+                    await msgFrom.add_reaction("🍂")
+                else:
+                    del msg2submission[messageId]
+                    await msgFrom.delete()
             elif step == 2:
                 emote = emojiHash
                 if emote == "🧀":
@@ -200,6 +205,13 @@ async def vote_react_add(messageId, user, guild, emojiHash, channel):
             return
 
         save()
+    elif str(emojiHash) == "807609057380794398": #remove the submission
+        if channel.id in LANGUAGE_CHANNELS:
+            languageChannel = LANGUAGE_CHANNELS[channel.id]
+            proposal = languageChannel.msg2vote.get(messageId)
+            if proposal and proposal.author.userId == user.id:
+                languageChannel.removeProposal(proposal)
+                await (await channel.fetch_message(messageId)).add_reaction("👌")
 
 async def vote_react_del(messageId, user, guild, emojiHash, channel):
     if emojiHash == "👍":
@@ -339,6 +351,7 @@ def main() -> None:
             emojiHash = traitement["emojiHash"]
             channel = traitement["channel"]
 
+            print(emojiHash)
             await submit_react_add(messageId, user, guild, emojiHash, channel)
             await vote_react_add(messageId, user, guild, emojiHash, channel)
             await grand_final_react(messageId, user, guild, emojiHash, channel)
@@ -399,7 +412,7 @@ def main() -> None:
 
                         return newUrl
 
-                    msgConfirm = await ctx.send("Are you sure that:\n- you took this photo yourself?\n- that it is somewhat related with this channel?\nIf yes, you can confirm the submission with <:eurolike:759798224764141628>", reference = ref)
+                    msgConfirm = await ctx.send("Are you sure that:\n- you took this photo yourself?\n- that it is somewhat related with this channel?\nIf yes, you can confirm the submission with <:eurolike:759798224764141628>. If not, react with <:thonk:807609057380794398>", reference = ref)
                     try:
                         msg2submission[msgConfirm.id] = (ctx.message.created_at, ctx.channel.id, ctx.author.id, await resendFile(url), 1)
                     except Exception as e:
@@ -407,6 +420,7 @@ def main() -> None:
                         await (await dmChannelUser(bog.get_member(ADMIN_ID))).send(str(e))
                     else:
                         await msgConfirm.add_reaction("eurolike:759798224764141628")
+                        await msgConfirm.add_reaction("thonk:807609057380794398")
                         save()
                 else:
                     await ctx.send("You have to post a photo to make a submission. You can check <#889538982931755088> to see how to do it")
