@@ -516,6 +516,17 @@ def main() -> None:
 
                 save()
 
+    @bot.command(name = "recap_semis")
+    async def recap_semis(ctx = None):
+        if ctx is None or ctx.author.id == ADMIN_ID:
+            for channelObj in LANGUAGE_CHANNELS.values():
+                affi = f"**Recap of the submissions as of Thursday, 8.00 CEST** in <#{channelObj.channelId}>\n"
+
+                for categ in (y for x, y in CATEGORIES.items() if isinstance(x, str)):
+                    affi += f"{len(x for x in channelObj.proposals if x.category is categ)} photos for the category {categ.name}\n"
+
+                await (bog.get_channel(889250102596743198)).send(affi)
+
     @bot.command(name = "start_gf1")
     async def startgf1(ctx):
         if ctx is None or ctx.author.id == ADMIN_ID:
