@@ -213,7 +213,8 @@ async def vote_react_add(messageId, user, guild, emojiHash, channel):
             proposal = languageChannel.msg2vote.get(messageId)
             if proposal and (proposal.author.userId == user.id or user.id == ADMIN_ID):
                 languageChannel.removeProposal(proposal)
-                await (await channel.fetch_message(messageId)).add_reaction("👌")
+                await (await channel.fetch_message(messageId)).delete()
+
 
 async def vote_react_del(messageId, user, guild, emojiHash, channel):
     if emojiHash == "👍":
