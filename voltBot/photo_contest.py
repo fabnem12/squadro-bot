@@ -157,14 +157,14 @@ async def submit_react_add(messageId, user, guild, emojiHash, channel):
 
             if step == 1:
                 emote = str(emojiHash)
-                if emote == "807609057380794398":
+                if emote == "759798224764141628":
                     msg2submission[messageId] = (date, channelId, submittedBy, url, 2)
 
                     await msgFrom.edit(content = "Which category fits the most this photo?\n🧀 for Food, 🎨 for Art - Architecture - Monuments 🍂 Nature - Landscapes")
                     await msgFrom.add_reaction("🧀")
                     await msgFrom.add_reaction("🎨")
                     await msgFrom.add_reaction("🍂")
-                else:
+                elif emote == "807609057380794398":
                     del msg2submission[messageId]
                     await msgFrom.delete()
             elif step == 2:
@@ -354,7 +354,6 @@ def main() -> None:
             emojiHash = traitement["emojiHash"]
             channel = traitement["channel"]
 
-            print(emojiHash)
             await submit_react_add(messageId, user, guild, emojiHash, channel)
             await vote_react_add(messageId, user, guild, emojiHash, channel)
             await grand_final_react(messageId, user, guild, emojiHash, channel)
