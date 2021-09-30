@@ -71,7 +71,7 @@ class LanguageChannel(Category):
         Category.setMsgProposal(self, proposal, messageId)
 
     def top3PerCategory(self):
-        return {name: sorted(filter(lambda x: x.category is categ, self.votes.keys()), key=lambda x: (len(self.votes[x]), -x.submissionTime), reverse = True)[:3] for name, categ in CATEGORIES.items() if isinstance(name, int)}
+        return {name: sorted(filter(lambda x: x.category is categ, self.votes.keys()), key=lambda x: (len(self.votes[x]), -x.submissionTime), reverse = True)[:4] for name, categ in CATEGORIES.items() if isinstance(name, int)}
 
 class Proposal:
     def __init__(self, url, submissionTime, submissionChannel, category):
