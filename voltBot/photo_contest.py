@@ -527,7 +527,7 @@ def main() -> None:
                 for categ in (y for x, y in CATEGORIES.items() if isinstance(x, str)):
                     affi += f"{sum((x.category is categ for x in channelObj.proposals), 0)} photos for the category {categ.name}\n"
 
-                await (bot.get_channel(channelObj.channelId)).send(affi)
+                await (bot.get_channel(889250102596743198) if ctx else bot.get_channel(channelObj.channelId)).send(affi)
 
     @bot.command(name = "start_gf1")
     async def startgf1(ctx):
