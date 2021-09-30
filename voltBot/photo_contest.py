@@ -457,6 +457,16 @@ def main() -> None:
             CONTEST_STATE[0] = True
             save()
 
+    @bot.command(name = "remind")
+    async def remind(ctx = None, txt: Optional[str] = None):
+        if ctx is None or ctx.author.id == ADMIN_ID:
+            for channelObj in LANGUAGE_CHANNELS.values():
+                channel = bot.get_channel(channelObj.channelId)
+                idFirstProposal = min(channelObj.msg2vote.keys(), key=lambda x: channelObj.msg2vote[x].submissionTime)
+                newLine = "\n"
+
+                await channel.send(f"{'**'+txt+'**'+newLine if txt else ''} You can find the first photo submitted in this channel for the photo contest via this link, then scroll down to see all the submissions:{newLine}https://discord.com/channels/{channel.guild.id}/{channel.id}/{idFirstProposal}")
+
     @bot.command(name = "end_semis")
     async def endsemis(ctx = None):
         if ctx is None or ctx.author.id == ADMIN_ID:
@@ -522,7 +532,7 @@ def main() -> None:
     async def recap_semis(ctx = None):
         if ctx is None or ctx.author.id == ADMIN_ID:
             for channelObj in LANGUAGE_CHANNELS.values():
-                affi = f"**Recap of the submissions as of Thursday, 8.00 CEST** in <#{channelObj.channelId}>\n"
+                affi = f"**Recap of the submissions as of now** in <#{channelObj.channelId}>\n"
 
                 for categ in (y for x, y in CATEGORIES.items() if isinstance(x, str)):
                     affi += f"{sum((x.category is categ for x in channelObj.proposals), 0)} photos for the category {categ.name}\n"
