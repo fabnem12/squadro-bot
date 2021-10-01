@@ -61,7 +61,7 @@ class Category:
             self.votes[proposal].remove(human)
 
     def nbPoints(self, proposal):
-        return (len(set(country for human in self.votes[proposal] for country in human.countryRoles)) + len(self.votes[proposal]), -proposal.submissionTime)
+        return (len(set(country for human in self.votes[proposal] for country in human.countryRoles)) + len(self.votes[proposal]), (len(self.votes[proposal]), -proposal.submissionTime))
     def top3ofCategory(self):
         nbSelected = 3
         sortedProposals = sorted(self.votes.keys(), key=self.nbPoints, reverse = True)
