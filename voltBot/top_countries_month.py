@@ -12,7 +12,7 @@ from utils import stockePID, cheminOutputs as outputsPath
 
 #token = "" #bot token
 #prefix = ","
-byLength = True
+byLength = False
 
 def eurovisionPoints(topPerChannel, keyDicoByAuthorId):
     points = dict()
