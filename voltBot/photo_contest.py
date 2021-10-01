@@ -63,12 +63,8 @@ class Category:
     def nbPoints(self, proposal):
         return (len(set(country for human in self.votes[proposal] for country in human.countryRoles)) + len(self.votes[proposal]), (len(self.votes[proposal]), -proposal.submissionTime))
     def top3ofCategory(self):
-        nbSelected = 3
         sortedProposals = sorted(self.votes.keys(), key=self.nbPoints, reverse = True)
-        if 798209793953234954 in (x.author.userId for x in sortedProposals[:nbSelected]): #select 1 more photo if a submission by Matty is in the top 3
-            nbSelected += 1
-
-        return sortedProposals[:nbSelected]
+        return sortedProposals[:3]
 
 class LanguageChannel(Category):
     def addProposal(self, proposal, messageId):
