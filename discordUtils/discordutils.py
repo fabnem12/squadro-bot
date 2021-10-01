@@ -108,7 +108,7 @@ if True:
     if "CLOSE" not in INFOS: INFOS["CLOSE"] = set()
     CLOSE = INFOS["CLOSE"]
 
-    if "MODO" not in INFOS: INFOS["MODO"] = dict()()
+    if "MODO" not in INFOS: INFOS["MODO"] = dict()
     MODO = INFOS["MODO"]
 
 def save():
