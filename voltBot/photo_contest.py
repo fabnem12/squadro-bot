@@ -341,7 +341,10 @@ def main() -> None:
         if payload.user_id != bot.user.id: #sinon, on est dans le cas d'une réaction en dm
             messageId = payload.message_id
             guild = bot.get_guild(payload.guild_id) if payload.guild_id else None
-            user = (await guild.fetch_member(payload.user_id)) if guild else (await bot.fetch_user(payload.user_id))
+            try:
+                user = (await guild.fetch_member(payload.user_id)) if guild else (await bot.fetch_user(payload.user_id))
+            except:
+                user = (await bot.fetch_user(payload.user_id))
             channel = bot.get_channel(payload.channel_id)
 
             partEmoji = payload.emoji
