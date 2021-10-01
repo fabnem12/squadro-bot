@@ -63,7 +63,12 @@ class Category:
     def nbPoints(self, proposal):
         return (len(set(country for human in self.votes[proposal] for country in human.countryRoles)) + len(self.votes[proposal]), -proposal.submissionTime)
     def top3ofCategory(self):
-        return sorted(self.votes.keys(), key=self.nbPoints, reverse = True)[:3]
+        nbSelected = 3
+        sortedProposals = sorted(self.votes.keys(), key=self.nbPoints, reverse = True)
+        if 798209793953234954 in (x.author.userId for x in sortedProposals[:nbSelected]): #select 1 more photo if a submission by Matty is in the top 3
+            nbSelected += 1
+
+        return sortedProposals[:nbSelected]
 
 class LanguageChannel(Category):
     def addProposal(self, proposal, messageId):
@@ -495,14 +500,19 @@ def main() -> None:
 
                 await channel.send("**You can upvote as many photos as you want**\n||Upvotes will be converted into points (number of upvotes + number of country roles of the voters)||\n\n**The top 3 photos will reach the <#889539190449131551>**")
 
+                idFstMsg = None
                 for proposal in categ.proposals:
                     e = discord.Embed(description = f"React with 👍 to upvote this photo.\nSubmitted in <#{proposal.submissionChannel.channelId}> by <@{proposal.author.userId}>")
                     e.set_image(url = proposal.url)
                     msgVote = await channel.send(embed = e)
                     await msgVote.add_reaction("👍")
+                    idFstMsg = idFstMsg or msgVote.id
 
                     categ.setMsgProposal(proposal, msgVote.id)
                     save()
+
+                ref = discord.Reference(channel_id = channel.id, message_id = idFstMsg)
+                await channel.send(f"link to the top of this channel, then just scroll down to see all {len(categ.proposals)} submissions: https://discord.com/channels/567021913210355745/{channel.id}/{idFstMsg}", reference = ref)
 
     @bot.command(name = "stop_categ")
     async def stopcateg(ctx, categname: str):
@@ -515,7 +525,7 @@ def main() -> None:
                     if msg.id in categ.msg2vote:
                         proposal = categ.msg2vote[msg.id]
                         points, tiebreaker = categ.nbPoints(proposal)
-                        e = discord.Embed(description = f"This photo got {points} point{'' if points == 1 else 's'}\n(submitted by <@{proposal.author.userId}> in <#{proposal.submissionChannel.channelId}>)")
+                        e = discord.Embed(description = f"This photo got {points} point{'' if points == 1 else 's'}\n(Submitted in <#{proposal.submissionChannel.channelId}> by <@{proposal.author.userId}> )")
                         e.set_image(url = proposal.url)
                         await msg.edit(embed = e)
 
