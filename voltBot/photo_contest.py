@@ -386,6 +386,12 @@ def main() -> None:
         if ctx.author.id == ADMIN_ID:
             save()
 
+    @bot.command(name = "eyes")
+    async def eyes(ctx):
+        categ = CATEGORIES["art"]
+        for proposal in categ.proposals:
+            await ctx.send(f"<@{proposal.author.userId}> {len(categ.votes[proposal])} {categ.nbPoints(proposal)[0]}")
+
     @bot.command(name = "submit")
     async def submit(ctx, url: Optional[str]):
         if ctx.channel.id in listOfChannels:
@@ -607,7 +613,7 @@ def main() -> None:
                 human.countryRoles = countryRolesUser(user)
 
             save()
-            await ctx.message.add_reaction("🗳️")
+            if ctx: await ctx.message.add_reaction("🗳️")
 
     @bot.command(name = "recount_votes")
     async def recount_votes(ctx, channel: discord.TextChannel):
