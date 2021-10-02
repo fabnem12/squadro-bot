@@ -604,6 +604,8 @@ def main() -> None:
                 user = await ctx.guild.fetch_member(human.userId)
                 human.countryRoles = countryRolesUser(user)
 
+        await ctx.message.add_reaction("🗳️")
+
     @bot.command(name = "start_gf2")
     async def startgf2(ctx):
         if ctx is None or ctx.author.id == ADMIN_ID:
