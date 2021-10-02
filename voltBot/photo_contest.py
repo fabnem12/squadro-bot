@@ -501,7 +501,7 @@ def main() -> None:
 
                 idFstMsg = None
                 for proposal in categ.proposals:
-                    e = discord.Embed(description = f"React with 👍 to upvote this photo.\nSubmitted in <#{proposal.submissionChannel.channelId}> by <@{proposal.author.userId}>")
+                    e = discord.Embed(description = f"React with 👍 to upvote this photo.\nSubmitted in <#{proposal.submissionChannel.channelId}>")
                     e.set_image(url = proposal.url)
                     msgVote = await channel.send(embed = e)
                     await msgVote.add_reaction("👍")
@@ -523,15 +523,16 @@ def main() -> None:
                 async for msg in channel.history(limit = None):
                     if msg.id in categ.msg2vote:
                         proposal = categ.msg2vote[msg.id]
+
                         points, tiebreaker = categ.nbPoints(proposal)
-                        e = discord.Embed(description = f"This photo got {points} point{'' if points == 1 else 's'}\n(Submitted in <#{proposal.submissionChannel.channelId}> by <@{proposal.author.userId}> )")
+                        e = discord.Embed(description = f"This photo got {points} point{'' if points == 1 else 's'}\n(Submitted in <#{proposal.submissionChannel.channelId}>)")
                         e.set_image(url = proposal.url)
                         await msg.edit(embed = e)
 
                 channelSuperFinal = bot.get_channel(SUPERFINAL)
 
                 for i, proposal in enumerate(categ.top3ofCategory()):
-                    e = discord.Embed(description = f"**Photo #{i+1} for {categ.name}**\nSubmitted in <#{proposal.submissionChannel.channelId}> by <@{proposal.author.userId}>")
+                    e = discord.Embed(description = f"**Photo #{i+1} for {categ.name}**\nSubmitted in <#{proposal.submissionChannel.channelId}>")
                     e.set_image(url = proposal.url)
                     await channelSuperFinal.send(embed = e)
 
@@ -594,6 +595,14 @@ def main() -> None:
 
             GRAND_FINALS.clear()
             save()
+
+    @bot.command(name = "update_country_roles")
+    async def update_country_roles(ctx):
+        if ctx.author.id == ADMIN_ID:
+            for human in HUMANS.values():
+                old = human.countryRoles
+                user = await ctx.guild.fetch_member(human.userId)
+                human.countryRoles = countryRolesUser(user)
 
     @bot.command(name = "start_gf2")
     async def startgf2(ctx):
