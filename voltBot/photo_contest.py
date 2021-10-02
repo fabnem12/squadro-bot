@@ -607,8 +607,7 @@ def main() -> None:
                 human.countryRoles = countryRolesUser(user)
 
             save()
-
-        await ctx.message.add_reaction("🗳️")
+            await ctx.message.add_reaction("🗳️")
 
     @bot.command(name = "recount_votes")
     async def recount_votes(ctx, channel: discord.TextChannel):
@@ -622,6 +621,7 @@ def main() -> None:
                     channelObj.votes[proposal] = {getHuman(user) for react in msg.reactions async for user in react.users() if react.emoji == "👍" and user.id != bot.user.id}
 
             save()
+            await ctx.message.add_reaction("🗳️")
 
     @bot.command(name = "start_gf2")
     async def startgf2(ctx):
