@@ -518,7 +518,9 @@ def main() -> None:
         if ctx is None or ctx.author.id == ADMIN_ID:
             if categname in CATEGORIES:
                 categ = CATEGORIES[categname]
-                channel = bot.get_channel(categ.channelId)
+                channel = await bot.fetch_channel(categ.channelId)
+
+                await recount_votes(None, channel)
 
                 async for msg in channel.history(limit = None):
                     if msg.id in categ.msg2vote:
@@ -547,7 +549,7 @@ def main() -> None:
                 for categ in (y for x, y in CATEGORIES.items() if isinstance(x, str)):
                     affi += f"{sum((x.category is categ for x in channelObj.proposals), 0)} photos for the category {categ.name}\n"
 
-                await (bot.get_channel(889250102596743198) if ctx else bot.get_channel(channelObj.channelId)).send(affi)
+                await (ctx.channel if ctx else bot.get_channel(channelObj.channelId)).send(affi)
 
     @bot.command(name = "start_gf1")
     async def startgf1(ctx):
@@ -604,7 +606,22 @@ def main() -> None:
                 user = await ctx.guild.fetch_member(human.userId)
                 human.countryRoles = countryRolesUser(user)
 
+            save()
+
         await ctx.message.add_reaction("🗳️")
+
+    @bot.command(name = "recount_votes")
+    async def recount_votes(ctx, channel: discord.TextChannel):
+        if ctx is None or ctx.author.id == ADMIN_ID:
+            channelObj = CATEGORIES[channel.id]
+            channelObj.votes = {proposal: set() for proposal in channelObj.proposals}
+
+            async for msg in channel.history():
+                if msg.id in channelObj.msg2vote:
+                    proposal = channelObj.msg2vote[msg.id]
+                    channelObj.votes[proposal] = {getHuman(user) for react in msg.reactions async for user in react.users() if react.emoji == "👍" and user.id != bot.user.id}
+
+            save()
 
     @bot.command(name = "start_gf2")
     async def startgf2(ctx):
