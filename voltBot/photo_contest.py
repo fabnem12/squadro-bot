@@ -241,6 +241,7 @@ async def majDuel(msg, votant, opt1, opt2, election):
     await msg.edit(content = f":arrow_left: {election.candidat2nom[opt1]} or {election.candidat2nom[opt2]} :arrow_right:")
     GRAND_FINALS[msg.id] = (votant, (opt1, opt2))
 
+FLAG_ATTENTE = dict()
 async def grand_final_react(messageId, user, guild, emojiHash, channel, remove = False):
     if not remove and (messageId, emojiHash) in GRAND_FINALS:
         election, categ = GRAND_FINALS[messageId, emojiHash]
@@ -250,8 +251,15 @@ async def grand_final_react(messageId, user, guild, emojiHash, channel, remove =
         if election.fini():
             await channel.send("The vote is already closed…")
             return
+        else:
+            if userId not in FLAG_ATTENTE:
+                FLAG_ATTENTE[userId] = set()
 
-        if not election.isVotant(userId):
+            while len(FLAG_ATTENTE[userId]) > 0:
+                await asyncio.sleep(0.5)
+
+            FLAG_ATTENTE[userId].add(election)
+
             votant = election.getVotant(userId, reset = True)
             for nomPhoto, photo in election.nom2candidat.items():
                 e = discord.Embed(description = nomPhoto)
@@ -262,6 +270,9 @@ async def grand_final_react(messageId, user, guild, emojiHash, channel, remove =
 
             opt1, opt2 = votant.optionAFaire()
             await ajoutDuel(votant, opt1, opt2, channel, election)
+
+            FLAG_ATTENTE[userId].remove(election)
+
     elif messageId in GRAND_FINALS: #c'est un message de duel
         votant, (opt1, opt2) = GRAND_FINALS[messageId]
 
@@ -537,7 +548,7 @@ def main() -> None:
                         e.set_image(url = proposal.url)
                         await msg.edit(embed = e)
 
-                channelSuperFinal = bot.get_channel(SUPERFINAL)
+                channelSuperFinal = await bot.fetch_channel(SUPERFINAL)
 
                 for i, proposal in enumerate(categ.top3ofCategory()):
                     e = discord.Embed(description = f"**Photo #{i+1} for {categ.name}**\nSubmitted in <#{proposal.submissionChannel.channelId}>")
@@ -640,7 +651,7 @@ def main() -> None:
                     channelObj.votes[proposal] = {getHuman(user) for react in msg.reactions async for user in react.users() if react.emoji == "👍" and user.id != bot.user.id}
 
             save()
-            await ctx.message.add_reaction("🗳️")
+            if ctx: await ctx.message.add_reaction("🗳️")
 
     @bot.command(name = "start_gf2")
     async def startgf2(ctx):
