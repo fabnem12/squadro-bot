@@ -597,6 +597,19 @@ def main() -> None:
                     e.set_image(url = classement[i][0].url)
                     await channel.send(msg, embed = e)
 
+                affiDetails = ["Detailed results of the vote:\n"]
+                for classement, votants in details.items():
+                    affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants)
+                    if len(affiCls) + len(affiDetails[-1]) < 2000:
+                        affiDetails[-1] += affiCls
+                    else:
+                        affiDetails.append(affiCls)
+                for msg in affiDetails:
+                    e = discord.Embed(description = msg)
+                    await channel.send(embed = e)
+                with open("resumeVote1.txt", "w") as f:
+                    f.write("\n".join(affiDetails))
+
                 if fichiers:
                     for fichier in fichiers:
                         await ctx.send(file = discord.File(fichier))
@@ -657,14 +670,27 @@ def main() -> None:
                 classement = election.getResultats()
                 winner = classement[0][0]
 
-                await channel.send(f"**Results of the final vote:**")
-                msgs, fichiers = election.affi()
+                await channel.send(f"**Results of the Grand Final - Part 2:**")
+                msgs, details, fichiers = election.affi()
 
                 trophies = ["🥇", "🥈", "🥉"] + [""] * (3-len(classement))
                 for i, msg in reversed(list(enumerate(msgs))):
                     e = discord.Embed(description = trophies[i] if i != 0 else f"The winner of the Photo Contest is <@{classement[i][0].author.userId}> {trophies[i]}!\nCongrats :partying_face: :tada:")
                     e.set_image(url = classement[i][0].url)
                     await channel.send(msg, embed = e)
+
+                affiDetails = ["Detailed results of the vote:\n"]
+                for classement, votants in details.items():
+                    affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants)
+                    if len(affiCls) + len(affiDetails[-1]) < 2000:
+                        affiDetails[-1] += affiCls
+                    else:
+                        affiDetails.append(affiCls)
+                for msg in affiDetails:
+                    e = discord.Embed(description = msg)
+                    await channel.send(embed = e)
+                with open("resumeVote2.txt", "w") as f:
+                    f.write("\n".join(affiDetails))
 
                 if fichiers:
                     for fichier in fichiers:

@@ -7,8 +7,9 @@ from random import shuffle #juste pour ne pas avoir un fichier de détails de vo
 from typing import List, Dict, Optional, Tuple
 
 class Votant:
-    def __init__(self, election, optionsVote: List[str]):
+    def __init__(self, election, optionsVote: List[str], ident: int):
         self.election = election
+        self.id = ident
         self.listeCandidats = optionsVote.copy()
         shuffle(self.listeCandidats)
 
@@ -18,8 +19,8 @@ class Votant:
     # def optionAFaire(self):
 
 class VotantRank(Votant):
-    def __init__(self, election, optionsVote: List[str]):
-        super().__init__(election, optionsVote)
+    def __init__(self, election, optionsVote: List[str], ident: int):
+        super().__init__(election, optionsVote, ident)
         self.classements: Dict[str, int] = dict()
         self.duels: Dict[Tuple[str, str], Optional[str]] = {(x, x): None for x in optionsVote}
         #gagnants des duels
@@ -97,23 +98,6 @@ class VotantRank(Votant):
         self.classements = {x: i for i, x in enumerate(self.listeCandidats)}
         return list(enumerate(self.listeCandidats))
 
-class VotantUninominal(Votant):
-    def __init__(self, election, optionsVote: List[str]):
-        super().__init__(election, optionsVote)
-        self.candidatPrefere: Optional[str] = None
-
-    def prefere(self):
-        return self.candidatPrefere
-
-    def setPrefere(self, candidat):
-        self.candidatPrefere = candidat
-
-    def resumePref(self):
-        return f"**1** {self.candidatPrefere if self.candidatPrefere else 'Vote blanc'}"
-
-    def optionAFaire(self):
-        return sorted(self.listeCandidats), None
-
 class Election:
     sysVotes = {"Borda", "sumaut", "approbation", "Copeland", "RankedPairs"}
 
@@ -145,64 +129,7 @@ class Election:
         if self.votants != tuple() and isinstance(self.votants[0], VotantRank):
             self.votants = [x for x in self.votants if len(x.classements.values()) == nbOptions]
 
-        if self.sysVote == "Borda":
-            points = {candidat: 0 for candidat in self.candidats} #on initialise les compteurs de points
-
-            for votant in self.votants: #on demande à chaque votant combien de points il donne à chaque candidat…
-                pointsVotant = lambda x: 1 + max(votant.classements.values()) - votant.classement(x)
-                nbPoints = lambda x: points[x] + pointsVotant(x)
-
-                points.update({candidat: nbPoints(candidat) for candidat in self.candidats}) #… et on met à jour les compteurs de points
-
-
-            self.resultats = list(sorted(points.items(), key = lambda x: x[1], reverse = True)) #on trie la liste des candidats
-
-        elif self.sysVote == "sumaut":
-            points = {candidat: 0 for candidat in self.candidats} #on initialise les compteurs de points
-            points[None] = 0
-
-            for votant in self.votants: #on demande à chaque votant son candidat préféré
-                points[votant.prefere()] += 1
-
-            self.resultats = list(sorted(points.items(), key = lambda x: x[1], reverse = True)) #on trie la liste des candidats
-
-        elif self.sysVote == "approbation":
-            points = {candidat: 0 for candidat in self.candidats}
-            for votant in self.votants:
-                for candidat in votant.classement: #tous les candidats classés par le votant sont considérés comme approuvés
-                    points[candidat] += 1
-
-            self.resultats = list(sorted(points.items(), key = lambda x: x[1], reverse = True))
-
-        elif self.sysVote == "Copeland":
-            votants, candidats = self.votants, self.candidats
-
-            def infosDuel(a, b):
-                points = {a:0, b:0, None:0}
-                for votant in votants: points[votant.prefere2(a, b)] += 1
-
-                if points[a] == points[b]:
-                    gagnant = None
-                else:
-                    gagnant = a if points[a] > points[b] else b
-
-                return gagnant, points[a], points[b], points[None]
-
-            duels = {(x, y): infosDuel(x, y) for x in candidats for y in candidats if x != y}
-
-            victoires = {candidat: [] for candidat in candidats}
-            for duel, (gagnant, ptsA, ptsB, ptsNone) in duels.items():
-                if gagnant is not None and gagnant == duel[0]:
-                    perdant = duel[0] if gagnant == duel[1] else duel[1]
-
-                    victoires[gagnant].append((perdant, ptsA, ptsB, ptsNone))
-                elif gagnant is None:
-                    victoires[duel[0]].append((duel[1], ptsA, ptsB, ptsNone))
-                    victoires[duel[1]].append((duel[0], ptsA, ptsB, ptsNone))
-
-            self.resultats = list(sorted(victoires.items(), key = lambda x: len(x[1]), reverse = True))
-
-        elif self.sysVote == "RankedPairs":
+        if self.sysVote == "RankedPairs":
             votants, candidats = self.votants, list(self.candidats)
 
             def infosDuel(a, b):
@@ -265,28 +192,22 @@ class Election:
         return self.resultats
 
     def getVotant(self, userId, reset = False):
-        userHash = hash(userId) #on fait un hashage de l'id d'utilisateur
+        userHash = userId#hash(userId) #on fait un hashage de l'id d'utilisateur
 
         if reset or userHash not in self.votants:
-            self.votants[userHash] = VotantRank(self, list(self.candidats)) if self.sysVote in {"Borda", "Copeland", "RankedPairs"} else VotantUninominal(self, list(self.candidats))
+            self.votants[userHash] = VotantRank(self, list(self.candidats), userHash)
 
         return self.votants[userHash]
 
     def isVotant(self, userId: int) -> bool:
-        return hash(userId) in self.votants
+        return userId in self.votants
 
     def affi(self):
-        if self.sysVote in ("Copeland", "RankedPairs"):
-            return affiCondorcet(self)
-        else:
-            return affiPoints(self)
+        return affiCondorcet(self)
 
     def nbVotesValides(self):
-        if self.sysVote in ("approbation", "sumaut"):
-            return len(self.votants)
-        else:
-            nbCandidats = len(self.candidats)
-            return len(tuple(x for x in self.votants.values() if True or len(x.classements) == nbCandidats))
+        nbCandidats = len(self.candidats)
+        return len(tuple(x for x in self.votants.values()))
 
 def resume(election):
     if election.fini():
@@ -299,21 +220,29 @@ def resume(election):
                     classements[clsVotant] = 1
                 else:
                     classements[clsVotant] += 1
-            else: #votant est un VotantUninominal
-                prefere = votant.prefere()
-                if prefere not in classements:
-                    classements[prefere] = 1
-                else:
-                    classements[prefere] += 1
 
         with open("resume.txt", "w") as f:
             infosVotes = list(classements.items())
             shuffle(infosVotes)
 
             for classement, nbVotants in infosVotes:
-                f.write(f"{nbVotants}:{'>'.join(election.candidat2nom[x[0]] for x in classement) if isinstance(classement, tuple) else classement}\n")
+                f.write(f"{nbVotants}:{' > '.join(election.candidat2nom[x[0]] for x in classement) if isinstance(classement, tuple) else classement}\n")
 
         return "resume.txt"
+
+def detailsVotes(election):
+    if election.fini():
+        classements = dict()
+
+        for votant in election.votants:
+            if isinstance(votant, VotantRank):
+                clsVotant = tuple(map(lambda x: election.candidat2nom[x], sorted(votant.classements.keys(), key=lambda x: votant.classements[x])))
+                if clsVotant not in classements:
+                    classements[clsVotant] = {votant.id}
+                else:
+                    classements[clsVotant].add(votant.id)
+
+        return classements
 
 def affiCondorcet(election):
     msgs = []
@@ -332,22 +261,4 @@ def affiCondorcet(election):
 
         duelsPrec = len(duels)
 
-    return msgs, [resume(election)]
-
-def affiPoints(election):
-    msgs = []
-
-    nbExaequo = 0
-    pointsPrec = -1000
-    for index, (candidat, points) in enumerate(election.resultats):
-        if candidat is None: candidat = "Vote blanc"
-
-        if points == pointsPrec: nbExaequo += 1
-        else: nbExaequo = 0
-        numero = index+1-nbExaequo
-
-        msgs.append(f"#**{numero}** {election.candidat2nom[candidat]} with {points} votes")
-
-        pointsPrec = points
-
-    return msgs, [resume(election)]
+    return msgs, detailsVotes(election), [resume(election)]
