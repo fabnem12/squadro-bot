@@ -610,7 +610,7 @@ def main() -> None:
 
                 affiDetails = ["Detailed results of the vote:\n"]
                 for classement, votants in details.items():
-                    affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants)
+                    affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants) + "\n"
                     if len(affiCls) + len(affiDetails[-1]) < 2000:
                         affiDetails[-1] += affiCls
                     else:
@@ -692,7 +692,7 @@ def main() -> None:
 
                 affiDetails = ["Detailed results of the vote:\n"]
                 for classement, votants in details.items():
-                    affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants)
+                    affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants) + "\n"
                     if len(affiCls) + len(affiDetails[-1]) < 2000:
                         affiDetails[-1] += affiCls
                     else:
