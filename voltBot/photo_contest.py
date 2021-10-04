@@ -334,7 +334,7 @@ def main() -> None:
         elif day == 6:
             if now.hour == 8 and now.minute == 0:
                 await startgf1(None)
-            elif now.hour == 20 and now.minute == 0:
+            elif now.hour == 22 and now.minute == 0:
                 await stopgf1(None)
         elif day == 7:
             if now.hour == 8 and now.minute == 0:
