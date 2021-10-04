@@ -571,7 +571,7 @@ def main() -> None:
                 await (ctx.channel if ctx else bot.get_channel(channelObj.channelId)).send(affi)
 
     @bot.command(name = "fix_gf1")
-    async def fix_gf1(ctx):
+    async def fix_gf1(ctx, messageId: int):
         if ctx.author.id == ADMIN_ID:
             election = Election("RankedPairs")
             election.commence = True
@@ -583,7 +583,7 @@ def main() -> None:
                 election.nom2candidat[f"Photo {i+1} ({categ.name})"] = photo
                 election.candidat2nom[photo] = f"Photo {i+1} ({categ.name})"
 
-            GRAND_FINALS[894463986299453480, "🧀"] = (election, categ)
+            GRAND_FINALS[messageId, "🧀"] = (election, categ)
             save()
 
             await ctx.message.add_reaction("🧀")
