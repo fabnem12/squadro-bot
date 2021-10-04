@@ -623,7 +623,7 @@ def main() -> None:
 
                 if fichiers:
                     for fichier in fichiers:
-                        await ctx.send(file = discord.File(fichier))
+                        await channel.send(file = discord.File(fichier))
 
             GRAND_FINALS.clear()
             save()
@@ -705,7 +705,7 @@ def main() -> None:
 
                 if fichiers:
                     for fichier in fichiers:
-                        await ctx.send(file = discord.File(fichier))
+                        await channel.send(file = discord.File(fichier))
 
             save()
 
