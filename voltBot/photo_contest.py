@@ -600,7 +600,7 @@ def main() -> None:
                 categ.setWinner(winner)
 
                 await channel.send(f"**Results of the vote for {categ.name}:**")
-                msgs, fichiers = electionCateg.affi()
+                msgs, details, fichiers = electionCateg.affi()
 
                 trophies = ["🥇", "🥈", "🥉"] + [""] * (3-len(classement))
                 for i, msg in reversed(list(enumerate(msgs))):
