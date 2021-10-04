@@ -347,6 +347,13 @@ def main() -> None:
     @bot.event
     async def on_ready():
         autoplanner.start()
+        
+        categ = CATEGORIES["food"]
+        for proposal in categ.proposals:
+            if "https://cdn.discordapp.com/attachments/847488864713048144/892855813775970346/https--cdn.discordapp.com-attachments-877626245582573668-892855801071411250-image0.jpg" in proposal.url:
+                categ.votes[proposal] = set()
+
+        save()
 
     async def traitementRawReact(payload):
         if payload.user_id != bot.user.id: #sinon, on est dans le cas d'une réaction en dm
@@ -630,7 +637,7 @@ def main() -> None:
 
                 affiDetails = ["Detailed results of the vote:\n"]
                 for classement, votants in details.items():
-                    affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants)
+                    affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants) + "\n"
                     if len(affiCls) + len(affiDetails[-1]) < 2000:
                         affiDetails[-1] += affiCls
                     else:
@@ -712,7 +719,7 @@ def main() -> None:
 
                 affiDetails = ["Detailed results of the vote:\n"]
                 for classement, votants in details.items():
-                    affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants)
+                    affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants) + "\n"
                     if len(affiCls) + len(affiDetails[-1]) < 2000:
                         affiDetails[-1] += affiCls
                     else:
@@ -725,7 +732,7 @@ def main() -> None:
 
                 if fichiers:
                     for fichier in fichiers:
-                        await ctx.send(file = discord.File(fichier))
+                        await channel.send(file = discord.File(fichier))
 
             save()
 
