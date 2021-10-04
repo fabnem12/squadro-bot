@@ -126,6 +126,9 @@ else:
     msg2submission = dict()
     save()
 
+SUPERFINAL = 765232858499252264
+prefix = "T."
+
 def countryRolesUser(user):
     listRoles = {'Vatican', 'Ukraine', 'United Kingdom', 'Turkey', 'Switzerland', 'Sweden', 'Spain', 'Slovenia', 'Slovakia', 'Serbia', 'San Marino', 'Portugal', 'Russia', 'Romania', 'Poland', 'Norway', 'North Macedonia', 'Netherlands', 'Montenegro', 'Monaco', 'Moldova', 'Malta', 'Luxembourg', 'Lithuania', 'Liechtenstein', 'Latvia', 'Kazakhstan', 'Kosovo', 'Italy', 'Ireland', 'Iceland', 'Hungary', 'Greece', 'Georgia', 'Germany', 'France', 'Finland', 'Estonia', 'Denmark', 'Czechia', 'Cyprus', 'Croatia', 'Bulgaria', 'Bosnia & Herzegovina', 'Belgium', 'Belarus', 'Azerbaijan', 'Austria', 'Andorra', 'Armenia', 'Albania'}
     return set(x.name for x in user.roles if x.name in listRoles)
@@ -197,6 +200,7 @@ async def submit_react_add(messageId, user, guild, emojiHash, channel):
                 save()
 
 async def vote_react_add(messageId, user, guild, emojiHash, channel):
+    return
     if emojiHash == "👍":
         if channel.id in LANGUAGE_CHANNELS:
             languageChannel = LANGUAGE_CHANNELS[channel.id]
@@ -568,6 +572,22 @@ def main() -> None:
 
                 await (ctx.channel if ctx else bot.get_channel(channelObj.channelId)).send(affi)
 
+    @bot.command(name = "fix_gf1")
+    async def fix_gf1(ctx):
+        if ctx.author.id == ADMIN_ID:
+            election = Election("RankedPairs")
+            election.commence = True
+            categ = CATEGORIES["food"]
+
+            for url in ["https://cdn.discordapp.com/attachments/847488864713048144/892770346997010463/https--cdn.discordapp.com-attachments-890977089631698964-892770336754499584-image0.jpg", "https://cdn.discordapp.com/attachments/847488864713048144/892690051375464458/https--cdn.discordapp.com-attachments-746041800804007988-892690035818774528-20210714_151509-min.jpg", "https://cdn.discordapp.com/attachments/847488864713048144/892844750087024670/https--cdn.discordapp.com-attachments-890977089631698964-892844732533833798-9YpOgP7RsN2ofOpY2epf_hLq.png"]:
+                photo = [x for x in categ.proposals if x.url == url][0]
+                election.candidats.add(photo)
+                election.nom2candidat[f"Photo {i+1} ({categ.name})"] = photo
+                election.candidat2nom[photo] = f"Photo {i+1} ({categ.name})"
+
+            GRAND_FINALS[894463986299453480, "🧀"] = (election, categ)
+            save()
+
     @bot.command(name = "start_gf1")
     async def startgf1(ctx):
         if ctx is None or ctx.author.id == ADMIN_ID:
@@ -600,7 +620,7 @@ def main() -> None:
                 categ.setWinner(winner)
 
                 await channel.send(f"**Results of the vote for {categ.name}:**")
-                msgs, fichiers = electionCateg.affi()
+                msgs, details, fichiers = electionCateg.affi()
 
                 trophies = ["🥇", "🥈", "🥉"] + [""] * (3-len(classement))
                 for i, msg in reversed(list(enumerate(msgs))):
@@ -623,7 +643,7 @@ def main() -> None:
 
                 if fichiers:
                     for fichier in fichiers:
-                        await ctx.send(file = discord.File(fichier))
+                        await channel.send(file = discord.File(fichier))
 
             GRAND_FINALS.clear()
             save()
