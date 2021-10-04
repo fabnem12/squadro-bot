@@ -294,6 +294,7 @@ async def grand_final_react(messageId, user, guild, emojiHash, channel, remove =
             await channel.send("**Your vote has been saved.**\nYou can change your vote by reacting again in <#889539190449131551>")
             save()
 
+prefix = ","
 def main() -> None:
     intents = discord.Intents.all()
     bot = commands.Bot(command_prefix=prefix, help_command=None, intents = intents)
@@ -576,7 +577,7 @@ def main() -> None:
             election.commence = True
             categ = CATEGORIES["food"]
 
-            for url in ["https://cdn.discordapp.com/attachments/847488864713048144/892770346997010463/https--cdn.discordapp.com-attachments-890977089631698964-892770336754499584-image0.jpg", "https://cdn.discordapp.com/attachments/847488864713048144/892690051375464458/https--cdn.discordapp.com-attachments-746041800804007988-892690035818774528-20210714_151509-min.jpg", "https://cdn.discordapp.com/attachments/847488864713048144/892844750087024670/https--cdn.discordapp.com-attachments-890977089631698964-892844732533833798-9YpOgP7RsN2ofOpY2epf_hLq.png"]:
+            for i, url in enumerate(["https://cdn.discordapp.com/attachments/847488864713048144/892770346997010463/https--cdn.discordapp.com-attachments-890977089631698964-892770336754499584-image0.jpg", "https://cdn.discordapp.com/attachments/847488864713048144/892690051375464458/https--cdn.discordapp.com-attachments-746041800804007988-892690035818774528-20210714_151509-min.jpg", "https://cdn.discordapp.com/attachments/847488864713048144/892844750087024670/https--cdn.discordapp.com-attachments-890977089631698964-892844732533833798-9YpOgP7RsN2ofOpY2epf_hLq.png"]):
                 photo = [x for x in categ.proposals if x.url == url][0]
                 election.candidats.add(photo)
                 election.nom2candidat[f"Photo {i+1} ({categ.name})"] = photo
@@ -584,6 +585,8 @@ def main() -> None:
 
             GRAND_FINALS[894463986299453480, "🧀"] = (election, categ)
             save()
+
+            await ctx.message.add_reaction("🧀")
 
     @bot.command(name = "start_gf1")
     async def startgf1(ctx):
