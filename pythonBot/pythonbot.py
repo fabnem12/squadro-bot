@@ -31,8 +31,6 @@ estAdmin = lambda user: user.id in ADMINS
 def traitementImageEnvoyeeDiscord():
     pass
 
-def eval2(code, receptacle, globals = dict(), locals = dict()):
-    receptacle[0] = eval(code, globals, locals)
 def checkSyntax(code):
     import ast
 
@@ -247,7 +245,7 @@ async def verifCode(code, channel, message):
 
             if estAdmin(message.author):
                 safe, trucInterdit = True, None
-                
+
             if not syntaxeOk: safe = False #on ne va pas laisser passer une erreur de syntaxe quand même !
 
     if not safe:
@@ -804,6 +802,9 @@ def main(idsTraites = set(range(10))):
         #exécution du code à proprement parler
         fail = not safe
         if safe: #on n'exécute pas le code s'il n'est pas safe !
+            def eval2(code, receptacle, globals = dict(), locals = dict()):
+                receptacle[0] = eval(code, globals, locals)
+                
             async with channel.typing():
                 try:
                     timeout = DUREE_EXEC if not estAdmin(user) else DUREE_EXEC_ADMIN
