@@ -217,7 +217,7 @@ async def verifCode(code, channel, message):
                     trucInterdit = commande
                     break
 
-            safe = safe or estAdmin(message.author) #les admins peuvent utiliser python sans filtre
+            #safe = safe or estAdmin(message.author) #les admins peuvent utiliser python sans filtre
 
             if safe:
                 syntaxeOk, erreurSyntaxe = checkSyntax(code)
@@ -245,8 +245,9 @@ async def verifCode(code, channel, message):
                         trucInterdit = "L'import du module **" + nomModule + "** est __interdit__"
                         break
 
-            safe = safe or estAdmin(message.author) #les admins peuvent utiliser python sans filtre
-            if estAdmin(message.author): trucInterdit = None
+            if estAdmin(message.author):
+                safe, trucInterdit = True, None
+                
             if not syntaxeOk: safe = False #on ne va pas laisser passer une erreur de syntaxe quand même !
 
     if not safe:
