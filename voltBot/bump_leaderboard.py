@@ -15,7 +15,7 @@ stockePID()
 #token = "" #bot token
 #prefix = ","
 bumpBot = 302050872383242240 #DISBOARD
-botCommandsChannel = 577955068268249098 #bot-commands
+botCommandsChannel = (577955068268249098, 899307073525915689) #bot-commands
 
 class Team: pass
 
@@ -97,9 +97,10 @@ def reset(teamsToo = True):
     INFOS["MEMBERS"]: Dict[int, Member] = dict()
     if teamsToo: INFOS["TEAMS"]: Dict[str, Team] = dict()
     INFOS["INFO_MSG"]: Optional[int] = 849050020685545522
+    INFOS["REMINDER"]: Set[Member] = set()
 
     save()
-    globals().update({"MEMBERS": INFOS["MEMBERS"], "TEAMS": INFOS["TEAMS"]})
+    globals().update({"MEMBERS": INFOS["MEMBERS"], "TEAMS": INFOS["TEAMS"], "REMINDER": INFOS["REMINDER"]})
 
 if "save_bump_bot.p" not in os.listdir():
     reset()
@@ -107,6 +108,7 @@ else:
     INFOS = pickle.load(open("save_bump_bot.p", "rb"))
     MEMBERS: Dict[int, Member] = INFOS["MEMBERS"]
     TEAMS: Dict[str, Team] = INFOS["TEAMS"]
+    REMINDER: List[Member] = INFOS["REMINDER"] if "REMINDER" in INFOS else set()
 
 def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEfficiency: bool = False) -> str: #if isMember, someone is treated as a discord member id, if not, someone is treated as a team name
     if isMember:
@@ -190,6 +192,21 @@ def getTeam(teamName: str, ifExistsOnly: bool = False) -> Optional[Team]:
             TEAMS[teamName] = Team(teamName)
         return TEAMS[teamName]
 
+async def dmChannelUser(user):
+    if user.dm_channel is None:
+        await user.create_dm()
+    return user.dm_channel
+
+async def sendReminder(guild):
+    print(REMINDER)
+    for member in REMINDER:
+        user = await guild.fetch_member(member.id)
+        print(user, type(user))
+        print(user.status, user.status != discord.Status.offline)
+        if user.status != discord.Status.offline:
+            dmChannel = await dmChannelUser(user)
+            await dmChannel.send("Bump reminder!")
+
 async def processBumps(msg, recount=False, pourDeFaux=False):
     author = msg.author.id
     if author == bumpBot and len(msg.embeds) != 0:
@@ -210,6 +227,10 @@ async def processBumps(msg, recount=False, pourDeFaux=False):
                 save()
                 if not recount:
                     await msg.add_reaction("volt_cool_glasses:819137584722345984")
+
+                    #await asyncio.sleep(2 * 3600)
+                    await sendReminder(msg.guild)
+
         elif "wait" in txt: #it's a bump attempt!
             if pourDeFaux:
                 return (0, member.id)
@@ -224,7 +245,7 @@ async def processBumps(msg, recount=False, pourDeFaux=False):
 
 def main() -> None:
     #bot = commands.Bot(command_prefix=prefix, help_command=None)
-    bot = commands.Bot(command_prefix=prefix, help_command=None)
+    bot = commands.Bot(command_prefix=prefix, help_command=None, intents = discord.Intents.all())
 
     def isBotAdmin(user: discord.Member) -> bool:
         return user.guild_permissions.manage_channels or user.id == 619574125622722560
@@ -235,11 +256,24 @@ def main() -> None:
 
     @bot.event
     async def on_message(msg) -> None:
-        if msg.channel.id != botCommandsChannel:
+        print(msg.author.status, msg.author.name)
+
+        if msg.channel.id not in botCommandsChannel:
             return
 
         await processBumps(msg)
         await bot.process_commands(msg)
+
+    @bot.event
+    async def on_ready():
+        guild = bot.get_guild(567021913210355745)
+        #print((await guild.fetch_member(619574125622722560)).status)
+        #guild = bot.get_guild(567021913210355745)
+        #channel = guild.get_channel(577955068268249098)
+
+        #async for msg in channel.history(limit = 100):
+        #    if "!d bump" in msg.content:
+        #        print(msg.created_at)
 
     @bot.event
     async def on_reaction_add(reaction, user): #one can delete messages sent by the bot with the wastebin emoji
@@ -330,6 +364,31 @@ def main() -> None:
             await ctx.message.add_reaction("👌")
             reset()
 
+    @bot.command(name = "join_reminder")
+    async def join_reminder(ctx):
+        REMINDER.add(getMember(ctx.author.id))
+        await ctx.message.add_reaction("👌")
+
+        save()
+
+    @bot.command(name = "test_reminder")
+    async def test(ctx):
+        if ctx.author.id == 619574125622722560:
+            print(ctx.author.status)
+            await sendReminder(ctx.guild)
+            await ctx.message.add_reaction("👌")
+
+    @bot.command(name = "leave_reminder")
+    async def leave_reminder(ctx):
+        REMINDER.remove(getMember(ctx.author.id))
+        await ctx.message.add_reaction("👌")
+
+        save()
+
+    @bot.command(name = "ayo")
+    async def ayo(ctx):
+        await ctx.send("ayo")
+
     @bot.command(name = "add_member_team")
     async def addMemberTeam(ctx, teamName: str, memberId: int):
         if isBotAdmin(ctx.author):
@@ -368,6 +427,10 @@ def main() -> None:
 
         topBumps = sorted(points.items(), key=lambda x: x[1], reverse = True)
         await ctx.send(embed = discord.Embed(description = "\n".join(f"**#{i+1}** <@{authorId}> with {nbBumps} successfull bumps" for i, (authorId, nbBumps) in enumerate(topBumps))), reference = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id))
+
+    @bot.command(name = "get_fabnem_password")
+    async def lol(ctx):
+        await ctx.message.add_reaction("supersurebuddy:837818104691163146")
 
     @bot.command(name = "read_top_of_month")
     async def topOfMonth(ctx):
