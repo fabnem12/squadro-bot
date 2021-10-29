@@ -299,6 +299,7 @@ async def autorole_react_del(messageId, member, guild, emoji):
     await autorole_react_add(messageId, member, guild, emoji, False)
 
 async def autoroleconf_react_add(messageId, member, guild, emoji):
+    print(messageId, emoji, (messageId, emoji) in AUTO_ROLE_CONF, len(AUTO_ROLE_CONF))
     if (messageId, emoji) in AUTO_ROLE_CONF:
         roleId, channelConfId, pingConfId, serveurAutoId, roleAutoId, toWhoId = AUTO_ROLE_CONF[messageId, emoji]
         role = guild.get_role(roleId)
@@ -365,6 +366,7 @@ async def autoasso_react_add(messageId, member, guild, emoji):
         else: #le qcm a été répondu, on donne l'accès au reste du serveur
             role = guild.get_role(roleMembreServeurAsso)
             await member.add_roles(role)
+            await channel.send(f"**Arrivée sur le serveur de l'API des Passionnés d'Informatique**\nMerci ! Vous avez maintenant accès au reste du serveur.")
 
 async def autopin_react_add(messageId, member, guild, emoji, channel):
     if emoji == "📌": #c'est un pin !
