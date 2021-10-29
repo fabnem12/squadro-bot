@@ -1,0 +1,170 @@
+html {
+  background-color: #36393f;
+  font-family: sans-serif;
+}
+
+header {
+  display: flex;
+  height: 42px;
+  max-height: 42px;
+}
+
+.conteneur_gauche {
+  width: 205px; /** Marge calculée pour éviter que le texte ne rentre dans la partie menu**/
+  background-color: #2f3136;
+}
+
+.conteneur_gauche .nom_serveur {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 195px;
+  max-width: 195px;
+  height: 50px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  white-space: nowrap;
+  padding-top: 10px;
+  padding-left: 5px;
+
+  font-weight: bold;
+  color: white;
+  background-color: #2f3136;
+
+  cursor: grab;
+  border-bottom: 2px solid #26272b;
+}
+
+.nom_salon {
+  padding-left: 20px;
+  background-color: #36393f;
+  color: white;
+  font-weight: bold;
+  width: 100%;
+
+  border-bottom: 2px solid #33363b;
+}
+
+#conteneur_global {
+  display: flex;
+}
+
+.conteneur_gauche nav {
+  position: absolute; /*Position absolue dans le conteneur, pour éviter que tout se superpose*/
+  height: auto;
+
+  top: 50px; /*Paramètre à modif
+  ier pour faire varier la hauteur  > on va plus bas < on va plus haut*/
+  left: 0px;
+  bottom: 0px; /*Si on veut que le menu aille jusqu'au bas de la page, sinon mettre en commentaire */
+  width: 200px; /*largeur en pourcentage; adapté au changement de taile d'écran*/
+
+  display: inline-block;
+  background-color: #2f3136;
+  color: #7e8287;
+}
+
+ul {
+  list-style: none;
+  padding-left: 10px;
+}
+li {
+  height: 25px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding-top: 5px;
+}
+li:hover {
+  background-color: #36393f;
+  color: #ccc;
+  cursor: grab;
+}
+
+section {
+  float: right;
+  background-color: #36393f;
+  color: #a0a2a5;
+  width: 100%;
+  margin-left: 5px;
+}
+
+article {
+  margin-left: 10px;
+  margin-top: 2px;
+}
+article:hover {
+  background-color: #32353b;
+}
+
+.avatar {
+  float: left;
+  height: 42px;
+  width: 42px;
+  border-radius: 50%;
+}
+.avatar:hover {
+  cursor: grab;
+}
+td.conteneur_avatar, td.heure_cachee {
+  width: 42px;
+  vertical-align: top;
+}
+
+.author {
+  color: yellow;
+  font-size: 17px;
+  font-weight: bold;
+}
+.author:hover {
+  text-decoration: underline;
+  cursor: grab;
+}
+span.author {
+  padding-left: 8px;
+}
+
+.date {
+  font-size: 11px;
+  color: #888;
+  cursor: default;
+}
+
+td.txt_message {
+  font-size: 15px;
+  color: #ccc;
+  line-height: 1.3em;
+  padding-left: 10px;
+}
+
+.heure_cachee {
+  visibility: hidden;
+  font-size: 11px;
+  color: #888;
+  width: 50px;
+  max-width: 50px;
+
+  cursor: default;
+}
+
+article:hover .heure_cachee {
+  visibility: visible;
+}
+
+.emoji_petit {
+  position: relative;
+  top: 2px;
+  margin-top: -5px;
+  height: 18px;
+  width: 18px;
+
+  cursor: grab;
+}
+
+.emoji_grand {
+  height: 50px;
+  width: 50px;
+
+  cursor: grab;
+}
