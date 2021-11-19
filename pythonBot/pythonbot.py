@@ -414,10 +414,11 @@ def main(idsTraites = set(range(10))):
 
     @bot.event
     async def on_message(msg):
-        if "patrick" in msg.content.lower():
-            await msg.channel.send("MASSOT ! <:PATRICK:692677586291261480>")
-        elif "cochon" in msg.content.lower():
-            await msg.channel.send("cochon :pig:")
+        if msg.author.id != bot.user.id:
+            if "patrick" in msg.content.lower():
+                await msg.channel.send("MASSOT ! <:PATRICK:692677586291261480>")
+            elif "cochon" in msg.content.lower():
+                await msg.channel.send("cochon :pig:")
 
         await bot.process_commands(msg)
 
