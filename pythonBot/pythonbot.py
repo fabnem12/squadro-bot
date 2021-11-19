@@ -414,6 +414,11 @@ def main(idsTraites = set(range(10))):
 
     @bot.event
     async def on_message(msg):
+        if "patrick" in msg.content.lower():
+            await msg.channel.send("MASSOT ! <:PATRICK:692677586291261480>")
+        elif "cochon" in msg.content.lower():
+            await msg.channel.send("cochon :pig:")
+
         await bot.process_commands(msg)
 
     @bot.event
@@ -804,7 +809,7 @@ def main(idsTraites = set(range(10))):
         if safe: #on n'exécute pas le code s'il n'est pas safe !
             def eval2(code, receptacle, globals = dict(), locals = dict()):
                 receptacle[0] = eval(code, globals, locals)
-                
+
             async with channel.typing():
                 try:
                     timeout = DUREE_EXEC if not estAdmin(user) else DUREE_EXEC_ADMIN
