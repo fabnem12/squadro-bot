@@ -15,8 +15,8 @@ stockePID()
 #token = "" #bot token
 #prefix = ","
 bumpBot = 302050872383242240 #DISBOARD
-botCommandsChannel = (577955068268249098, 899307073525915689) #bot-commands
-
+botCommandsChannel = (577955068268249098, 899307073525915689, 777966573540474923) #bot-commands
+print(prefix)
 class Team: pass
 
 class Member:
@@ -256,7 +256,7 @@ def main() -> None:
 
     @bot.event
     async def on_message(msg) -> None:
-        print(msg.author.status, msg.author.name)
+        #print(msg.author.status, msg.author.name)
 
         if msg.channel.id not in botCommandsChannel:
             return
@@ -444,6 +444,17 @@ def main() -> None:
                 await ctx.send(file = discord.File(pathTop), reference = ref)
             else:
                 await ctx.send("Someone has to start the count!", reference = ref)
+
+    @bot.command(name="react")
+    async def react(ctx, *emojis: Union[discord.Emoji, str]):
+        reference = ctx.message.reference
+
+        if reference:
+            msg = await ctx.channel.fetch_message(reference.message_id)
+            for emoji in emojis:
+                await msg.add_reaction(emoji)
+
+        await ctx.message.delete()
 
     @bot.command(name = "kill")
     async def kill(ctx):
