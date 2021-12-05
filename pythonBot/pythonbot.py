@@ -248,6 +248,7 @@ async def verifCode(code, channel, message):
 
             if not syntaxeOk: safe = False #on ne va pas laisser passer une erreur de syntaxe quand même !
 
+    if estAdmin(message.author): safe = True
     if not safe:
         msgEnvoi = ""
         if retire is None:
