@@ -366,6 +366,13 @@ def main() -> None:
 
         GRAND_FINALS[msgVote.id, "🗳️"] = (election, None)
 
+    @bot.command(name = "save")
+    async def savebot(ctx):
+        if 674583505446895616 not in (x.id for x in ctx.author.roles):
+            return
+        
+        save()
+    
     @bot.command(name = "results_pfp")
     async def results(ctx, channel: discord.TextChannel):
         if 674583505446895616 not in (x.id for x in ctx.author.roles):
