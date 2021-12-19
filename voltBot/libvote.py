@@ -28,8 +28,11 @@ class VotantRank(Votant):
     def classement(self, candidat):
         return self.classements[candidat] if candidat in self.classements else None
 
-    def prefere(self):
-        classements = self.classements
+    def prefere(self, candidats = None):
+        if candidats is None:
+            classements = self.classements
+        else:
+            classements = {key: val for key, val in self.classements.items() if key in candidats}
         return min(classements.keys(), key = lambda x: classements[x])
 
     def prefere2(self, candidatA, candidatB):
@@ -99,7 +102,7 @@ class VotantRank(Votant):
         return list(enumerate(self.listeCandidats))
 
 class Election:
-    sysVotes = {"Borda", "sumaut", "approbation", "Copeland", "RankedPairs"}
+    sysVotes = {"Borda", "sumaut", "approbation", "Copeland", "RankedPairs", "RCV"}
 
     def __init__(self, sysVote = "Borda"):
         self.candidats = set()
@@ -181,6 +184,33 @@ class Election:
                         break
 
             self.resultats = classement
+        elif self.sysVote == "RCV":
+            votants, candidats = self.votants, tuple(self.candidats)
+            threshold = len(votants) // 2 + 1
+
+            listePreferes = []
+            preferes = {candidat: set() for candidat in candidats}
+            dernier = None
+
+            while True:
+                if dernier:
+                    votants = preferes[dernier]
+
+                preferes = {candidat: votes.copy() for candidat, votes in preferes.items() if candidat != dernier}
+                listePreferes.append(preferes)
+
+                for votant in votants:
+                    preferes[votant.prefere(candidats)].add(votant)
+
+                premier = max(preferes.keys(), key=lambda x: len(preferes[x]))
+                if len(preferes[premier]) >= threshold:
+                    self.resultats = (premier, listePreferes)
+                    return self.resultats
+
+                else: #en cas d'égalité, le dernier est retiré selon un certain critère, donc pas de pb
+                    dernier = min(preferes.keys(), key=lambda x: (len(preferes[x], -int(self.candidat2nom[x].split(" ")[1]))))
+                    candidats = tuple(x for x in candidats if x != dernier)
+
         else:
             raise ValueError("Système de vote non géré pour le moment")
 
