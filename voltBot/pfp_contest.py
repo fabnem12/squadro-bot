@@ -14,10 +14,6 @@ from libvote import Votant, Election
 
 stockePID()
 
-#token = "" #bot token
-#prefix = ","
-print(prefix)
-
 #BOT FOR VOLT'S pfp CONTEST
 
 toto = dict()
@@ -370,9 +366,9 @@ def main() -> None:
     async def savebot(ctx):
         if 674583505446895616 not in (x.id for x in ctx.author.roles):
             return
-        
+
         save()
-    
+
     @bot.command(name = "results_pfp")
     async def results(ctx, channel: discord.TextChannel):
         if 674583505446895616 not in (x.id for x in ctx.author.roles):
@@ -384,21 +380,26 @@ def main() -> None:
             election.calculVote()
         premier, details = election.getResultats()
 
-        print("\n".join(str(x) for x in details))
-
-        e = discord.Embed(description = f"Winner for <#{channel.id}>")
-        e.set_image(url = premier)
-        await ctx.send(embed = e)
+        await ctx.send(f"Here are the results of the vote for <#{channel.id}>")
 
         for i, det in enumerate(details):
-            scores = sorted(((candidat, votes) for candidat, votes in det.items()), key=lambda x: len(x[1]), reverse = True)
-            await ctx.send(f"__**Round #{i+1}:**__\n" + "\n".join(f"- {election.candidat2nom[candidat]} with {len(votes)} vote{'s' if len(votes) != 1 else ''}" + (f"({' '.join(f'<@{votant.id}>' for votant in votes)})" if len(votes) else "") for candidat, votes in scores))
+            scores = sorted(((candidat, votes) for candidat, votes in det.items()), key=lambda x: (len(x[1]), -int(election.candidat2nom[x[0]].split(" ")[1])), reverse = True)
+            e = discord.Embed(description = f"__**Round #{i+1}:**__\n" + "\n".join(f"- {election.candidat2nom[candidat]} with {len(votes)} vote{'s' if len(votes) != 1 else ''}" + (f"({' '.join(f'<@{votant.id}>' for votant in votes)})" if len(votes) else "") for candidat, votes in scores))
+            await ctx.send(embed = e)
 
         await ctx.send("Reminder of the proposals:")
         for candidat in sorted(election.candidats, key=lambda x: election.candidat2nom[x]):
             e = discord.Embed(description = election.candidat2nom[candidat])
             e.set_image(url = candidat)
             await ctx.send(embed = e)
+
+        e = discord.Embed(description = f"**Winner for <#{channel.id}>**")
+        e.set_image(url = premier)
+        await ctx.send(embed = e)
+
+    @bot.command(name = "ohé")
+    async def ohe(ctx):
+        await ctx.send("ohé")
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
