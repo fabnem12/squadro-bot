@@ -15,7 +15,7 @@ stockePID()
 #token = "" #bot token
 #prefix = ","
 bumpBot = 302050872383242240 #DISBOARD
-botCommandsChannel = (577955068268249098, 899307073525915689, 777966573540474923, 676119576798560316, 567482036919730196, 806213028034510859) #bot-commands
+botCommandsChannel = (577955068268249098, 899307073525915689, 777966573540474923, 676119576798560316, 567482036919730196, 806213028034510859, 567024817128210433) #bot-commands
 print(prefix)
 class Team: pass
 
@@ -266,14 +266,26 @@ def main() -> None:
 
     @bot.event
     async def on_ready():
-        guild = bot.get_guild(567021913210355745)
-        #print((await guild.fetch_member(619574125622722560)).status)
-        #guild = bot.get_guild(567021913210355745)
-        #channel = guild.get_channel(577955068268249098)
+        pass
 
-        #async for msg in channel.history(limit = 100):
-        #    if "!d bump" in msg.content:
-        #        print(msg.created_at)
+    @bot.command(name = "local_volt")
+    async def local_volt(ctx, countryRole: discord.Role, localVolt: discord.Role):
+        from math import ceil
+        volter = 588818733410287636
+
+        await ctx.send(f"Country role: {countryRole.name}, local Volt Role: {localVolt.name}")
+
+        output = ""
+        count = 0
+        for member in ctx.guild.members:
+            roles = {x.id for x in member.roles}
+            if volter in roles and countryRole.id in roles and localVolt.id not in roles:
+                output += str(member) + "\n"
+                count += 1
+
+        await ctx.send(f"{count} members found that should have the local role and don't have it found:")
+        for i in range(ceil(len(output) / 2000)):
+            await ctx.send(f"{output[2000*i:2000*(i+1)]}")
 
     @bot.event
     async def on_reaction_add(reaction, user): #one can delete messages sent by the bot with the wastebin emoji
@@ -455,6 +467,41 @@ def main() -> None:
                 await msg.add_reaction(emoji)
 
         await ctx.message.delete()
+
+    async def isMod(guild, memberId):
+        member = await guild.fetch_member(memberId)
+        return any(role.id == 674583505446895616 for role in member.roles)
+
+    banFrom = [0]
+    @bot.command(name="ban_from")
+    async def ban_from(ctx):
+        ref = ctx.message.reference
+        if ref and (await isMod(ctx.guild, ctx.author.id)):
+            msg = await ctx.channel.fetch_message(ref.message_id)
+            banFrom[0] = msg.created_at
+
+            await ctx.message.add_reaction("👌")
+
+    @bot.command(name="ban_to")
+    async def banTo(ctx):
+        ref = ctx.message.reference
+        if ref and banFrom[0] and (await isMod(ctx.guild, ctx.author.id)):
+            msg = await ctx.channel.fetch_message(ref.message_id)
+
+            async for msg in ctx.channel.history(limit = None, before = msg.created_at, after = banFrom[0]):
+                if msg.author.id == 282859044593598464: #the message is from ProBot -> introduction message
+                    idNew = int(msg.content.split("<")[1].split(">")[0].split("!")[-1])
+                    try:
+                        memberNew = await ctx.guild.fetch_member(idNew)
+                    except discord.errors.NotFound:
+                        continue
+
+                    if memberNew and 597867859095584778 in (role.id for role in memberNew.roles):
+                        await memberNew.ban(reason = "raid - mass ban by fabnem's volt bot")
+                        #print(f"I would have banned {memberNew.name}")
+
+            banFrom[0] = 0
+            await ctx.message.add_reaction("👌")
 
     @bot.command(name = "kill")
     async def kill(ctx):
