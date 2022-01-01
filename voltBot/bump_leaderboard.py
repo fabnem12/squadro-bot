@@ -99,7 +99,7 @@ def reset(teamsToo = True):
     if teamsToo: INFOS["TEAMS"]: Dict[str, Team] = dict()
     INFOS["INFO_MSG"]: Optional[int] = 849050020685545522
     INFOS["REMINDER"]: Set[Member] = set()
-    INFOS["LAST_BUMP"]: Dict[Member, datetime.datetime]
+    INFOS["LAST_BUMP"]: Dict[Member, datetime.datetime] = dict()
 
     save()
     globals().update({"MEMBERS": INFOS["MEMBERS"], "TEAMS": INFOS["TEAMS"], "REMINDER": INFOS["REMINDER"]})
@@ -532,7 +532,7 @@ def main() -> None:
                 multinationalMembers[user.id] = nationality
                 pickle.dump(multinationalMembers, open("multinationals.p", "wb"))
 
-                await ctx.send(f"<@{user.id}> is registered as {nationality}", reference = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id))
+                await ctx.send(f"{user.nick or user.name} is registered as {nationality}", reference = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id))
 
                 await ctx.message.add_reaction("👌")
 
