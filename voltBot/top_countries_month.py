@@ -132,7 +132,7 @@ async def countMessages(guild, bot):
 
                 if author.id not in keyDicoByAuthorId:
                     if author.id in multinationalMembers:
-                        authorsCountries = tuple(multinationalMembers[author.id])
+                        authorsCountries = (multinationalMembers[author.id],)
                     else:
                         authorsCountries = tuple(role.name for role in author.roles if role.name in countries)
 
