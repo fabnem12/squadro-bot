@@ -530,7 +530,7 @@ def main() -> None:
                 multinationalMembers[user.id] = nationality
                 pickle.dump(multinationalMembers, open("multinationals.p", "wb"))
 
-                await ctx.send(f"<@{user.id}> is registered as {nationality}", reference = discord.Reference(message_id = ctx.message.id, channel_id = ctx.channel.id))
+                await ctx.send(f"<@{user.id}> is registered as {nationality}", reference = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id))
 
                 await ctx.message.add_reaction("👌")
 
