@@ -2,6 +2,7 @@ import asyncio
 import discord
 import pickle
 import os
+from arrow import get as arrowGet, utcnow
 from discord.ext import commands
 from typing import Dict, List, Tuple, Union, Optional, Set
 
@@ -98,6 +99,7 @@ def reset(teamsToo = True):
     if teamsToo: INFOS["TEAMS"]: Dict[str, Team] = dict()
     INFOS["INFO_MSG"]: Optional[int] = 849050020685545522
     INFOS["REMINDER"]: Set[Member] = set()
+    INFOS["LAST_BUMP"]: Dict[Member, datetime.datetime]
 
     save()
     globals().update({"MEMBERS": INFOS["MEMBERS"], "TEAMS": INFOS["TEAMS"], "REMINDER": INFOS["REMINDER"]})
