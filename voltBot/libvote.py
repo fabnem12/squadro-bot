@@ -197,7 +197,7 @@ class Election:
                     votants = preferes[dernier]
 
                 preferes = {candidat: votes.copy() for candidat, votes in preferes.items() if candidat != dernier}
-                listePreferes.append(preferes)
+                if len(votants) != 0: listePreferes.append(preferes)
 
                 for votant in votants:
                     preferes[votant.prefere(candidats)].add(votant)
@@ -208,7 +208,7 @@ class Election:
                     return self.resultats
 
                 else: #en cas d'égalité, le dernier est retiré selon un certain critère, donc pas de pb
-                    dernier = min(preferes.keys(), key=lambda x: (len(preferes[x], -int(self.candidat2nom[x].split(" ")[1]))))
+                    dernier = min(preferes.keys(), key=lambda x: (len(preferes[x]), -int(self.candidat2nom[x].split(" ")[1])))
                     candidats = tuple(x for x in candidats if x != dernier)
 
         else:
