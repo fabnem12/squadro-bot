@@ -15,7 +15,7 @@ stockePID()
 #token = "" #bot token
 #prefix = ","
 bumpBot = 302050872383242240 #DISBOARD
-botCommandsChannel = (577955068268249098, 899307073525915689, 777966573540474923, 676119576798560316, 567482036919730196, 806213028034510859, 567024817128210433, 765706450500452372) #bot-commands
+botCommandsChannel = (577955068268249098, 899307073525915689, 777966573540474923, 676119576798560316, 567482036919730196, 806213028034510859, 567024817128210433, 765706450500452372, 765232858499252264) #bot-commands
 print(prefix)
 class Team: pass
 
@@ -478,7 +478,7 @@ def main() -> None:
             try:
                 memberNew = await msg.guild.fetch_member(idNew)
             except discord.errors.NotFound:
-                continue
+                return
 
             if memberNew and any(role.id == 597867859095584778 for role in memberNew.roles):
                 await memberNew.ban(reason = "raid - mass ban by fabnem's volt bot")
@@ -513,6 +513,28 @@ def main() -> None:
         if ctx.author.id == 619574125622722560: #only fabnem can use this command
             await ctx.message.add_reaction("👌")
             quit()
+
+    @bot.command(name = "save_nat")
+    async def save_nat(ctx, user: discord.Member, *, nationality: str):
+        if (await isMod(ctx.guild, ctx.author.id)):
+            countries = {'Vatican', 'Ukraine', 'United Kingdom', 'Turkey', 'Switzerland', 'Sweden', 'Spain', 'Slovenia', 'Slovakia', 'Serbia', 'San Marino', 'Portugal', 'Russia', 'Romania', 'Poland', 'Norway', 'North Macedonia', 'Netherlands', 'Montenegro', 'Monaco', 'Moldova', 'Malta', 'Luxembourg', 'Lithuania', 'Liechtenstein', 'Latvia', 'Kazakhstan', 'Kosovo', 'Italy', 'Ireland', 'Iceland', 'Hungary', 'Greece', 'Georgia', 'Germany', 'France', 'Finland', 'Estonia', 'Denmark', 'Czechia', 'Cyprus', 'Croatia', 'Bulgaria', 'Bosnia & Herzegovina', 'Belgium', 'Belarus', 'Azerbaijan', 'Austria', 'Andorra', 'Armenia', 'Albania', 'Asia', 'Africa', 'North America', 'Oceania', 'South America'}
+
+            if nationality not in countries:
+                await ctx.send(f"{nationality} is not a valid country role. Pay attention to the capital letters")
+                return
+            else:
+                multinationalMembers = pickle.load(open("multinationals.p", "rb"))
+                multinationalMembers[user.id] = nationality
+                pickle.dump(multinationalMembers, open("multinationals.p", "wb"))
+
+                await ctx.message.add_reaction("👌")
+
+    @bot.command(name = "see_nat")
+    async def see_nat(ctx):
+        if (await isMod(ctx.guild, ctx.author.id)):
+            multinationalMembers = pickle.load(open("multinationals.p", "rb"))
+
+            await ctx.send("\n".join(f"<@{idUser}>: {nat}" for idUser, nat in multinationalMembers.items()))
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))

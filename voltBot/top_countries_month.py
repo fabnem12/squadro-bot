@@ -14,6 +14,12 @@ from utils import stockePID, cheminOutputs as outputsPath
 #prefix = ","
 byLength = False
 
+multinationalMembers = dict()
+if not os.path.isfile("multinationals.p"):
+    pickle.dump(multinationalMembers, open("multinationals.p", "wb"))
+else:
+    multinationalMembers = pickle.load(open("multinationals.p", "rb"))
+
 def eurovisionPoints(topPerChannel, keyDicoByAuthorId):
     points = dict()
     affi = ""
@@ -27,10 +33,10 @@ def eurovisionPoints(topPerChannel, keyDicoByAuthorId):
     for channel, (top, channelName) in topPerChannel.items():
         rankedTop = sorted(top.items(), key=lambda x: x[1], reverse = True)
 
-        if len(rankedTop) >= 10 and rankedTop[9][1] >= (150 if byLength else 10): #if not, let's just ignore this channel for the eurovision points, it's not relevant
+        if len(rankedTop) >= 10 and (rankedTop[9][1] >= (150 if byLength else 10) or (len(sys.argv) >= 2 and sys.argv[1] == "day")): #if not, let's just ignore this channel for the eurovision points, it's not relevant
             #recap of the channel
-            affiChannel = f"Top in #{channelName}\n"
-            affiChannel += "\n".join(f"#{i+1} {keyDicoByAuthorId[authorId][2]}" for i, (authorId, _) in zip(range(10), rankedTop))
+            affiChannel = f"Top in #{channelName} ({sum(y for x, y in rankedTop)} {'letters' if byLength else 'messages'})\n"
+            affiChannel += "\n".join(f"#{i+1} {keyDicoByAuthorId[authorId][2]} ({nbMsgs} {'letters' if byLength else 'messages'})" for i, (authorId, nbMsgs) in zip(range(10), rankedTop))
             affiChannel += "\n\n"
 
             affi += affiChannel
@@ -44,15 +50,49 @@ def eurovisionPoints(topPerChannel, keyDicoByAuthorId):
 
     return topPoints + "\n\n" + affi
 
+def topByCountryRole(keyDicoByAuthorId, nbMsgPerPerson):
+    perCountry = dict()
+    for authorId, (_, _, name, roles) in keyDicoByAuthorId.items():
+        for role in roles:
+            if role != name:
+                if role not in perCountry:
+                    perCountry[role] = set()
+
+                perCountry[role].add((name, nbMsgPerPerson[authorId]))
+
+    topPerCountry = f"Top users per country role:\n"
+    topPerCountry += "\n\n".join(f"{role}:\n" + "\n".join(f"#{i+1} {name} with {nbMsgs} {'letters' if byLength else 'messages'}" for i, (name, nbMsgs) in zip(range(10), sorted(members, key=lambda x: x[1], reverse = True))) for role, members in sorted(perCountry.items()))
+
+    return topPerCountry
+
 async def countMessages(guild, bot):
     now = datetime.now()
-    currentMonth = now.month
-    previousMonth = (currentMonth - 1) if currentMonth != 1 else 12
-    yearOfPrevMonth = now.year if currentMonth != 1 else now.year -1
 
-    #let's find the beginning and the end of the previous month according to UTC
-    timeLimitEarly = datetime(yearOfPrevMonth, previousMonth, 1) - timedelta(hours = 2)
-    timeLimitLate = datetime(yearOfPrevMonth, currentMonth, 1) - timedelta(hours = 2)
+    def previousMonthYear(month, year):
+        return (month - 1) if month != 1 else 12, year if month != 1 else year - 1
+    def nextMonthYear(month, year):
+        return (month + 1) if month != 12 else 1, year if month != 12 else year + 1
+
+    #let's find the beginning and the end of the previous month/day according to UTC
+    if len(sys.argv) == 1: #previous month
+        currentMonth, currentYear = now.month, now.year
+        prevMonth, prevMonthYear = previousMonthYear(currentMonth, currentYear)
+
+        timeLimitEarly = datetime(prevMonthYear, prevMonth, 1)
+        timeLimitLate = datetime(currentYear, currentMonth, 1)
+    else: #custom period, assumes sys.argv[2:5] -> (day, month, year)
+        if sys.argv[1] == "day":
+            day, month, year = map(int, (sys.argv[2], sys.argv[3], sys.argv[4]))
+            timeLimitEarly = datetime(year, month, day)
+            timeLimitLate = timeLimitEarly + timedelta(hours = 24)
+        else: #if sys.argv[1] == "month"
+            day, month, year = map(int, (sys.argv[2], sys.argv[3], sys.argv[4]))
+            nexMonth, nexMonthYear = nextMonthYear(month, year)
+
+            timeLimitEarly = datetime(year, month, day)
+            timeLimitLate = datetime(nexMonthYear, nexMonth, day)
+
+    print(timeLimitEarly, timeLimitLate)
 
     #the file will be stored here… the bot will send the txt file when the counting is done
     pathSave = os.path.join(outputsPath, "infoTopCountries.txt")
@@ -64,7 +104,7 @@ async def countMessages(guild, bot):
     keyDicoByAuthorId = dict()
 
     totalNbMsgs = 0
-    countries = {'Vatican', 'Ukraine', 'United Kingdom', 'Turkey', 'Switzerland', 'Sweden', 'Spain', 'Slovenia', 'Slovakia', 'Serbia', 'San Marino', 'Portugal', 'Russia', 'Romania', 'Poland', 'Norway', 'North Macedonia', 'Netherlands', 'Montenegro', 'Monaco', 'Moldova', 'Malta', 'Luxembourg', 'Lithuania', 'Liechtenstein', 'Latvia', 'Kazakhstan', 'Kosovo', 'Italy', 'Ireland', 'Iceland', 'Hungary', 'Greece', 'Georgia', 'Germany', 'France', 'Finland', 'Estonia', 'Denmark', 'Czechia', 'Cyprus', 'Croatia', 'Bulgaria', 'Bosnia & Herzegovina', 'Belgium', 'Belarus', 'Azerbaijan', 'Austria', 'Andorra', 'Armenia', 'Albania'}
+    countries = {'Vatican', 'Ukraine', 'United Kingdom', 'Turkey', 'Switzerland', 'Sweden', 'Spain', 'Slovenia', 'Slovakia', 'Serbia', 'San Marino', 'Portugal', 'Russia', 'Romania', 'Poland', 'Norway', 'North Macedonia', 'Netherlands', 'Montenegro', 'Monaco', 'Moldova', 'Malta', 'Luxembourg', 'Lithuania', 'Liechtenstein', 'Latvia', 'Kazakhstan', 'Kosovo', 'Italy', 'Ireland', 'Iceland', 'Hungary', 'Greece', 'Georgia', 'Germany', 'France', 'Finland', 'Estonia', 'Denmark', 'Czechia', 'Cyprus', 'Croatia', 'Bulgaria', 'Bosnia & Herzegovina', 'Belgium', 'Belarus', 'Azerbaijan', 'Austria', 'Andorra', 'Armenia', 'Albania', 'Asia', 'Africa', 'North America', 'Oceania', 'South America'}
     for channel in filter((lambda x: "logs" not in x.name), guild.text_channels): #let's read all the channels
         try: #discord raises Forbidden error if the bot is not allowed to read messages in "channel"
             await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name} - {totalNbMsgs}+ messages counted so far"))
@@ -90,7 +130,11 @@ async def countMessages(guild, bot):
                 msgLength = len(msg.content) if byLength else 1
 
                 if author.id not in keyDicoByAuthorId:
-                    authorsCountries = tuple(role.name for role in author.roles if role.name in countries)
+                    if author.id in multinationalMembers:
+                        authorsCountries = tuple(multinationalMembers[author.id])
+                    else:
+                        authorsCountries = tuple(role.name for role in author.roles if role.name in countries)
+
                     if len(authorsCountries) == 1: #the author has only 1 country role: easy
                         key = authorsCountries[0]
                         dico = nbMsgPerCountry
@@ -98,9 +142,9 @@ async def countMessages(guild, bot):
                         key = f"{author.nick} ({author.name})" if author.nick else author.name
                         dico = nbMsgPerMultinational
 
-                    keyDicoByAuthorId[author.id] = (key, dico, f"{author.nick} ({author.name})" if author.nick else author.name)
+                    keyDicoByAuthorId[author.id] = (key, dico, f"{author.nick} ({author.name})" if author.nick else author.name, authorsCountries)
                 else:
-                    key, dico, authorNick = keyDicoByAuthorId[author.id]
+                    key, dico, authorNick, countryRoles = keyDicoByAuthorId[author.id]
 
                 if key not in dico: #increase the count of messages
                     dico[key] = msgLength
@@ -125,10 +169,12 @@ async def countMessages(guild, bot):
         f.write("\n".join(f"{country} with {nbMsgs} {'letters' if byLength else 'messages'}" for country, nbMsgs in sorted(nbMsgPerCountry.items(), key=lambda x: x[1], reverse = True)))
         f.write("\n\nTop multi-national users:\n")
         f.write("\n".join(f"{name} with {nbMsgs} {'letters' if byLength else 'messages'}" for name, nbMsgs in sorted(nbMsgPerMultinational.items(), key=lambda x: x[1], reverse = True)))
-        f.write("\n\nTop 100 users of the month:\n")
+        f.write(f"\n\nTop 100 users of the {'day' if len(sys.argv) >= 2 and sys.argv[1] == 'day' else 'month'}:\n")
         f.write("\n".join(f"#{i+1} {keyDicoByAuthorId[authId][2]} with {nbMsgs} {'letters' if byLength else 'messages'}" for i, (authId, nbMsgs) in zip(range(100), sorted(nbMsgPerPerson.items(), key=lambda x: x[1], reverse = True))))
         f.write("\n\n")
         f.write(eurovisionPoints(topPerChannel, keyDicoByAuthorId))
+        f.write("\n\n")
+        f.write(topByCountryRole(keyDicoByAuthorId, nbMsgPerPerson))
 
     await bot.change_presence()
     quit()
