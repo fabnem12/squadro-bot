@@ -15,7 +15,7 @@ stockePID()
 #token = "" #bot token
 #prefix = ","
 bumpBot = 302050872383242240 #DISBOARD
-botCommandsChannel = (577955068268249098, 899307073525915689, 777966573540474923, 676119576798560316, 567482036919730196, 806213028034510859, 567024817128210433) #bot-commands
+botCommandsChannel = (577955068268249098, 899307073525915689, 777966573540474923, 676119576798560316, 567482036919730196, 806213028034510859, 567024817128210433, 765706450500452372) #bot-commands
 print(prefix)
 class Team: pass
 
@@ -472,13 +472,24 @@ def main() -> None:
         member = await guild.fetch_member(memberId)
         return any(role.id == 674583505446895616 for role in member.roles)
 
+    async def banFromMsg(msg):
+        if msg.author.id == 282859044593598464: #the message is from ProBot -> introduction message
+            idNew = int(msg.content.split("<")[1].split(">")[0].split("!")[-1])
+            try:
+                memberNew = await msg.guild.fetch_member(idNew)
+            except discord.errors.NotFound:
+                continue
+
+            if memberNew and any(role.id == 597867859095584778 for role in memberNew.roles):
+                await memberNew.ban(reason = "raid - mass ban by fabnem's volt bot")
+
     banFrom = [0]
     @bot.command(name="ban_from")
     async def ban_from(ctx):
         ref = ctx.message.reference
         if ref and (await isMod(ctx.guild, ctx.author.id)):
             msg = await ctx.channel.fetch_message(ref.message_id)
-            banFrom[0] = msg.created_at
+            banFrom[0] = (msg.created_at, msg)
 
             await ctx.message.add_reaction("👌")
 
@@ -486,19 +497,13 @@ def main() -> None:
     async def banTo(ctx):
         ref = ctx.message.reference
         if ref and banFrom[0] and (await isMod(ctx.guild, ctx.author.id)):
+            timestampInit, msgFrom = banFrom[0]
             msg = await ctx.channel.fetch_message(ref.message_id)
 
-            async for msg in ctx.channel.history(limit = None, before = msg.created_at, after = banFrom[0]):
-                if msg.author.id == 282859044593598464: #the message is from ProBot -> introduction message
-                    idNew = int(msg.content.split("<")[1].split(">")[0].split("!")[-1])
-                    try:
-                        memberNew = await ctx.guild.fetch_member(idNew)
-                    except discord.errors.NotFound:
-                        continue
-
-                    if memberNew and 597867859095584778 in (role.id for role in memberNew.roles):
-                        await memberNew.ban(reason = "raid - mass ban by fabnem's volt bot")
-                        #print(f"I would have banned {memberNew.name}")
+            await banFromMsg(msgFrom)
+            await banFromMsg(ctx.message)
+            async for msg in ctx.channel.history(limit = None, before = msg.created_at, after = timestampInit):
+                await banFromMsg(msg)
 
             banFrom[0] = 0
             await ctx.message.add_reaction("👌")
