@@ -523,6 +523,9 @@ def main() -> None:
                 await ctx.send(f"{nationality} is not a valid country role. Pay attention to the capital letters")
                 return
             else:
+                if not os.path.isfile("multinationals.p"):
+                    pickle.dump(dict(), open("multinationals.p", "wb"))
+                    
                 multinationalMembers = pickle.load(open("multinationals.p", "rb"))
                 multinationalMembers[user.id] = nationality
                 pickle.dump(multinationalMembers, open("multinationals.p", "wb"))
