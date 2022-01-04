@@ -429,7 +429,7 @@ def main() -> None:
             from subprocess import Popen
             import os
 
-            Popen(["python3", os.path.join(os.path.dirname(__file__), f"top_countries_month.py year 1 1 {year}")])
+            Popen(["python3", os.path.join(os.path.dirname(__file__), "top_countries_month.py", "year", "1", "1", f"{year}")])
             await ctx.message.add_reaction("👌")
 
     @bot.command(name = "top_bumps_month")
