@@ -423,6 +423,15 @@ def main() -> None:
             Popen(["python3", os.path.join(os.path.dirname(__file__), "top_countries_month.py")])
             await ctx.message.add_reaction("👌")
 
+    @bot.command(name = "top_of_year")
+    async def topOfMonth(ctx, year: int):
+        if isBotAdmin(ctx.author):
+            from subprocess import Popen
+            import os
+
+            Popen(["python3", os.path.join(os.path.dirname(__file__), f"top_countries_month.py year 1 1 {year}")])
+            await ctx.message.add_reaction("👌")
+
     @bot.command(name = "top_bumps_month")
     async def topBumpsMonth(ctx):
         points = dict()
