@@ -412,6 +412,7 @@ class MachineTuring:
             etats = dict()
 
         self.etats = etats
+        self.dernierParcours = []
 
     def addState(self, etat: EtatTuring):
         self.etats[etat.ident] = etat
@@ -432,23 +433,32 @@ class MachineTuring:
     def __repr__(self):
         return "\n".join(str(e) for e in self.etats.values())
 
-    def run(self, mot: str):
+    def affiBande(bande, pointeur = None):
+        affi = "".join(bande[x] for x in sorted(bande.keys()))
+        if pointeur is not None:
+            affi += "\n" + "".join(" " if i != pointeur else "^" for i in range(-1, len(bande))) #-1 parce que le triangle du début prend deux caractères
+
+        return affi
+
+    def run(self, mot: str, verbose: bool = False):
         #on initialise la bande avec l'input
         bande = {i+1: lettre for i, lettre in enumerate(mot)}
         bande[0] = "|>"
 
         #exécution de la machine
-        parcours = [self.etats[0]]
+        parcours = []
 
         currentState = self.etats[0]
         currentPoint = 1
 
-        #print(bande)
-
         while True:
             if currentPoint not in bande: bande[currentPoint] = " "
+            parcours.append(currentState.ident)
 
-            #print(currentState.ident, currentPoint)
+            if verbose:
+                print(currentState.ident, currentPoint)
+                print(MachineTuring.affiBande(bande, currentPoint))
+                print("---")
 
             char = bande[currentPoint]
             if char in currentState:
@@ -464,5 +474,7 @@ class MachineTuring:
                 elif direction == "G": currentPoint -= 1
                 else: pass #immobile
             else: break
+
+        self.dernierParcours = parcours.copy()
 
         return currentState.acceptant
