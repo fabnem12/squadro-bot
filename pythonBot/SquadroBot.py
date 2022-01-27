@@ -16,6 +16,7 @@ __**Fonctions disponibles**__ :
 """
 from cmath import phase, exp, isnan
 from math import cos, sin, sqrt
+from typing import Dict, List, Optional, Union
 
 e = exp(1)
 phi = (1 + sqrt(5)) / 2
@@ -344,3 +345,121 @@ def linkedlistlib():
             return ajoute(None, None)
 
     return locals()
+
+class TransitionTuring:
+    """
+    Représentation d'une transition d'état de machine de Turing.
+    """
+
+    def __init__(self, char: str, arrivee: 'EtatTuring', direction: str, newChar: Optional[str] = None):
+        self.arrivee = arrivee #arrivee est un EtatTuring
+        self.char, self.direction, self.newChar = char, direction, char if newChar is None else newChar
+
+        if self.direction not in "DGI":
+            raise ValueError(f"La direction '{direction}' n'est pas valide")
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return f"{self.char}{self.direction}{self.newChar if self.char != self.newChar else ''} vers #{self.arrivee}"
+
+class EtatTuring:
+    """
+    Représentation d'un état de machine de Turing.
+    """
+
+    def __init__(self, ident: str, acceptant: bool = False, transitions: Dict[str, TransitionTuring] = None):
+        self.ident, self.acceptant = ident, acceptant
+        self.transitions = dict() if transitions is None else transitions
+
+    def addTransition(self, transition: TransitionTuring):
+        self.transitions[transition.char] = transition
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        infosTransitions = "\n".join(f"- {str(tr)}" for tr in self.transitions.values())
+        return f"État #{self.ident}, transitions :\n{infosTransitions}"
+
+    def __contains__(self, key):
+        return key in self.transitions
+
+    def __getitem__(self, item: str):
+        return self.transitions[item]
+
+    def __setitem__(self, item: str, val: Union[tuple, TransitionTuring]):
+        if isinstance(val, tuple):
+            if len(val) < 2: raise Exception("Pas assez d'infos pour la transition")
+            else:
+                self.transitions[item] = TransitionTuring(*list((item,) + val))
+        elif isinstance(val, TransitionTuring):
+            val.char = item
+            self.transitions[item] = val
+        else:
+            raise TypeError("Il faut un objet de type TransitionTuring or tuple")
+
+class MachineTuring:
+    """
+    Représentation d'une machine de Turing mono-infinie à une bande. (+ améliorations à venir !)
+    Le triangle initial de la bande est représenté par la chaîne "|>".
+    L'état initial de la machine de Turing doit avoir l'identifiant 0.
+    """
+
+    def __init__(self, etats: Dict[int, EtatTuring]):
+        self.etats = etats
+
+    def addState(self, etat: EtatTuring):
+        self.etats[etat.ident] = etat
+
+    def __getitem__(self, ident):
+        return self.etats[ident]
+
+    def __setitem__(self, ident, val):
+        if isinstance(val, EtatTuring):
+            val.ident = ident
+            self.etats[ident] = val
+        else:
+            raise TypeError("Il faut un objet de type EtatTuring")
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return "\n".join(str(e) for e in self.etats.values())
+
+    def run(self, mot: str):
+        #on initialise la bande avec l'input
+        bande = {i+1: lettre for i, lettre in enumerate(mot)}
+        bande[0] = "|>"
+
+        #exécution de la machine
+        parcours = [self.etats[0]]
+
+        currentState = self.etats[0]
+        currentPoint = 1
+
+        #print(bande)
+
+        while True:
+            if currentPoint not in bande: bande[currentPoint] = " "
+
+            #print(currentState.ident, currentPoint)
+
+            char = bande[currentPoint]
+            if char in currentState:
+                #on extrait la transition appliquée
+                tr = currentState[char]
+                currentState, direction, newChar = self.etats[tr.arrivee], tr.direction, tr.newChar
+
+                #écriture de la nouvelle valeur sur le pointeur actuel
+                bande[currentPoint] = newChar
+
+                #déplacement du curseur
+                if direction == "D": currentPoint += 1
+                elif direction == "G": currentPoint -= 1
+                else: pass #immobile
+            else: break
+
+        return currentState.acceptant
