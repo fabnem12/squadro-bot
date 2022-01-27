@@ -413,6 +413,7 @@ class MachineTuring:
 
         self.etats = etats
         self.dernierParcours = []
+        self.print = print
 
     def addState(self, etat: EtatTuring):
         self.etats[etat.ident] = etat
@@ -456,9 +457,9 @@ class MachineTuring:
             parcours.append(currentState.ident)
 
             if verbose:
-                print(currentState.ident, currentPoint)
-                print(MachineTuring.affiBande(bande, currentPoint))
-                print("---")
+                self.print(currentState.ident, currentPoint)
+                self.print(MachineTuring.affiBande(bande, currentPoint))
+                self.print("---")
 
             char = bande[currentPoint]
             if char in currentState:
