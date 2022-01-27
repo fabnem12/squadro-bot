@@ -437,7 +437,7 @@ class MachineTuring:
     def affiBande(bande, pointeur = None):
         affi = "".join(bande[x] for x in sorted(bande.keys()))
         if pointeur is not None:
-            affi += "\n" + "".join(" " if i != pointeur else "^" for i in range(-1, len(bande))) #-1 parce que le triangle du début prend deux caractères
+            affi += "\n" + "".join("_" if i != pointeur else "^" for i in range(-1, len(bande))) #-1 parce que le triangle du début prend deux caractères
 
         return affi
 
