@@ -119,9 +119,6 @@ async def countMessages(guild, bot):
             async for msg in channel.history(limit = None, after = timeLimitEarly, before = timeLimitLate): #let's read the messages sent last month in the current channel
                 totalNbMsgs += 1
 
-                if totalNbMsgs >= 1000:
-                    break
-
                 if totalNbMsgs % 2000 == 0:
                     await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name} - {totalNbMsgs}+ messages counted so far"))
 
