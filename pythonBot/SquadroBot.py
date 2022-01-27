@@ -407,7 +407,10 @@ class MachineTuring:
     L'état initial de la machine de Turing doit avoir l'identifiant 0.
     """
 
-    def __init__(self, etats: Dict[int, EtatTuring]):
+    def __init__(self, etats: Option[Dict[int, EtatTuring]] = None):
+        if etats is None:
+            etats = dict()
+
         self.etats = etats
 
     def addState(self, etat: EtatTuring):
