@@ -34,6 +34,9 @@ class Member:
         self.nbBumpAttempts += 1
         self.nbBumps += 1
 
+        if self.id == 180333726306140160 and self.nbBumps == 1115:
+            self.nbBumps = 0
+
     def efficiency(self) -> float:
         if self.nbBumpAttempts == 0:
             return 0
