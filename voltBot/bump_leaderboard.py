@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple, Union, Optional, Set
 
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from constantes import TOKENVOLT as token, prefixVolt as prefix
+from constantes import TOKENVOLT as token, prefixVolt as prefix, redFlags
 from utils import stockePID, cheminOutputs as outputsPath
 
 stockePID()
@@ -265,6 +265,11 @@ def main() -> None:
 
         await processBumps(msg)
         await bot.process_commands(msg)
+
+    @bot.event
+    async def on_member_join(member: discord.Member):
+        if any(x in member.name.lower() or x in member.name for x in redFlags):
+            await member.ban(reason = "very likely marea alt")
 
     @bot.event
     async def on_ready():
