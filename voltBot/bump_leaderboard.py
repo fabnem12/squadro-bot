@@ -34,9 +34,6 @@ class Member:
         self.nbBumpAttempts += 1
         self.nbBumps += 1
 
-        if self.id == 180333726306140160 and self.nbBumps == 1115:
-            self.nbBumps = 0
-
     def efficiency(self) -> float:
         if self.nbBumpAttempts == 0:
             return 0
@@ -374,6 +371,14 @@ def main() -> None:
                     i += 1
 
                     if i % 100 == 0: print(i)
+
+    @bot.command(name = "set_nb")
+    async def set_nb(ctx, user: discord.User, nb: int):
+        if ctx.author.id == 619574125622722560:
+            member = getMember(user.id)
+            member.nbBumps = nb
+
+            await ctx.message.add_reaction("👌")
 
     @bot.command(name = "reset")
     async def resetBot(ctx):
