@@ -260,16 +260,21 @@ def main() -> None:
     async def on_message(msg) -> None:
         #print(msg.author.status, msg.author.name)
 
-        if msg.channel.id not in botCommandsChannel:
-            return
-
         await processBumps(msg)
         await bot.process_commands(msg)
 
+    @bot.command(name = "test")
+    async def terogijeg(ctx, user: discord.User):
+        await ctx.send(f"<@{user.id}> created at <t:{int(user.created_at.timestamp())}:R>")
+
     @bot.event
     async def on_member_join(member: discord.Member):
-        if any(x in member.name.lower() or x in member.name for x in redFlags):
-            await member.ban(reason = "very likely marea alt")
+        if member.guild.id == 567021913210355745: #volt server
+            if any(x in member.name.lower() or x in member.name for x in redFlags):
+                await member.ban(reason = "very likely marea alt")
+
+            channel = await member.guild.fetch_channel(567482036919730196)
+            await channel.send(f"<@{member.id}> created at <t:{int(member.created_at.timestamp())}:R>")
 
     @bot.event
     async def on_ready():
