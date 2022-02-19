@@ -265,7 +265,7 @@ def main() -> None:
 
     @bot.command(name = "test")
     async def terogijeg(ctx, user: discord.User):
-        await ctx.send(f"<@{user.id}> created at <t:{int(user.created_at.timestamp())}:R>")
+        await ctx.send(f"<@{user.id}> <t:{int(user.created_at.timestamp())}:R>")
 
     @bot.event
     async def on_member_join(member: discord.Member):
@@ -273,7 +273,7 @@ def main() -> None:
             if any(x in member.name.lower() or x in member.name for x in redFlags):
                 await member.ban(reason = "very likely marea alt")
 
-            channel = await member.guild.fetch_channel(567482036919730196)
+            channel = member.guild.get_channel(567482036919730196)
             await channel.send(f"<@{member.id}> created at <t:{int(member.created_at.timestamp())}:R>")
 
     @bot.event
