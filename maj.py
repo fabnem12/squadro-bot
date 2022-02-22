@@ -6,11 +6,14 @@ import sys
 
 def killBot():
     if "fichierPID.p" in os.listdir():
-        pidsBot = pickle.load(open("fichierPID.p", "rb"))
-
-        for pid in pidsBot:
-            if psutil.pid_exists(pid):
-                psutil.Process(pid).terminate()
+        try:
+            pidsBot = pickle.load(open("fichierPID.p", "rb"))
+        except:
+            pass
+        else:
+            for pid in pidsBot:
+                if psutil.pid_exists(pid):
+                    psutil.Process(pid).terminate()
 
 listeScripts = ["pythonBot/pythonbot.py", "pythonBot/votenew.py", "discordUtils/ranks.py", "discordUtils/ranks2.py", "squadroGame/bot.py", "discordUtils/discordutils.py", "squadroGame/botNew.py", "voltBot/bump_leaderboard.py", "pythonBot/edtbot.py"]
 

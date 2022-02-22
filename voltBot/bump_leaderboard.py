@@ -107,10 +107,14 @@ def reset(teamsToo = True):
 if "save_bump_bot.p" not in os.listdir():
     reset()
 else:
-    INFOS = pickle.load(open("save_bump_bot.p", "rb"))
-    MEMBERS: Dict[int, Member] = INFOS["MEMBERS"]
-    TEAMS: Dict[str, Team] = INFOS["TEAMS"]
-    REMINDER: List[Member] = INFOS["REMINDER"] if "REMINDER" in INFOS else set()
+    try:
+        INFOS = pickle.load(open("save_bump_bot.p", "rb"))
+    except:
+        reset()
+    else:
+        MEMBERS: Dict[int, Member] = INFOS["MEMBERS"]
+        TEAMS: Dict[str, Team] = INFOS["TEAMS"]
+        REMINDER: List[Member] = INFOS["REMINDER"] if "REMINDER" in INFOS else set()
 
 def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEfficiency: bool = False) -> str: #if isMember, someone is treated as a discord member id, if not, someone is treated as a team name
     if isMember:
