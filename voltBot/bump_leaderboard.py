@@ -278,7 +278,8 @@ def main() -> None:
                 await member.ban(reason = "very likely marea alt")
 
             channel = member.guild.get_channel(567482036919730196)
-            await channel.send(f"<@{member.id}> created at <t:{int(member.created_at.timestamp())}:R>")
+
+            await channel.send(f"<@{member.id}>: <t:{int(member.created_at.timestamp()) + 3600}:R> {member.avatar_url}", embed = e)
 
     @bot.event
     async def on_ready():
