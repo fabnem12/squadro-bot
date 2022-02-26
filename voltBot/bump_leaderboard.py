@@ -279,7 +279,7 @@ def main() -> None:
 
             channel = member.guild.get_channel(567482036919730196)
 
-            await channel.send(f"<@{member.id}>: <t:{int(member.created_at.timestamp()) + 3600}:R> {member.avatar_url}")
+            await channel.send(f"<@{member.id}>: <t:{int(member.created_at.timestamp()) + 3600}:R> <{member.avatar_url}>")
 
     @bot.event
     async def on_ready():
