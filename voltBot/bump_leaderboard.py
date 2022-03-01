@@ -229,13 +229,18 @@ async def processBumps(msg, recount=False, pourDeFaux=False):
             if pourDeFaux:
                 return (1, member.id)
             else:
-                member.addBump()
-                save()
-                if not recount:
-                    await msg.add_reaction("volt_cool_glasses:819137584722345984")
+                if member.id in (180333726306140160, 619574125622722560): #clus or fabnem
+                    await msg.channel.send(f"NONONONONO <@{619574125622722560 if member.id == 180333726306140160 else 180333726306140160}>")
+                    await msg.add_reaction("bonk:843489770918903819")
+                    member.nbBumps = 0
+                else:
+                    member.addBump()
+                    save()
+                    if not recount:
+                        await msg.add_reaction("volt_cool_glasses:819137584722345984")
 
-                    #await asyncio.sleep(2 * 3600)
-                    await sendReminder(msg.guild)
+                        #await asyncio.sleep(2 * 3600)
+                        await sendReminder(msg.guild)
 
         elif "wait" in txt: #it's a bump attempt!
             if pourDeFaux:
