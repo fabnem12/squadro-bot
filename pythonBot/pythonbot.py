@@ -376,40 +376,6 @@ def main(idsTraites = set(range(10))):
         if emoji == "🗑️" and (msg.guild is None or user.guild_permissions.manage_messages or user.guild_permissions.administrator or estAdmin(user)):
             await msg.delete()
 
-    salonsOk = {325349544655323139, 549326239756976148, 506937154811723777, 406921230629732352, 692674190897315960, 221388620810944515, 709046166964404426, 631946475634556949, 343503582643093506, 374982766812594176, 227889965076316162}
-    @bot.event
-    async def on_raw_reaction_add(payload):
-        channel = await bot.fetch_channel(payload.channel_id)
-        msg = await channel.fetch_message(payload.message_id)
-        if "guild" not in dir(channel): return
-
-        guild = channel.guild
-        user = await guild.fetch_member(payload.user_id)
-
-        if msg.id == 788039088313860126 and user.id not in salonsOk: #salon privé pour le cours de python
-            nick = user.nick or user.name
-            overwrites = {
-            user: discord.PermissionOverwrite(read_messages = True, send_messages = True),
-            guild.default_role: discord.PermissionOverwrite(read_messages = False),
-            guild.me: discord.PermissionOverwrite(send_messages = True, read_messages = True)}
-
-            categorie = [x for x in guild.categories if x.id == 767324188620619776][0]
-            messageWelcome = "Bienvenue {} !\nTu pourras poster ici tes morceaux de code pendant le cours de Python :wink:, ce salon est visible seulement par toi et fabnem.".format(user.mention)
-
-            nouvSalon = await categorie.create_text_channel("python-{}".format(nick), overwrites = overwrites)
-            await nouvSalon.send(messageWelcome)
-            salonsOk.add(user.id)
-
-        """channel = await bot.fetch_channel(payload.channel_id)
-        msg = await channel.fetch_message(payload.message_id)
-        class Reaction:
-            message = msg
-            emoji = payload.emoji
-
-        user = bot.get_user(payload.user_id)
-
-        await on_reaction_add(Reaction(), user)"""
-
     @bot.event
     async def on_reaction_remove(reaction, user): await on_reaction_add(reaction, user)
 
@@ -434,34 +400,6 @@ def main(idsTraites = set(range(10))):
     @bot.event
     async def on_ready():
         await bot.change_presence(activity=discord.Game(name="S.help python"))
-
-        if 0 in idsTraites:
-            try:
-                #envoiBlaguesWolf.start()
-                envoiEDT.start()
-            except RuntimeError:
-                pass
-
-    @bot.event
-    async def on_voice_state_update(member, before, after):
-        channelBefore = before.channel and before.channel.id
-        channelAfter = after.channel and after.channel.id
-        guild = member.guild
-
-        if guild.id == 756418771664633917: #L2 maths
-            roleVocal, channelsCible = guild.get_role(777176676965810206), {759304841352052767,781826907175387167}
-        elif guild.id == 690209463369859129: #L2 MPI
-            roleVocal, channelsCible = guild.get_role(778660443254161448), {692068282328547339,709173049135595580}
-        else:
-            return
-
-        if any(channelBefore == x and channelAfter not in channelsCible for x in channelsCible):
-            #on retire le rôle vocal
-            await member.remove_roles(roleVocal)
-        elif any(channelBefore not in channelsCible and channelAfter == x for x in channelsCible):
-            #on ajoute le rôle vocal
-            await member.add_roles(roleVocal)
-
 
     @bot.command(name="help")
     async def helpPython(ctx, python = ""):
@@ -594,17 +532,6 @@ def main(idsTraites = set(range(10))):
     ############################################################################
     #TÂCHES PROGRAMMÉES ########################################################
     ############################################################################
-    @tasks.loop(minutes = 10.0)
-    async def envoiEDT():
-        now = utcnow().to("Europe/Brussels")
-        if True or now.weekday() in {4, 5}: return #on n'envoie pas l'edt le week-end
-
-        if now.hour == 18 and now.minute >= 0 and now.minute < 10:
-            for groupeId, (channelId, _) in GROUPES_DISCORD.items():
-                channel = bot.get_channel(channelId)
-                lienImage = genereEDT(groupeId, 1)
-
-                await channel.send("Voici l'agenda de demain pour le groupe {} :".format(groupeId), file = discord.File(lienImage))
 
     ################################################################################
     #EASTER-EGGS ###################################################################
@@ -665,61 +592,6 @@ def main(idsTraites = set(range(10))):
         await ctx.send("Si vous avez utilisé le module SquadroBot, il faut mettre son code dans le même dossier que le notebook **__en gardant le même nom de fichier__**",
                        file = discord.File("SquadroBot.py"))
 
-    @bot.command(name = "stats-old")
-    async def stats(ctx):
-        if not estAdmin(ctx.author): return
-
-        from datetime import datetime
-        from random import randint
-
-        minutesActives = dict()
-        nbMessages = dict()
-        salons = dict()
-        def ajoutMsg(msg):
-            usr, moment = msg.author, msg.created_at
-
-            if usr not in minutesActives:
-                minutesActives[usr] = set()
-                nbMessages[usr] = 0
-            if msg.channel not in salons:
-                salons[msg.channel] = 0
-
-            timestamp = round(datetime.timestamp(moment))
-            minutesActives[usr].add(timestamp // 60)
-            nbMessages[usr] += 1
-            salons[msg.channel] += 1
-
-        msgAnnonce = await ctx.send("**Calculs en cours…**")
-
-        for channel in ctx.guild.text_channels:
-            await msgAnnonce.edit(content = "**Calculs en cours…**\nSalon {} en cours de revue…".format(channel.name))
-
-            try:
-                async for message in channel.history(limit = None):
-                    ajoutMsg(message)
-            except:
-                print("Erreur : ", channel.name)
-
-        await msgAnnonce.edit(content = "**Calculs finis !**")
-
-        points = {usr: sum(randint(15, 25) for _ in msgs) for usr, msgs in minutesActives.items()}
-        classement = sorted(points.items(), key=lambda x: x[1], reverse = True)
-
-        txt = "**Personnes les plus actives sur le serveur :**\n"
-        for index, (usr, points) in enumerate(classement):
-            txt += "**{}** {} avec {} XP ({} messages)\n".format(index+1, usr.name, points, nbMessages[usr])
-            if index == 19: break
-
-        await ctx.send(txt)
-
-        txt = "**Salons les plus actifs sur le serveur :**\n"
-        for index, (salon, nbMessages) in enumerate(sorted(salons.items(), key = lambda x: x[1], reverse = True)):
-            txt += "**{}** {} avec {} messages\n".format(index+1, salon.name, nbMessages)
-
-            if index == 9: break
-
-        await ctx.send(txt)
-
     ################################################################################
     #FONCTIONS DE TRAITEMENT DU CODE ###############################################
     ################################################################################
@@ -753,7 +625,7 @@ def main(idsTraites = set(range(10))):
 
         txt = ""
         async for msg in channel.history(limit = None):
-            if "T.txt" in msg.content: continue
+            if msg.startswith("T.txt"): continue
 
             auteur = msg.author.nick if "nick" in dir(msg.author) else msg.author.name
             txt += "{datetime} {auteur}: {message}\n".format(auteur = auteur, message = msg.content, datetime = msg.created_at.strftime("%d/%m/%Y-%H:%M"))
@@ -878,31 +750,6 @@ def main(idsTraites = set(range(10))):
             notebookUser.glob = glob
             notebookUser.ajoutExex(msgPlusId, msgEnvoyes, imagesEnvoyees)
 
-    @bot.command(name="concours")
-    async def concours(ctx):
-        nick = ctx.author.nick or ctx.author.name
-        overwrites = {
-        ctx.author: discord.PermissionOverwrite(read_messages = True, send_messages = True),
-        ctx.guild.default_role: discord.PermissionOverwrite(read_messages = False),
-        ctx.guild.me: discord.PermissionOverwrite(send_messages = True, read_messages = True)}
-
-        if ctx.guild.id == 762734296414683136: #L2 info
-            categorie = [x for x in ctx.guild.categories if x.id == 775399085918126150][0]
-            messageWelcome = "Bienvenue dans le concours {} !\nMerci de bien vouloir préciser dès maintenant le langage dans lequel tu veux envoyer ton code, parmi Python, C++, C, Java et Ocaml.".format(ctx.author.mention)
-        elif ctx.guild.id == 756418771664633917: #L2 maths
-            categorie = [x for x in ctx.guild.categories if x.id == 777120881112776725][0]
-            milan = await ctx.guild.fetch_member(187595362150645760)
-
-            overwrites[milan] = discord.PermissionOverwrite(read_messages = True, send_messages = True)
-            messageWelcome = "Bienvenue dans le tournoi {} !".format(ctx.author.mention)
-
-        nouvSalon = await categorie.create_text_channel("{}-tournoi".format(nick), overwrites = overwrites)
-        await nouvSalon.send(messageWelcome)
-
-    @bot.command(name="tournoi")
-    async def tournoi(ctx):
-        await concours(ctx)
-
     compteurTB = [0]
     @bot.command(name="tb")
     async def tb(ctx, moins = "add"):
@@ -914,12 +761,6 @@ def main(idsTraites = set(range(10))):
     async def isa(ctx, moins = "add"):
         compteurIsa[0] += 1 if moins != "sub" else -1
         await ctx.send("On en est à {} références à Isabelle Adjani <:nicole_bidoit:809431037993680966>".format(compteurIsa[0]))
-
-    compteurChristian = [0]
-    @bot.command(name="raleACauseDeLaTablette")
-    async def christian(ctx, moins = "add"):
-        compteurChristian[0] += 1 if moins != "sub" else -1
-        await ctx.send("On en est à {} fois où le prof râle à cause de sa tablette".format(compteurChristian[0]))
 
     compteurEnfait = [0]
     @bot.command(name="enFait")
