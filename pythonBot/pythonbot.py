@@ -553,7 +553,7 @@ def main(idsTraites = set(range(10))):
         return idRab
 
     def rabIsOk(user, idRab: str): #on vérifie que l'id de rab est le bon
-        return idRab not in RAB_TEMPS and idRab == calIdRab(user.id)
+        return (idRab not in RAB_TEMPS and idRab == calIdRab(user.id)) or (estAdmin(user) and idRab == "illimité")
 
     def heureDebutCreneau():
         timestamp = (round(time.time()) // DELAI_RAB) * DELAI_RAB
@@ -816,10 +816,13 @@ def main(idsTraites = set(range(10))):
                 try:
                     timeout = DUREE_EXEC if not estAdmin(user) else DUREE_EXEC_ADMIN
                     if rab: timeout = DUREE_EXEC_RAB #on donne 60 secondes si le rab est activé
-
-                    debut = time.time()
-                    func_timeout(timeout, exec, args=(code, glob))
-                    dureeExec = time.time() - debut
+                    if rab and rabId == "illimité":
+                        exec(code, glob)
+                        print("hoe")
+                    else:
+                        debut = time.time()
+                        func_timeout(timeout, exec, args=(code, glob))
+                        dureeExec = time.time() - debut
 
                     #on exécute la dernière ligne comme dans la console python
                     #on affiche la valeur de l'expression sur la dernière ligne, quand c'est possible
