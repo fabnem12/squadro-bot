@@ -580,6 +580,14 @@ def main() -> None:
 
             await ctx.send("\n".join(f"<@{idUser}>: {nat}" for idUser, nat in multinationalMembers.items()))
 
+    @bot.command(name = "mop")
+    async def mop(ctx, pageNumber: int):
+        os.system(f"convert -density 200 {os.path.join(os.path.dirname(__file__), 'volt_mop.pdf')}[{pageNumber-1}] mop_page_{pageNumber}.png")
+        ref = discord.MessageReference(channel_id = ctx.channel.id, message_id = ctx.message.id)
+        await ctx.send(file=discord.File(f"mop_page_{pageNumber}.png"), reference = ref)
+
+        os.remove(f"mop_page_{pageNumber}.png")
+
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
     loop.run_forever()
