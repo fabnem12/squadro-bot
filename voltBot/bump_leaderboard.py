@@ -304,8 +304,9 @@ def main() -> None:
             if volter in roles and countryRole.id in roles and localVolt.id not in roles:
                 output += str(member) + "\n"
                 count += 1
+                await member.add_roles(localVolt)
 
-        await ctx.send(f"{count} members found that should have the local role and don't have it found:")
+        await ctx.send(f"{count} members were granted the role {localVolt.name}")
         for i in range(ceil(len(output) / 2000)):
             await ctx.send(f"{output[2000*i:2000*(i+1)]}")
 
