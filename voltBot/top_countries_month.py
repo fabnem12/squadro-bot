@@ -106,78 +106,83 @@ async def countMessages(guild, bot):
     topPerChannel = dict()
     keyDicoByAuthorId = dict()
 
-    totalNbMsgs = 0
+    totalNbMsgs = [0]
     countries = {'Vatican', 'Ukraine', 'United Kingdom', 'Turkey', 'Switzerland', 'Sweden', 'Spain', 'Slovenia', 'Slovakia', 'Serbia', 'San Marino', 'Portugal', 'Russia', 'Romania', 'Poland', 'Norway', 'North Macedonia', 'Netherlands', 'Montenegro', 'Monaco', 'Moldova', 'Malta', 'Luxembourg', 'Lithuania', 'Liechtenstein', 'Latvia', 'Kazakhstan', 'Kosovo', 'Italy', 'Ireland', 'Iceland', 'Hungary', 'Greece', 'Georgia', 'Germany', 'France', 'Finland', 'Estonia', 'Denmark', 'Czechia', 'Cyprus', 'Croatia', 'Bulgaria', 'Bosnia & Herzegovina', 'Belgium', 'Belarus', 'Azerbaijan', 'Austria', 'Andorra', 'Armenia', 'Albania', 'Asia', 'Africa', 'North America', 'Oceania', 'South America'}
+
+    async def readChannel(channel):
+        await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name} - {totalNbMsgs[0]}+ messages counted so far"))
+
+        topChannel = dict()
+        topPerChannel[channel.id] = (topChannel, channel.name if isinstance(channel, discord.TextChannel) else f"{channel.parent.name}-{channel.name}")
+
+        async for msg in channel.history(limit = None, after = timeLimitEarly, before = timeLimitLate): #let's read the messages sent last month in the current channel
+            totalNbMsgs[0] += 1
+
+            if totalNbMsgs[0] % 2000 == 0:
+                await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name} - {totalNbMsgs[0]}+ messages counted so far"))
+
+            author = msg.author
+            try:
+                if author.id not in keyDicoByAuthorId:
+                    author = await guild.fetch_member(author.id)
+
+                    if author.bot: continue
+            except: #the author left the server, there is no way to know their country roles…
+                try:
+                    author = await bot.fetch_user(author.id)
+                except:
+                    continue
+                else:
+                    if author.bot: continue
+
+            msgLength = len(msg.content) if byLength else 1
+
+            if author.id not in keyDicoByAuthorId:
+                if author.id in multinationalMembers:
+                    authorsCountries = (multinationalMembers[author.id],)
+                else:
+                    if isinstance(author, discord.Member):
+                        authorsCountries = tuple(role.name for role in author.roles if role.name in countries)
+                    else:
+                        authorsCountries = ()
+
+                if isinstance(author, discord.Member):
+                    name = f"{author.nick} ({author.name})" if author.nick else author.name
+                else:
+                    name = author.name
+
+                if len(authorsCountries) == 1: #the author has only 1 country role: easy
+                    key = authorsCountries[0]
+                    dico = nbMsgPerCountry
+                else: #the author has several country roles, it's up to Isak!
+                    key = name
+                    dico = nbMsgPerMultinational
+
+                keyDicoByAuthorId[author.id] = (key, dico, name, authorsCountries)
+            else:
+                key, dico, authorNick, countryRoles = keyDicoByAuthorId[author.id]
+
+            if key not in dico: #increase the count of messages
+                dico[key] = msgLength
+            else:
+                dico[key] += msgLength
+
+            if author.id not in nbMsgPerPerson:
+                nbMsgPerPerson[author.id] = msgLength
+            else:
+                nbMsgPerPerson[author.id] += msgLength
+
+            if author.id not in topChannel:
+                topChannel[author.id] = msgLength
+            else:
+                topChannel[author.id] += msgLength
 
     for channel in filter((lambda x: "logs" not in x.name), guild.text_channels): #let's read all the channels
         try: #discord raises Forbidden error if the bot is not allowed to read messages in "channel"
-            await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name} - {totalNbMsgs}+ messages counted so far"))
+            await readChannel(channel)
 
-            topChannel = dict()
-            topPerChannel[channel.id] = (topChannel, channel.name)
-
-            async for msg in channel.history(limit = None, after = timeLimitEarly, before = timeLimitLate): #let's read the messages sent last month in the current channel
-                totalNbMsgs += 1
-
-                if totalNbMsgs % 2000 == 0:
-                    await bot.change_presence(activity=discord.Game(name=f"Counting messages in #{channel.name} - {totalNbMsgs}+ messages counted so far"))
-
-                author = msg.author
-                try:
-                    if author.id not in keyDicoByAuthorId:
-                        author = await guild.fetch_member(author.id)
-
-                        if author.bot: continue
-                except: #the author left the server, there is no way to know their country roles…
-                    try:
-                        author = await bot.fetch_user(author.id)
-                    except:
-                        continue
-                    else:
-                        if author.bot: continue
-
-                msgLength = len(msg.content) if byLength else 1
-
-                if author.id not in keyDicoByAuthorId:
-                    if author.id in multinationalMembers:
-                        authorsCountries = (multinationalMembers[author.id],)
-                    else:
-                        if isinstance(author, discord.Member):
-                            authorsCountries = tuple(role.name for role in author.roles if role.name in countries)
-                        else:
-                            authorsCountries = ()
-
-                    if isinstance(author, discord.Member):
-                        name = f"{author.nick} ({author.name})" if author.nick else author.name
-                    else:
-                        name = author.name
-
-                    if len(authorsCountries) == 1: #the author has only 1 country role: easy
-                        key = authorsCountries[0]
-                        dico = nbMsgPerCountry
-                    else: #the author has several country roles, it's up to Isak!
-                        key = name
-                        dico = nbMsgPerMultinational
-
-                    keyDicoByAuthorId[author.id] = (key, dico, name, authorsCountries)
-                else:
-                    key, dico, authorNick, countryRoles = keyDicoByAuthorId[author.id]
-
-                if key not in dico: #increase the count of messages
-                    dico[key] = msgLength
-                else:
-                    dico[key] += msgLength
-
-                if author.id not in nbMsgPerPerson:
-                    nbMsgPerPerson[author.id] = msgLength
-                else:
-                    nbMsgPerPerson[author.id] += msgLength
-
-                if author.id not in topChannel:
-                    topChannel[author.id] = msgLength
-                else:
-                    topChannel[author.id] += msgLength
-
+            for thread in channel.threads:
+                await readChannel(thread)
         except Exception as e:
             print(e)
 
