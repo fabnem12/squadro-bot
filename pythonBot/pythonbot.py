@@ -1,5 +1,5 @@
 import asyncio
-import discord
+import nextcord as discord
 import os
 import sys
 
@@ -277,7 +277,7 @@ async def verifCode(code, channel, message):
 
 def main(idsTraites = set(range(10))):
     from arrow import get as arrowGet, utcnow
-    from discord.ext import commands, tasks
+    from nextcord.ext import commands, tasks
     from func_timeout import func_timeout, FunctionTimedOut
     import time
     import traceback

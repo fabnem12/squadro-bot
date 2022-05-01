@@ -1,5 +1,5 @@
 import asyncio
-import discord
+import nextcord as discord
 import os, sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -20,7 +20,7 @@ async def dmChannelUser(user):
     return user.dm_channel
 
 def main():
-    from discord.ext import commands, tasks
+    from nextcord.ext import commands, tasks
 
     intents = discord.Intents.all()
     bot = commands.Bot(command_prefix=prefixeBot, help_command=None, intents = intents) #il faudrait peut-être que je fasse une aide un jour...

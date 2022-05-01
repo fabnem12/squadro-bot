@@ -27,4 +27,4 @@ with open("logs_bot.log", "w") as f: f.write(" ") #astuce pour effacer les logs 
 foutput = open("logs_bot.log", "a")
 for path in listeScripts:
     Popen(["python3", path], stdout = foutput, stderr = foutput)
-Popen(["python3.8", "voltBot/modmail_main.py"])
+Popen(["python3", "voltBot/modmail_main.py"])

@@ -1,10 +1,10 @@
 import asyncio
-import discord
+import nextcord as discord
 import os
 import pickle
 import requests
 import sys
-from discord.ext import commands
+from nextcord.ext import commands
 from random import randint
 from time import sleep
 from typing import Optional, Union, Dict, Set, Tuple

@@ -1,9 +1,9 @@
 import asyncio
-import discord
+import nextcord as discord
 import pickle
 import os
 from arrow import get as arrowGet, utcnow
-from discord.ext import commands
+from nextcord.ext import commands
 from typing import Dict, List, Tuple, Union, Optional, Set
 
 import sys

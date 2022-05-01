@@ -1,9 +1,9 @@
 import asyncio
-import discord
+import nextcord as discord
 import os
 import pickle
 from datetime import datetime, timedelta
-from discord.ext import commands, tasks
+from nextcord.ext import commands, tasks
 from typing import Dict, List, Tuple, Union, Optional, Set
 
 import sys

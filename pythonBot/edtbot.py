@@ -1,8 +1,8 @@
 import asyncio
-import discord
+import nextcord as discord
 import pickle
 import os
-from discord.ext import commands, tasks
+from nextcord.ext import commands, tasks
 from datetime import datetime, timedelta
 from random import randint
 from typing import Callable, Dict, Optional, Tuple
@@ -133,7 +133,7 @@ async def setAgenda(msg):
             await msg.channel.send("Euh il y a un problème quelque part :sweat_smile:")
 
 def main():
-    bot = commands.Bot(command_prefix="A.", help_command = None)
+    bot = commands.Bot(command_prefix="A,", help_command = None)
 
     @tasks.loop(minutes = 10.0)
     async def envoiEDT():

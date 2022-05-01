@@ -4,7 +4,7 @@ from random import randint
 from time import sleep, time
 from typing import Optional, Dict, List, Set, Union, Any, Tuple
 import asyncio
-import discord
+import nextcord as discord
 import os
 import pickle
 import numpy as np
@@ -227,7 +227,7 @@ def save():
 
 
 def main():
-    from discord.ext import commands, tasks
+    from nextcord.ext import commands, tasks
     bot = commands.Bot(command_prefix="T.", help_command=None)
 
     @bot.event

@@ -3,7 +3,7 @@ from random import randint
 from time import sleep, time
 from typing import Optional
 import asyncio
-import discord
+import nextcord as discord
 import os
 import pickle
 import sys
@@ -79,7 +79,7 @@ def estAdmin(authorId):
 
 
 def main():
-    from discord.ext import commands, tasks
+    from nextcord.ext import commands, tasks
     bot = commands.Bot(command_prefix=prefixeBot, help_command=None)
 
     @bot.event #pour ne pas afficher les messages d'erreur de commande inexistante (typiquement si on utilise une commande du bot squadro qui est gérée par un autre script)

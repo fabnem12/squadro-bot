@@ -1,5 +1,5 @@
 import asyncio
-import discord
+import nextcord as discord
 import os
 import sys
 
@@ -13,7 +13,7 @@ stockePID()
 
 def main():
     import time
-    from discord.ext import commands
+    from nextcord.ext import commands
     from random import choice, randint
 
     from algoTournoi import genereToursPossibles, mariagesStables
