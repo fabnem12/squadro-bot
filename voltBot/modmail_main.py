@@ -3,6 +3,7 @@ import pandas as pd
 import datetime
 from nextcord.ext import commands
 from os.path import join, abspath, dirname
+import os
 
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,7 +30,7 @@ with open(join(dirname(__file__), 'bot_settings.txt'), 'r+') as settings:
     prefix = str(settings.readline())[:-1]
     mod_anonymity = int(settings.readline())
     join_message = str(settings.readline())[:-1]
-    
+
 # initializing the bot
 owners = (180333726306140160, 619574125622722560)
 bot = commands.Bot(command_prefix=prefix, owner_ids=owners)
