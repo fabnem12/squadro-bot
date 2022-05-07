@@ -101,6 +101,7 @@ class ButtonConfirm(nextcord.ui.View):
         top.append(self.song)
 
         self.selectPrec.stop()
+        self.stop()
 
         if self.remaining > 0:
             await interaction.channel.send(f"Select the #{len(top)+1} song you prefer", view=ViewSelect([x for x in songs if x not in top], self.remaining))
@@ -194,6 +195,7 @@ def main():
     async def countCommand(ctx):
         if ctx.author.id == 619574125622722560:
             countVotes()
+            await ctx.message.add_reaction("🗳️")
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
