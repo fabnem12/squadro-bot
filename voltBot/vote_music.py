@@ -131,7 +131,13 @@ class Select(nextcord.ui.Select):
 
     async def callback(self, interaction: nextcord.Interaction):
         num = len(infoVote[interaction.user.id]) + 1
-        await interaction.response.send_message(content=f"Confirm {self.values[0]} as #{num}" + "(you can still select another song thanks to the previous message)" if num == 1 else "", view=ButtonConfirm(self.values[0], self.remaining-1, self.parentView))
+
+        async for msg in interaction.channel.history(limit = None):
+            if "Confirm" in msg.content: #there is one such message
+                await msg.delete()
+                break
+
+        await interaction.response.send_message(content=f"Confirm {self.values[0]} as #{num}" + "(you can still select another song thanks to the previous message)", view=ButtonConfirm(self.values[0], self.remaining-1, self.parentView))
 
 async def vote(user, jury: bool):
     channel = await dmChannelUser(user)
@@ -143,7 +149,7 @@ async def vote(user, jury: bool):
 async def react_vote(messageId, user, guild, emojiHash, channel):
     if user.bot: return
 
-    if emojiHash == "🗳️" and messageId == msgVote[0]:
+    if emojiHash == "🗳️" and messageId == msgVote[0] and infoVote[user.id] == []:
         await vote(user, jury=user.id in JURY)
 
 #MAIN ##########################################################################
