@@ -26,6 +26,7 @@ except:
     songs = ["Du hast den Farbfilm vergessen", "Dinner Outside", "My song", "Kalimba", "Vesoul", "Wheels of the Beat", "I get around", "Dreams Of Night", "Skyfall"]
     
 timeClickVote = dict()
+JURY = {}
 
 reactionsVote = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
 "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹", "🇺", "🇻", "🇼", "🇽", "🇾", "🇿"]
@@ -52,8 +53,21 @@ def countVotes():
 
     pointsJury = lambda top: tuple((e, 12 - i*2) for i, e in enumerate(top))
     pointsTele = lambda rang: 3-rang
+    
+    votesLoc = {i: x for i, x in enumerate(votes)}
+    
+    #let's keep only the last 5 votes of non-contestants
+    nbVotesNonContestant = dict()
+    for i, (username, isJury, _) in reversed(list(enumerate(votes.copy()))):
+        if not isJury:
+            if username not in nbVotesNonContestant:
+                nbVotesNonContestant[username] = 1
+            else:
+                nbVotesNonContestant[username] += 1
+                if nbVotesNonContestant[username] > 5:
+                    del votesLoc[i]
 
-    for (username, isJury, top) in votes:
+    for (username, isJury, top) in votesLoc.values():
         if isJury:
             jury[username] = pointsJury(top)
         else:
