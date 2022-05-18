@@ -224,7 +224,9 @@ def main():
             countVotes()
             await ctx.message.add_reaction("🗳️")
             
-            if ctx.author.id == 180333726306140160: msgVote[0] = None
+            if ctx.author.id == 180333726306140160:
+                msgVote[0] = None
+                await get_votes(ctx)
 
     @bot.command(name = "find_jurors")
     async def find_jurors(ctx):
@@ -246,7 +248,7 @@ def main():
         if ctx.author.id not in (619574125622722560, 180333726306140160):
             return
         
-        await ctx.send(discord.File("data_contest/votes_new.csv", filename="votes.csv"))
+        await ctx.send(file=discord.File("data_contest/votes_new.csv", filename="votes.csv"))
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
