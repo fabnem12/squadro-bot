@@ -26,7 +26,7 @@ except:
     songs = ["Du hast den Farbfilm vergessen", "Dinner Outside", "My song", "Kalimba", "Vesoul", "Wheels of the Beat", "I get around", "Dreams Of Night", "Skyfall"]
     
 timeClickVote = dict()
-JURY = {}
+JURY = {619574125622722560, 803869544414183434, 584661378657419264, 178629368678055937, 834846994098683924}
 
 reactionsVote = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
 "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹", "🇺", "🇻", "🇼", "🇽", "🇾", "🇿"]
@@ -104,7 +104,7 @@ def countVotes():
 
         #tele
         nbPointsTeleBrut = sum(tele.values())
-        for (song, points) in hare(tele, min(nbPointsJury, 4*nbPointsTeleBrut)).items():
+        for (song, points) in hare(tele, max(min(nbPointsJury, 4*nbPointsTeleBrut)), 3*42).items():
             printF(f"{idSong(song)};public;{points}")
 
 class ButtonConfirm(nextcord.ui.View):
