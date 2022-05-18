@@ -104,7 +104,7 @@ def countVotes():
 
         #tele
         nbPointsTeleBrut = sum(tele.values())
-        for (song, points) in hare(tele, max(min(nbPointsJury, 4*nbPointsTeleBrut)), 3*42).items():
+        for (song, points) in hare(tele, max(min(nbPointsJury, 4*nbPointsTeleBrut),  3*42)).items():
             printF(f"{idSong(song)};public;{points}")
 
 class ButtonConfirm(nextcord.ui.View):
