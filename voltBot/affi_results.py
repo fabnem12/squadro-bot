@@ -248,12 +248,12 @@ def updatePublic():
 #window
 window = Tk()
 window.title("Results of the contest")
-window.geometry(f"{window.winfo_screenwidth() // 2}x{window.winfo_screenheight() // 2}")
+window.geometry(f"{round(window.winfo_screenwidth() / 1.2)}x{round(window.winfo_screenheight() / 2)}")
 
-infosGraphic["widthInfo"] = round(window.winfo_screenwidth()/2 - 40) // 2
-infosGraphic["heightInfo"] = round((window.winfo_screenheight() - 100 - 10*halfNbActs) / halfNbActs) // 2
-infosGraphic["heightScreen"] = window.winfo_screenheight() // 2
-infosGraphic["centerScreenHori"] = window.winfo_screenwidth() // 4
+infosGraphic["widthInfo"] = round((window.winfo_screenwidth()/2 - 40) / 1.2)
+infosGraphic["heightInfo"] = round(((window.winfo_screenheight() - 150 - 10*halfNbActs) / halfNbActs) / 2)
+infosGraphic["heightScreen"] = window.winfo_screenheight() / 1.5
+infosGraphic["centerScreenHori"] = round((window.winfo_screenwidth() + 20) / 2.4)
 
 canvas = Canvas(window, width=window.winfo_screenwidth(), height=window.winfo_screenheight(), bg="#5F288F")
 canvas.pack()

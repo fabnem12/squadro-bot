@@ -1,6 +1,7 @@
 import asyncio
 import nextcord as discord
 import pickle, os
+import time
 from nextcord.ext import commands
 nextcord = discord
 
@@ -17,19 +18,22 @@ try:
     else:
         raise Exception
 except:
-    JURY = {180333726306140160, 619574125622722560, 745394320739401840, 380720384594411521, 962031267434610759}
+    JURY = {619574125622722560, 803869544414183434, 584661378657419264, 178629368678055937, 834846994098683924}
     #JURY = {619574125622722560}
     infoVote = {k: [] for k in JURY}
     votes = []
-    authors = [619574125622722560, 180333726306140160, 619574125622722560, 962031267434610759, 745394320739401840, 380720384594411521, 745394320739401840, 180333726306140160, 619574125622722560, 962031267434610759, 745394320739401840, 180333726306140160, 619574125622722560, 962031267434610759, 745394320739401840, 380720384594411521, 380720384594411521]
-    songs = ["Passacaglia", "Moonlight Sonata", "Prelude", "Ode to Joy", "Four Seasons", "The Final Countdown", "Back in the USSR", "Amsterdam", "Vesoul", "La valse à mille temps", "Padam Padam", "L'hymne à l'amour", "Takogo kak Putin", "Dragostea din tei", "Shum", "Dancing Lasha Tumbai", "Stefania"]
+    authors = [619574125622722560, 803869544414183434, 584661378657419264, 803869544414183434, 619574125622722560, 178629368678055937, 834846994098683924, 803869544414183434, 584661378657419264]
+    songs = ["Du hast den Farbfilm vergessen", "Dinner Outside", "My song", "Kalimba", "Vesoul", "Wheels of the Beat", "I get around", "Dreams Of Night", "Skyfall"]
+    
+timeClickVote = dict()
 
 reactionsVote = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
-"🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹", "🇺"]
+"🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹", "🇺", "🇻", "🇼", "🇽", "🇾", "🇿"]
+reactionsVote = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
 msgVote = [0]
 
 numberVotesJury = 6
-numberMaxVotesPublic = 5
+numberMaxVotesPublic = 3
 numberMinVotesPublic = 3
 
 #FUNCTIONS #####################################################################
@@ -46,7 +50,7 @@ def countVotes():
     tele = {e: 0 for e in songs}
     teleDetails = dict()
 
-    pointsJury = lambda top: tuple((e, 12 if i == 0 else (10 if i == 1 else 10-i)) for i, e in enumerate(top))
+    pointsJury = lambda top: tuple((e, 12 - i*2) for i, e in enumerate(top))
     pointsTele = lambda rang: 3-rang
 
     for (username, isJury, top) in votes:
@@ -55,9 +59,10 @@ def countVotes():
         else:
             teleDetails[username] = tuple(top)
             for i, e in enumerate(top):
+                if e is None: break
                 tele[e] += pointsTele(i)
 
-    nbPointsJury = 58 * len(jury)
+    nbPointsJury = 42 * len(jury)
 
     #tele
     def hare(votes, nbPoints):
@@ -84,27 +89,32 @@ def countVotes():
                 printF(f"{idSong(song)};{juror};{points}")
 
         #tele
-        for (song, points) in hare(tele, nbPointsJury).items():
+        nbPointsTeleBrut = sum(tele.values())
+        for (song, points) in hare(tele, min(nbPointsJury, 4*nbPointsTeleBrut)).items():
             printF(f"{idSong(song)};public;{points}")
 
 class ButtonConfirm(nextcord.ui.View):
-    def __init__(self, song, remaining, selectPrec):
+    def __init__(self, song, remaining, selectPrec, listSongs):
         super().__init__(timeout = 3600)
         self.value = None
         self.song = song
         self.remaining = remaining
         self.selectPrec = selectPrec
+        self.listSongs = listSongs
 
     @nextcord.ui.button(label = "Confirm", style = nextcord.ButtonStyle.blurple)
     async def test(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         top = infoVote[interaction.user.id]
-        top.append(self.song)
+        top[-1] = self.song
 
         self.selectPrec.stop()
         self.stop()
 
+        button.disabled=True
+        await interaction.response.edit_message(view=self)
+
         if self.remaining > 0:
-            await interaction.channel.send(f"Select the #{len(top)+1} song you prefer", view=ViewSelect([x for x in songs if x not in top], self.remaining))
+            await interaction.channel.send(f"Select the #{len(top)+1} song you prefer", view=ViewSelect([(r, e) for r, e in self.listSongs if e not in top], self.remaining, self.selectPrec.userId))
             save()
         else:
             await interaction.channel.send(f"**Thanks!**\n\n**Your vote:**\n" + "\n".join(f"**#{i+1}** __{e}__" for i, e in enumerate(top)))
@@ -114,43 +124,54 @@ class ButtonConfirm(nextcord.ui.View):
             save()
 
 class ViewSelect(nextcord.ui.View):
-    def __init__(self, listSongs, remaining):
+    def __init__(self, listSongs, remaining, userId):
         super().__init__(timeout = 3600)
         self.value = None
         self.select = Select(listSongs, remaining, self)
         self.remaining = remaining
+        self.userId = userId
 
         self.add_item(self.select)
 
 class Select(nextcord.ui.Select):
     def __init__(self, listSongs, remaining, view):
-        options = [discord.SelectOption(label=e, emoji=r) for r, e in zip(reactionsVote, songs) if e in listSongs]
+        options = [discord.SelectOption(label=e, emoji=r) for r, e in listSongs]
         super().__init__(placeholder="Select an option", max_values=1, min_values=1, options=options)
         self.remaining = remaining
         self.parentView = view
+        self.listSongs = listSongs
 
     async def callback(self, interaction: nextcord.Interaction):
         num = len(infoVote[interaction.user.id]) + 1
 
         async for msg in interaction.channel.history(limit = None):
-            if "Confirm" in msg.content: #there is one such message
+            if "Confirm" in msg.content and msg.author.bot: #there is one such message
                 await msg.delete()
-                break
 
-        await interaction.response.send_message(content=f"Confirm {self.values[0]} as #{num}" + "(you can still select another song thanks to the previous message)", view=ButtonConfirm(self.values[0], self.remaining-1, self.parentView))
+            break
+
+        infoUser = infoVote[self.parentView.userId]
+        if infoUser == [] or infoUser[-1] is not None:
+            infoUser.append(None)
+            await interaction.response.send_message(content=f"Confirm {self.values[0]} as #{num}" + " (you can still select another song thanks to the previous message)", view=ButtonConfirm(self.values[0], self.remaining-1, self.parentView, self.listSongs))
 
 async def vote(user, jury: bool):
     channel = await dmChannelUser(user)
 
     infoVote[user.id] = []
-    await channel.send("__**List of songs**__\n\n" + "\n".join(f"- {r} **{e}**" for r, e in zip(reactionsVote, songs)))
-    commandMessage = await channel.send("Select the #1 song you prefer", view=ViewSelect(songs, 10 if jury else 3))
+    songsLoc = [(r, x) for r, (i, x) in zip(reactionsVote, enumerate(songs)) if authors[i] != user.id]
+    await channel.send("__**List of songs**__\n\n" + "\n".join(f"- {r} **{e}**" for r, e in songsLoc))
+    commandMessage = await channel.send("Select the #1 song you prefer", view=ViewSelect(songsLoc, 6 if jury else 3, user.id))
 
 async def react_vote(messageId, user, guild, emojiHash, channel):
     if user.bot: return
 
+    if (user.id in timeClickVote and time.time() - timeClickVote[user.id] > 300) or user.id not in timeClickVote:
+        infoVote[user.id] = []
+
     if emojiHash == "🗳️" and messageId == msgVote[0] and infoVote[user.id] == []:
         await vote(user, jury=user.id in JURY)
+        timeClickVote[user.id]= time.time()
 
 #MAIN ##########################################################################
 def main():
@@ -190,7 +211,7 @@ def main():
     async def voteCommand(ctx):
         if ctx.author.id == 619574125622722560:
             for i in range(len(songs) // 10 + 1):
-                await ctx.send(f"__**Set #{i+1} of submissions**__", files=[discord.File(f"data_contest/{e}_recap.mp3") for e in songs[10*i:10*i+10]])
+                await ctx.send(f"__**Submissions**__", files=[discord.File(f"data_contest/{e}_recap.mp3", filename=f"{e.replace(' ', '_')}.mp3") for e in songs[10*i:10*i+10]])
 
             msg = await ctx.send("React with 🗳️ to vote")
             await msg.add_reaction("🗳️")
@@ -199,9 +220,33 @@ def main():
 
     @bot.command(name = "count")
     async def countCommand(ctx):
-        if ctx.author.id == 619574125622722560:
+        if ctx.author.id in (619574125622722560, 180333726306140160):
             countVotes()
             await ctx.message.add_reaction("🗳️")
+            
+            if ctx.author.id == 180333726306140160: msgVote[0] = None
+
+    @bot.command(name = "find_jurors")
+    async def find_jurors(ctx):
+        guild = bot.get_guild(567021913210355745)
+        channel = await guild.fetch_channel(973607562710769674)
+        msg = await channel.fetch_message(974728503973007420)
+        users = []
+        for reac in msg.reactions:
+            users += [x.id for x in await reac.users().flatten()]
+
+        #JURY.clear()
+        #JURY.update(users)
+        print(JURY)
+
+        save()
+    
+    @bot.command(name = "get_votes")
+    async def get_votes(ctx):
+        if ctx.author.id not in (619574125622722560, 180333726306140160):
+            return
+        
+        await ctx.send(discord.File("data_contest/votes_new.csv", filename="votes.csv"))
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
