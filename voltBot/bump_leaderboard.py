@@ -272,19 +272,19 @@ def main() -> None:
         await processBumps(msg)
         await bot.process_commands(msg)
 
-    @bot.command(name = "test")
-    async def terogijeg(ctx, user: discord.User):
-        await ctx.send(f"<@{user.id}> <t:{int(user.created_at.timestamp())}:R>")
-
     @bot.event
     async def on_member_join(member: discord.Member):
         if member.guild.id == 567021913210355745: #volt server
+            channelIntro = await member.guild.fetch_channel(567024817128210433)
+
             if any(x in member.name.lower() or x in member.name for x in redFlags):
                 await member.ban(reason = "very likely marea alt")
+            elif time.time() - (member.created_at.timestamp()) < 300:
+                await channelIntro.send(":warning: account created less than 5 minutes ago")
 
-            channel = member.guild.get_channel(567482036919730196)
-
-            await channel.send(f"<@{member.id}>: <t:{int(member.created_at.timestamp()) + 3600}:R> <{member.avatar_url}>")
+    @bot.event
+    async def on_member_update(before, after):
+        await on_member_join(after)
 
     @bot.event
     async def on_ready():
@@ -588,6 +588,11 @@ def main() -> None:
         await ctx.send(file=discord.File(f"mop_page_{pageNumber}.png"), reference = ref)
 
         os.remove(f"mop_page_{pageNumber}.png")
+
+    @bot.command(name = "testTruc")
+    async def testTruc(ctx, msg: discord.Message):
+        print(msg, "\n", msg.components, "\n", msg.reference, "\n", msg.stickers, "\n", msg.type)
+        print(msg.application)
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
