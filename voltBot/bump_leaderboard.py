@@ -288,6 +288,10 @@ def main() -> None:
             await on_member_join(after)
 
     @bot.event
+    async def on_member_update(before, after):
+        await on_member_join(after)
+
+    @bot.event
     async def on_ready():
         pass
 
