@@ -277,14 +277,15 @@ def main() -> None:
         if member.guild.id == 567021913210355745: #volt server
             channelIntro = await member.guild.fetch_channel(567024817128210433)
 
-            if any(x in member.name.lower() or x in member.name for x in redFlags):
+            if any(x in member.name.lower() or x in member.name or (member.nick and (x in member.nick.lower() or x in member.nick)) for x in redFlags):
                 await member.ban(reason = "very likely marea alt")
             elif time.time() - (member.created_at.timestamp()) < 300:
                 await channelIntro.send(":warning: account created less than 5 minutes ago")
 
     @bot.event
-    async def on_member_update(before, after):
-        await on_member_join(after)
+    async def on_user_update(before, after):
+        if 567021913210355745 in (x.id for x in after.mutual_guilds):
+            await on_member_join(after)
 
     @bot.event
     async def on_ready():
