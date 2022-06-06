@@ -255,6 +255,20 @@ async def processBumps(msg, recount=False, pourDeFaux=False):
 
     return (0, 0)
 
+async def introreact(messageId, guild, emojiHash, channel, user):
+    if emojiHash != 712416440099143708:
+        return
+
+    if channel.id == 567024817128210433: #in introduction
+        if any(x.id == 801958112173096990 for x in user.roles): #welcome team
+            message = await channel.fetch_message(messageId)
+            newMember = message.author
+
+            roles = [guild.get_role(x) for x in (708313061764890694, 708315631774335008, 754029717211971705, 708313617686069269, 856620435164495902)]
+            await newMember.add_roles(*roles)
+
+            await message.add_reaction("👌")
+
 def main() -> None:
     #bot = commands.Bot(command_prefix=prefix, help_command=None)
     bot = commands.Bot(command_prefix=prefix, help_command=None, intents = discord.Intents.all())
@@ -268,8 +282,6 @@ def main() -> None:
 
     @bot.event
     async def on_message(msg) -> None:
-        #print(msg.author.status, msg.author.name)
-
         await processBumps(msg)
         await bot.process_commands(msg)
 
@@ -317,10 +329,33 @@ def main() -> None:
         for i in range(ceil(len(output) / 2000)):
             await ctx.send(f"{output[2000*i:2000*(i+1)]}")
 
+    async def traitementRawReact(payload):
+        if payload.user_id != bot.user.id: #sinon, on est dans le cas d'une réaction en dm
+            messageId = payload.message_id
+            guild = bot.get_guild(payload.guild_id) if payload.guild_id else None
+            try:
+                user = (await guild.fetch_member(payload.user_id)) if guild else (await bot.fetch_user(payload.user_id))
+            except:
+                user = (await bot.fetch_user(payload.user_id))
+            channel = bot.get_channel(payload.channel_id)
+
+            partEmoji = payload.emoji
+            emojiHash = partEmoji.id if partEmoji.is_custom_emoji() else partEmoji.name
+
+            return locals()
+        else:
+            return None
     @bot.event
-    async def on_reaction_add(reaction, user): #one can delete messages sent by the bot with the wastebin emoji
-        if reaction.message.author.id == 845357066263724132 and reaction.emoji == '🗑️' and reaction.message.id != INFOS["INFO_MSG"]:
-            await reaction.message.delete()
+    async def on_raw_reaction_add(payload):
+        traitement = await traitementRawReact(payload)
+        if traitement:
+            messageId = traitement["messageId"]
+            user = traitement["user"]
+            guild = traitement["guild"]
+            emojiHash = traitement["emojiHash"]
+            channel = traitement["channel"]
+
+            await introreact(messageId, guild, emojiHash, channel, user)
 
     async def updateInfoMsg(channel: discord.TextChannel): #info msg: the message with the recap of all teams
         if INFOS["INFO_MSG"] is not None: #let's try to update the info msg
