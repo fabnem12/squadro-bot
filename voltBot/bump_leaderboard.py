@@ -294,8 +294,8 @@ def main() -> None:
 
             if any(x in member.name.lower() or x in member.name or (member.nick and (x in member.nick.lower() or x in member.nick)) for x in redFlags):
                 await member.ban(reason = "very likely marea alt")
-            elif member.id not in warnings5 and time.time() - member.created_at.timestamp() < 300:
-                await channelIntro.send(":warning: account created less than 5 minutes ago")
+            elif member.id not in warnings5 and time.time() - member.created_at.timestamp() < 3600:
+                await channelIntro.send(":warning: account created less than 60 minutes ago")
                 warnings5.add(member.id)
 
     @bot.event
