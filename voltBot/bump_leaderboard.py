@@ -264,7 +264,7 @@ async def introreact(messageId, guild, emojiHash, channel, user):
             message = await channel.fetch_message(messageId)
             newMember = message.author
 
-            roles = [guild.get_role(x) for x in (708313061764890694, 708315631774335008, 754029717211971705, 708313617686069269, 856620435164495902)]
+            roles = [guild.get_role(x) for x in (708313061764890694, 708315631774335008, 754029717211971705, 708313617686069269, 856620435164495902, 596511307209900053, 717132666721402949)]
             await newMember.add_roles(*roles)
 
             await message.add_reaction("👌")
