@@ -639,7 +639,7 @@ def main() -> None:
             from subprocess import Popen
             import os
 
-            Popen(["python3", os.path.join(os.path.dirname(__file__), "top_countries_month.py", "statsUser")])
+            Popen(["python3", os.path.join(os.path.dirname(__file__), "top_countries_month.py"), "statsUser"])
             await ctx.message.add_reaction("👌")
 
     @bot.command(name = "statusInfosUser")
