@@ -633,10 +633,22 @@ def main() -> None:
 
         os.remove(f"mop_page_{pageNumber}.png")
 
-    @bot.command(name = "testTruc")
-    async def testTruc(ctx, msg: discord.Message):
-        print(msg, "\n", msg.components, "\n", msg.reference, "\n", msg.stickers, "\n", msg.type)
-        print(msg.application)
+    @bot.command(name = "startInfosUser")
+    async def startInfosUser(ctx):
+        if ctx.author.id == 619574125622722560:
+            from subprocess import Popen
+            import os
+
+            Popen(["python3", os.path.join(os.path.dirname(__file__), "top_countries_month.py", "statsUser")])
+            await ctx.message.add_reaction("👌")
+
+    @bot.command(name = "statusInfosUser")
+    async def statusInfosUser(ctx):
+        if ctx.author.id == 619574125622722560:
+            with open("status.txt", "r") as f:
+                lines = list(f.readlines())
+
+            await ctx.send(lines[0], file = discord.File("infosUser.p"))
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))

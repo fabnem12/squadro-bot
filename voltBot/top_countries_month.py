@@ -201,12 +201,59 @@ async def countMessages(guild, bot):
     await bot.change_presence()
     quit()
 
+async def countStats(guild, bot):
+    infosUser = dict()
+
+    totalNbMsgs = [0]
+    async def readChannel(channel):
+        def saveStatus():
+            with open("status.txt", "w") as f:
+                f.write(f"Counting messages in #{channel.name} - {totalNbMsgs[0]}+ messages counted so far")
+            pickle.dump(infosUser, open("infosUser.p", "wb"))
+
+        saveStatus()
+
+        async for msg in channel.history(limit = None): #let's read the messages sent last month in the current channel
+            totalNbMsgs[0] += 1
+
+            if totalNbMsgs[0] % 2000 == 0:
+                saveStatus()
+
+            authorId = msg.author.id
+            date = (msg.created_at.year, msg.created_at.month, msg.created_at.day)
+
+            if authorId not in infosUser:
+                infosUser[authorId] = dict()
+
+            if channel.id not in infosUser[authorId]:
+                infosUser[authorId][channel.id] = dict()
+
+            if date not in infosUser[authorId][channel.id]:
+                infosUser[authorId][channel.id][date] = 0
+
+            infosUser[authorId][channel.id][date] += 1
+
+
+    for channel in filter((lambda x: "logs" not in x.name), guild.text_channels): #let's read all the channels
+        try: #discord raises Forbidden error if the bot is not allowed to read messages in "channel"
+            await readChannel(channel)
+
+            for thread in channel.threads:
+                await readChannel(thread)
+        except Exception as e:
+            print(e)
+
+    quit()
+
 def main() -> None:
     bot = commands.Bot(command_prefix=prefix, help_command=None)
 
     @bot.event
     async def on_ready():
-        await countMessages(bot.get_guild(567021913210355745), bot)
+        if "statsUser" in sys.argv:
+            await countStats(bot.get_guild(567021913210355745), bot)
+        else:
+            await countMessages(bot.get_guild(567021913210355745), bot)
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
