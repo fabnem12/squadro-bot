@@ -12,7 +12,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from constantes import ADMINS, prefixeBot, TOKEN
+from constantes import ADMINS, prefixeBot, TOKENVOLT as TOKEN
 from utils import cheminOutputs, stockePID, decoupeMessages
 stockePID()
 
@@ -299,6 +299,27 @@ def main():
                 await ctx.send(f"Impossible de lire le salon <#{channel.id}>")
 
         await msgAnnonce.edit(content = "**Calculs finis !**")
+
+    @bot.command(name = "most_used_emotes")
+    async def mostUsedEmotes(ctx):
+        if ctx.author.it != 619574125622722560: return
+
+        server = getServer(ctx.guild.id)
+        members = server.members
+
+        total = dict()
+        for member in members:
+            for reac, nb in member.nbParReac.items():
+                if reac not in total:
+                    total[reac] = 0
+                total[reac] += nb
+
+        with open("temp-stats.txt", "w") as f:
+            f.write("\n".join(f"{x[0]}: {x[1]}" for x in sorted(total.items(), key=lambda x: x[1], reverse=True)))
+
+        await ctx.send("Result:", file = discord.File("temp-stats.txt"))
+
+        os.remove("temp-stats.txt")
 
     return bot, TOKEN
 
