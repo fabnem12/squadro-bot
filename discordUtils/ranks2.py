@@ -302,13 +302,13 @@ def main():
 
     @bot.command(name = "most_used_emotes")
     async def mostUsedEmotes(ctx):
-        if ctx.author.it != 619574125622722560: return
+        if ctx.author.id != 619574125622722560: return
 
         server = getServer(ctx.guild.id)
         members = server.members
 
         total = dict()
-        for member in members:
+        for member in members.values():
             for reac, nb in member.nbParReac.items():
                 if reac not in total:
                     total[reac] = 0
