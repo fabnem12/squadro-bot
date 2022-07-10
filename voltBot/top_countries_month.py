@@ -251,7 +251,7 @@ async def countEmotes(guild, bot):
         def saveStatus():
             with open("status.txt", "w") as f:
                 f.write(f"Counting messages in #{channel.name} - {sum(totalEmotes.values())}+ emotes counted so far")
-            pickle.dump(infosUser, open("infosEmotes.p", "wb"))
+            pickle.dump(totalEmotes, open("infosEmotes.p", "wb"))
 
         saveStatus()
 
