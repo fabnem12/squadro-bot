@@ -245,7 +245,7 @@ async def countStats(guild, bot):
 
     quit()
 
-async def countStats(guild, bot):
+async def countEmotes(guild, bot):
     totalEmotes = dict()
     async def readChannel(channel):
         def saveStatus():
