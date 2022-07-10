@@ -650,6 +650,23 @@ def main() -> None:
 
             await ctx.send(lines[0], file = discord.File("infosUser.p"))
 
+    @bot.command(name = "startStatsEmotes")
+    async def startInfosUser(ctx):
+        if ctx.author.id == 619574125622722560:
+            from subprocess import Popen
+            import os
+
+            Popen(["python3", os.path.join(os.path.dirname(__file__), "top_countries_month.py"), "statsEmotes"])
+            await ctx.message.add_reaction("👌")
+
+    @bot.command(name = "statsEmotes")
+    async def statusInfosUser(ctx):
+        if ctx.author.id == 619574125622722560:
+            with open("status.txt", "r") as f:
+                lines = list(f.readlines())
+
+            await ctx.send(lines[0], file = discord.File("infosEmotes.p"))
+
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
     loop.run_forever()

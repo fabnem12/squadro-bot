@@ -245,6 +245,36 @@ async def countStats(guild, bot):
 
     quit()
 
+async def countStats(guild, bot):
+    totalEmotes = dict()
+    async def readChannel(channel):
+        def saveStatus():
+            with open("status.txt", "w") as f:
+                f.write(f"Counting messages in #{channel.name} - {sum(totalEmotes.values())}+ emotes counted so far")
+            pickle.dump(infosUser, open("infosEmotes.p", "wb"))
+
+        saveStatus()
+
+        async for msg in channel.history(limit = None): #let's read the messages sent last month in the current channel
+            for reac in msg.reactions:
+                if reac not in totalEmotes:
+                    totalEmotes[str(reac.emoji)] = 0
+                totalEmotes[str(reac.emoji)] += reac.count
+
+            if sum(totalEmotes.values()) % 2000 == 0:
+                saveStatus()
+
+    for channel in filter((lambda x: "logs" not in x.name), guild.text_channels): #let's read all the channels
+        try: #discord raises Forbidden error if the bot is not allowed to read messages in "channel"
+            await readChannel(channel)
+
+            for thread in channel.threads:
+                await readChannel(thread)
+        except Exception as e:
+            print(e)
+
+    quit()
+
 def main() -> None:
     bot = commands.Bot(command_prefix=prefix, help_command=None)
 
@@ -252,6 +282,8 @@ def main() -> None:
     async def on_ready():
         if "statsUser" in sys.argv:
             await countStats(bot.get_guild(567021913210355745), bot)
+        elif "statsEmotes" in sys.argv:
+            await countEmotes(bot.get_guild(567021913210355745), bot)
         else:
             await countMessages(bot.get_guild(567021913210355745), bot)
 
