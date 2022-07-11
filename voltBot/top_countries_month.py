@@ -257,7 +257,7 @@ async def countEmotes(guild, bot):
 
         async for msg in channel.history(limit = None): #let's read the messages sent last month in the current channel
             for reac in msg.reactions:
-                if reac not in totalEmotes:
+                if str(reac.emoji) not in totalEmotes:
                     totalEmotes[str(reac.emoji)] = 0
                 totalEmotes[str(reac.emoji)] += reac.count
 
