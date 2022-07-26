@@ -6,6 +6,7 @@ from arrow import get as arrowGet, utcnow
 from nextcord.ext import commands
 from typing import Dict, List, Tuple, Union, Optional, Set
 import time
+import requests
 
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -269,6 +270,20 @@ async def introreact(messageId, guild, emojiHash, channel, user):
 
             await message.add_reaction("👌")
 
+async def suggestion(msg):
+    guild = msg.guild
+    if guild and guild.id == 567021913210355745: #message sent on the volt server
+        ideaBox = await guild.fetch_channel(567028600058937355)
+
+        if msg.content.startswith("*suggest"):
+            for att in msg.attachments:
+                r = requests.get(att.url)
+                with open(att.filename, "wb") as outfile:
+                    outfile.write(r.content)
+
+                await ideaBox.send(file = discord.File(att.filename))
+                os.remove(att.filename)
+
 def main() -> None:
     #bot = commands.Bot(command_prefix=prefix, help_command=None)
     bot = commands.Bot(command_prefix=prefix, help_command=None, intents = discord.Intents.all())
@@ -282,6 +297,7 @@ def main() -> None:
 
     @bot.event
     async def on_message(msg) -> None:
+        await suggestion(msg)
         await processBumps(msg)
         await bot.process_commands(msg)
 
@@ -363,7 +379,6 @@ def main() -> None:
         if INFOS["INFO_MSG"] is not None: #let's try to update the info msg
             try:
                 infoMsg = await channel.fetch_message(INFOS["INFO_MSG"])
-                print(teamsInfo(channel.guild, bot))
                 await infoMsg.edit(embed = discord.Embed(description = teamsInfo(channel.guild, bot)), content = "")
                 return
             except:
@@ -423,7 +438,7 @@ def main() -> None:
     async def statsEfficiency(ctx, fromRank: int = 1) -> None:
         await ctx.send(embed = discord.Embed(description = computeStats(ctx.guild, bot, True, fromRank)))
 
-    @bot.command(name = "prerank")
+    @bot.command(name = "prerankBump")
     async def prerank(ctx, teamsToo: Optional[str]):
         if ctx.author.id == 619574125622722560: #only fabnem can use this command
             reset(teamsToo is not None)
@@ -632,40 +647,6 @@ def main() -> None:
         await ctx.send(file=discord.File(f"mop_page_{pageNumber}.png"), reference = ref)
 
         os.remove(f"mop_page_{pageNumber}.png")
-
-    @bot.command(name = "startInfosUser")
-    async def startInfosUser(ctx):
-        if ctx.author.id == 619574125622722560:
-            from subprocess import Popen
-            import os
-
-            Popen(["python3", os.path.join(os.path.dirname(__file__), "top_countries_month.py"), "statsUser"])
-            await ctx.message.add_reaction("👌")
-
-    @bot.command(name = "statusInfosUser")
-    async def statusInfosUser(ctx):
-        if ctx.author.id == 619574125622722560:
-            with open("status.txt", "r") as f:
-                lines = list(f.readlines())
-
-            await ctx.send(lines[0], file = discord.File("infosUser.p"))
-
-    @bot.command(name = "startStatsEmotes")
-    async def startInfosUser(ctx):
-        if ctx.author.id == 619574125622722560:
-            from subprocess import Popen
-            import os
-
-            Popen(["python3", os.path.join(os.path.dirname(__file__), "top_countries_month.py"), "statsEmotes"])
-            await ctx.message.add_reaction("👌")
-
-    @bot.command(name = "statsEmotes")
-    async def statusInfosUser(ctx):
-        if ctx.author.id == 619574125622722560:
-            with open("status.txt", "r") as f:
-                lines = list(f.readlines())
-
-            await ctx.send(lines[0], file = discord.File("infosEmotes.p"))
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
