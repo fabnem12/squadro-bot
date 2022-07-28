@@ -297,6 +297,16 @@ def main() -> None:
 
     @bot.event
     async def on_message(msg) -> None:
+        if msg.content.startswith("*ban"):
+            user = msg.content.split(" ")[1]
+            if user.isdigit():
+                userId = int(user)
+            else:
+                userId = int(user[2:-1])
+            channel = await dmChannelUser(await msg.guild.fetch_member(userId))
+            await channel.send(f"Ban appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
+            await (await dmChannelUser(msg.author)).send("Ban appeal form successfully sent")
+
         await suggestion(msg)
         await processBumps(msg)
         await bot.process_commands(msg)
@@ -647,6 +657,22 @@ def main() -> None:
         await ctx.send(file=discord.File(f"mop_page_{pageNumber}.png"), reference = ref)
 
         os.remove(f"mop_page_{pageNumber}.png")
+
+    @bot.command(name = "report")
+    async def reportTemp(ctx):
+        reference = ctx.message.reference
+        if reference:
+            reportChannel = await ctx.guild.fetch_channel(806219815760166972)
+            await ctx.message.delete()
+
+            msg = await ctx.channel.fetch_message(reference.message_id)
+            e = discord.Embed(title = f"Report from #{ctx.channel.name} by @{ctx.author.name}", description = msg.content)
+            e.set_author(name = msg.author.name, icon_url = msg.author.avatar.url)
+            e.add_field(name = "Author", value=msg.author.mention)
+            e.add_field(name = "Channel", value=f"<#{ctx.channel.id}>")
+            e.add_field(name = "Reporter", value=ctx.author.mention)
+
+            await reportChannel.send(embed = e)
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
