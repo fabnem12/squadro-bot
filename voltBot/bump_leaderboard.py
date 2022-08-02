@@ -668,11 +668,22 @@ def main() -> None:
             msg = await ctx.channel.fetch_message(reference.message_id)
             e = discord.Embed(title = f"Report from #{ctx.channel.name} by @{ctx.author.name}", description = msg.content)
             e.set_author(name = msg.author.name, icon_url = msg.author.avatar.url)
-            e.add_field(name = "Author", value=msg.author.mention)
-            e.add_field(name = "Channel", value=f"<#{ctx.channel.id}>")
-            e.add_field(name = "Reporter", value=ctx.author.mention)
+            e.add_field(name = "Author", value=msg.author.mention, inline=False)
+            e.add_field(name = "Channel", value=f"<#{ctx.channel.id}>", inline=False)
+            e.add_field(name = "Reporter", value=ctx.author.mention, inline=False)
+            e.add_field(name = "Link to message", value=msg.jump_url)
+            msgReport = await reportChannel.send(embed = e)
 
-            await reportChannel.send(embed = e)
+            ref = discord.MessageReference(channel_id = msgReport.channel.id, message_id = msgReport.id)
+
+            for att in msg.attachments:
+                r = requests.get(att.url)
+                with open(att.filename, "wb") as outfile:
+                    outfile.write(r.content)
+
+                await reportChannel.send(file = discord.File(att.filename), reference = ref)
+                os.remove(att.filename)
+
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
