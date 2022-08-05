@@ -285,7 +285,7 @@ async def suggestion(msg):
                 os.remove(att.filename)
 
 async def noe(msg):
-    if any(l in msg.content.lower() for l in "eε🇪3"):
+    if msg.author != 845357066263724132 and any(l in msg.content.lower() for l in "eε🇪3"):
         await msg.channel.send(f"<:bonk:843489770918903819> <@{msg.author.id}>")
         await msg.delete()
 
