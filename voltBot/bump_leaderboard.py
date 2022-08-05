@@ -284,6 +284,11 @@ async def suggestion(msg):
                 await ideaBox.send(file = discord.File(att.filename))
                 os.remove(att.filename)
 
+async def noe(msg):
+    if "e" in msg.content.lower():
+        await msg.channel.send(f"<:bonk:843489770918903819> <@{msg.author.id}>")
+        await msg.delete()
+
 def main() -> None:
     #bot = commands.Bot(command_prefix=prefix, help_command=None)
     bot = commands.Bot(command_prefix=prefix, help_command=None, intents = discord.Intents.all())
@@ -307,6 +312,8 @@ def main() -> None:
             await channel.send(f"Ban appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
             await (await dmChannelUser(msg.author)).send("Ban appeal form successfully sent")
 
+        if msg.channel.id == 1005143874517356594: #no-e-channel
+            await noe(msg)
         await suggestion(msg)
         await processBumps(msg)
         await bot.process_commands(msg)
