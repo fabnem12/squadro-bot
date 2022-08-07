@@ -285,7 +285,7 @@ async def suggestion(msg):
                 os.remove(att.filename)
 
 async def noe(msg):
-    if msg.author.id != 845357066263724132 and any(l in msg.content.lower() for l in "eε🇪Ἑéèêëȩếềее"):
+    if msg.author.id != 845357066263724132 and any(l in msg.content.lower() for l in "eε🇪Ἑéèêëȩếềееė"):
         await msg.channel.send(f"<:bonk:843489770918903819> <@{msg.author.id}>")
         await msg.delete()
 
@@ -311,6 +311,7 @@ def main() -> None:
             channel = await dmChannelUser(await msg.guild.fetch_member(userId))
             await channel.send(f"Ban appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
             await (await dmChannelUser(msg.author)).send("Ban appeal form successfully sent")
+            await user.ban(reason = f"{' '.join(msg.content.split(' ')[2:])} (ban by {msg.author.name})")
 
         await suggestion(msg)
         await processBumps(msg)
