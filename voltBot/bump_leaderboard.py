@@ -312,11 +312,17 @@ def main() -> None:
             await channel.send(f"Ban appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
             await (await dmChannelUser(msg.author)).send("Ban appeal form successfully sent")
 
-        if msg.channel.id == 1005143874517356594: #no-e-channel
-            await noe(msg)
         await suggestion(msg)
         await processBumps(msg)
         await bot.process_commands(msg)
+
+        if msg.channel.id == 1005143874517356594: #no-e-channel
+            await noe(msg)
+
+    @bot.event
+    async def on_message_edit(_, msg):
+        if msg.channel.id == 1005143874517356594: #no-e-channel
+            await noe(msg)
 
     warnings5 = set()
     @bot.event
