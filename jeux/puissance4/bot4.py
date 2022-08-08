@@ -27,7 +27,7 @@ class Partie:
         return self.partie.drawTab()
 
     def joue(self, coup):
-        if coup not in (1, 2, 3, 4, 5): return False
+        if coup not in (1, 2, 3, 4, 5, 6, 7): return False
 
         ret = self.partie.action(coup)
         if ret:
