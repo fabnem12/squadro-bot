@@ -50,6 +50,7 @@ def main():
     intentsBot.message_content = True
     bot = commands.Bot(command_prefix="T.", help_command=None, intents = intentsBot)
 
+    """
     @bot.slash_command(guild_ids=[712348902073827479, 603692346273693697])
     async def puissance_quatre(interaction: nextcord.Interaction, joueur2: nextcord.Member):
         joueur1 = interaction.user
@@ -59,6 +60,18 @@ def main():
         joueur2partie[joueur2.id] = partie
 
         msg = await interaction.response.send_message(f"Partie entre {joueur1.mention} et {joueur2.mention}.\nÀ {joueur1.mention} de jouer", file = nextcord.File(partie.affiPlateau()))
+    """
+
+    @bot.command(name = "puissance_quatre")
+    async def puissance_quatre(ctx, joueur2: nextcord.Member):
+        joueur1 = ctx.author
+        partie = Partie(joueur1, joueur2)
+        parties[joueur1.id, joueur2.id] = partie
+        joueur2partie[joueur1.id] = partie
+        joueur2partie[joueur2.id] = partie
+
+        msg = await ctx.send(f"Partie entre {joueur1.mention} et {joueur2.mention}.\nÀ {joueur1.mention} de jouer", file = nextcord.File(partie.affiPlateau()))
+        partie.msgs.append(msg.id)
 
     @bot.command(name = "coup")
     async def coup(ctx, coup: int):
