@@ -3,6 +3,7 @@ import nextcord as discord
 import pickle
 import os
 from arrow import get as arrowGet, utcnow
+from emoji import UNICODE_EMOJI
 from nextcord.ext import commands
 from typing import Dict, List, Tuple, Union, Optional, Set
 import time
@@ -287,9 +288,8 @@ async def suggestion(msg):
 async def noe(msg):
     if msg.author.id != 845357066263724132:
         def toDelete(msg):
-            okChars = " azrtyuiopqsdfghjklwxcvbn1234567890&\"\\'(-_)=~#{[|`^@]}+°^¨$£*µ%!§:/;.,?²\n"
-            print(msg.content.lower(), [(x, x not in okChars) for x in msg.content.lower()])
-            return any(x not in okChars for x in msg.content.lower())
+            okChars = " azrtyuiopqsdfghjklmwxcvbn1234567890&\"\\'(-_)=~#{[|`^@]}+°^¨$£*µ%!§:/;.,?<>²\n"
+            return any(x not in okChars and x not in UNICODE_EMOJI for x in msg.content.lower())
 
         if toDelete(msg):
             await msg.channel.send(f"<:bonk:843489770918903819> <@{msg.author.id}>")
