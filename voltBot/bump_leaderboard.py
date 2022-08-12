@@ -285,9 +285,14 @@ async def suggestion(msg):
                 os.remove(att.filename)
 
 async def noe(msg):
-    if msg.author.id != 845357066263724132 and any(l in msg.content.lower() for l in "eε🇪Ἑéèêëȩếềееė"):
-        await msg.channel.send(f"<:bonk:843489770918903819> <@{msg.author.id}>")
-        await msg.delete()
+    if msg.author.id != 845357066263724132:
+        def isMsgOk(msg):
+            okChars = "azrtyuiopqsdfghjklwxcvbn1234567890&\"\\'(-_)=~#{[|`^@]}+°^¨$£*µ%!§:/;.,?²"
+            return all(x in okChars for x in msg.content.lower())
+
+        if not isMsgOk(msg):
+            await msg.channel.send(f"<:bonk:843489770918903819> <@{msg.author.id}>")
+            await msg.delete()
 
 def main() -> None:
     #bot = commands.Bot(command_prefix=prefix, help_command=None)

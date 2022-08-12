@@ -171,7 +171,7 @@ async def bind_new_envoi(msg):
                 if webhook is None:
                     webhook = await channel.create_webhook(name = auteur.name)
 
-                retransmis = await webhook.send(texte, wait = True, files = fichiersHere, embed = embed, username = affiNom, avatar_url = auteur.avatar_url)
+                retransmis = await webhook.send(texte, wait = True, files = fichiersHere, embed = embed, username = affiNom, avatar_url = auteur.avatar.url)
                 #retransmis = await channel.send(texteRenvoye, files = fichiersHere, embed = embed)
 
             groupe.ajoutMsg(msg.id, retransmis.id, (channelId, guildId), (channelCibleId, serveurCibleId), pseudoAuteur)
@@ -726,7 +726,7 @@ def main():
 
         ref = discord.MessageReference(channel_id = ctx.channel.id, message_id = ctx.message.id)
         embed = discord.Embed()
-        embed.set_image(url=someone.avatar_url)
+        embed.set_image(url=someone.avatar.url)
         await ctx.send(embed=embed, reference = ref)
 
 
