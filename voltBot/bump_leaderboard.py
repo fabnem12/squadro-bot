@@ -286,11 +286,11 @@ async def suggestion(msg):
 
 async def noe(msg):
     if msg.author.id != 845357066263724132:
-        def isMsgOk(msg):
-            okChars = "azrtyuiopqsdfghjklwxcvbn1234567890&\"\\'(-_)=~#{[|`^@]}+°^¨$£*µ%!§:/;.,?²"
-            return all(x in okChars for x in msg.content.lower())
+        def toDelete(msg):
+            okChars = "azrtyuiopqsdfghjklwxcvbn1234567890&\"\\'(-_)=~#{[|`^@]}+°^¨$£*µ%!§:/;.,?²\n"
+            return any(x not in okChars for x in msg.content.lower())
 
-        if not isMsgOk(msg):
+        if toDelete(msg):
             await msg.channel.send(f"<:bonk:843489770918903819> <@{msg.author.id}>")
             await msg.delete()
 
