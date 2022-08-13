@@ -50,7 +50,7 @@ def main():
     intentsBot.message_content = True
     bot = commands.Bot(command_prefix="T.", help_command=None, intents = intentsBot)
 
-    @bot.slash_command(guild_ids=[712348902073827479, 603692346273693697])
+    @bot.slash_command(name = "puissance4") #, guild_ids=[712348902073827479, 603692346273693697]
     async def puissance_quatre(interaction: nextcord.Interaction, joueur2: nextcord.Member):
         joueur1 = interaction.user
         partie = Partie(joueur1, joueur2)
