@@ -288,7 +288,7 @@ async def suggestion(msg):
 async def noe(msg):
     if msg.author.id != 845357066263724132:
         def toDelete(msg):
-            okChars = " azrtyuiopqsdfghjklmwxcvbn1234567890&\"\\'(-_)=~#{[|`^@]}+°^¨$£*µ%!§:/;.,?<>²\n"
+            okChars = " zertyuiopqsdfghjklmwxcvbn1234567890&\"\\'(-_)=~#{[|`^@]}+°^¨$£*µ%!§:/;.,?<>²\n"
             return any(x not in okChars and not is_emoji(x) for x in msg.content.lower())
 
         if toDelete(msg):
