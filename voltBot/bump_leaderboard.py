@@ -296,8 +296,12 @@ async def noe(msg):
             await msg.delete()
 
 def main() -> None:
-    #bot = commands.Bot(command_prefix=prefix, help_command=None)
-    bot = commands.Bot(command_prefix=prefix, help_command=None, intents = discord.Intents.all())
+    #bot = commands.Bot(command_prefix=prefix, help_command=None, intents = discord.Intents.all())
+    intentsBot = discord.Intents.default()
+    intentsBot.members = True
+    intentsBot.messages = True
+    intentsBot.message_content = True
+    bot = commands.Bot(command_prefix=prefix, help_command=None, intents = intentsBot)
 
     def isBotAdmin(user: discord.Member) -> bool:
         return user.guild_permissions.manage_channels or user.id == 619574125622722560
