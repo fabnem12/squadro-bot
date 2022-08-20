@@ -316,9 +316,11 @@ def main() -> None:
             else:
                 userId = int(user[2:-1])
             channel = await dmChannelUser(await msg.guild.fetch_member(userId))
-            await channel.send(f"Ban appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
+            banReason = ' '.join(msg.content.split(' ')[2:])
+
+            await channel.send(f"Ban reason: {banReason}\nBan appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
             await (await dmChannelUser(msg.author)).send(f"Ban appeal form successfully sent to {user.name}")
-            await user.ban(reason = f"{' '.join(msg.content.split(' ')[2:])} (ban by {msg.author.name})")
+            await user.ban(reason = f"{banReason} (ban by {msg.author.name})")
             await (await dmChannelUser(msg.author)).send("Ban successfully done")
 
         await suggestion(msg)
