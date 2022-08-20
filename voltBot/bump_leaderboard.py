@@ -308,21 +308,25 @@ def main() -> None:
         await ctx.send("yeah <:volt_cool_glasses:819137584722345984>")
 
     @bot.event
+    async def on_member_update(before, after):
+        countries = {'Vatican', 'Ukraine', 'United Kingdom', 'Turkey', 'Switzerland', 'Sweden', 'Spain', 'Slovenia', 'Slovakia', 'Serbia', 'San Marino', 'Portugal', 'Russia', 'Romania', 'Poland', 'Norway', 'North Macedonia', 'Netherlands', 'Montenegro', 'Monaco', 'Moldova', 'Malta', 'Luxembourg', 'Lithuania', 'Liechtenstein', 'Latvia', 'Kazakhstan', 'Kosovo', 'Italy', 'Ireland', 'Iceland', 'Hungary', 'Greece', 'Georgia', 'Germany', 'France', 'Finland', 'Estonia', 'Denmark', 'Czechia', 'Cyprus', 'Croatia', 'Bulgaria', 'Bosnia & Herzegovina', 'Belgium', 'Belarus', 'Azerbaijan', 'Austria', 'Andorra', 'Armenia', 'Albania', 'Asia', 'Africa', 'North America', 'Oceania', 'South America'}
+
+        multinationalMembers = pickle.load(open("multinationals.p", "rb"))
+        userId = after.id
+
+        newCountryRoles = sorted({role for role in after.roles if role.name in countries})
+        changedCountryRoles = sorted({role for role in before.roles if role.name in countries}) != newCountryRoles
+
+        if changedCountryRoles:
+            if userId not in multinationalMembers and len(newCountryRoles) == 1:
+                multinationalMembers[userId] = newCountryRoles[0]
+            elif userId in multinationalMembers:
+                del multinationalMembers[userId]
+
+            pickle.dump(multinationalMembers, open("multinationals.p", "wb"))
+
+    @bot.event
     async def on_message(msg) -> None:
-        if msg.content.startswith("*ban"):
-            user = msg.content.split(" ")[1]
-            if user.isdigit():
-                userId = int(user)
-            else:
-                userId = int(user[2:-1])
-            channel = await dmChannelUser(await msg.guild.fetch_member(userId))
-            banReason = ' '.join(msg.content.split(' ')[2:])
-
-            await channel.send(f"Ban reason: {banReason}\nBan appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
-            await (await dmChannelUser(msg.author)).send(f"Ban appeal form successfully sent to {user.name}")
-            await user.ban(reason = f"{banReason} (ban by {msg.author.name})")
-            await (await dmChannelUser(msg.author)).send("Ban successfully done")
-
         await suggestion(msg)
         await processBumps(msg)
         await bot.process_commands(msg)
@@ -360,6 +364,23 @@ def main() -> None:
     @bot.event
     async def on_ready():
         pass
+
+    @bot.command(name = "ban")
+    async def bancommand(ctx):
+        msg = ctx.message
+        
+        user = msg.content.split(" ")[1]
+        if user.isdigit():
+            userId = int(user)
+        else:
+            userId = int(user[2:-1])
+        channel = await dmChannelUser(await msg.guild.fetch_member(userId))
+        banReason = ' '.join(msg.content.split(' ')[2:])
+
+        await channel.send(f"Ban reason: {banReason}\nBan appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
+        await (await dmChannelUser(msg.author)).send(f"Ban appeal form successfully sent to {user.name}")
+        await user.ban(reason = f"{banReason} (ban by {msg.author.name})")
+        await (await dmChannelUser(msg.author)).send("Ban successfully done")
 
     @bot.command(name = "local_volt")
     async def local_volt(ctx, countryRole: discord.Role, localVolt: discord.Role):
