@@ -242,9 +242,6 @@ async def processBumps(msg, recount=False, pourDeFaux=False):
                     if not recount:
                         await msg.add_reaction("volt_cool_glasses:819137584722345984")
 
-                        #await asyncio.sleep(2 * 3600)
-                        await sendReminder(msg.guild)
-
         elif "wait" in txt: #it's a bump attempt!
             if pourDeFaux:
                 return (0, member.id)
@@ -320,8 +317,9 @@ def main() -> None:
                 userId = int(user[2:-1])
             channel = await dmChannelUser(await msg.guild.fetch_member(userId))
             await channel.send(f"Ban appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
-            await (await dmChannelUser(msg.author)).send("Ban appeal form successfully sent")
+            await (await dmChannelUser(msg.author)).send(f"Ban appeal form successfully sent to {user.name}")
             await user.ban(reason = f"{' '.join(msg.content.split(' ')[2:])} (ban by {msg.author.name})")
+            await (await dmChannelUser(msg.author)).send("Ban successfully done")
 
         await suggestion(msg)
         await processBumps(msg)
@@ -499,27 +497,6 @@ def main() -> None:
         if ctx.author.id == 619574125622722560:
             await ctx.message.add_reaction("👌")
             reset()
-
-    @bot.command(name = "join_reminder")
-    async def join_reminder(ctx):
-        REMINDER.add(getMember(ctx.author.id))
-        await ctx.message.add_reaction("👌")
-
-        save()
-
-    @bot.command(name = "test_reminder")
-    async def test(ctx):
-        if ctx.author.id == 619574125622722560:
-            print(ctx.author.status)
-            await sendReminder(ctx.guild)
-            await ctx.message.add_reaction("👌")
-
-    @bot.command(name = "leave_reminder")
-    async def leave_reminder(ctx):
-        REMINDER.remove(getMember(ctx.author.id))
-        await ctx.message.add_reaction("👌")
-
-        save()
 
     @bot.command(name = "ayo")
     async def ayo(ctx):
