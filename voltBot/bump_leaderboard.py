@@ -368,13 +368,15 @@ def main() -> None:
     @bot.command(name = "ban")
     async def bancommand(ctx):
         msg = ctx.message
-        
-        user = msg.content.split(" ")[1]
+
+        userIdRaw = msg.content.split(" ")[1]
         if user.isdigit():
-            userId = int(user)
+            userId = int(userIdRaw)
         else:
-            userId = int(user[2:-1])
-        channel = await dmChannelUser(await msg.guild.fetch_member(userId))
+            userId = int(userIdRaw[2:-1])
+
+        user = await msg.guild.fetch_member(userId)
+        channel = await dmChannelUser(user)
         banReason = ' '.join(msg.content.split(' ')[2:])
 
         await channel.send(f"Ban reason: {banReason}\nBan appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
