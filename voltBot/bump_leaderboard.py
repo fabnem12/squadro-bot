@@ -395,6 +395,7 @@ def main() -> None:
             msgMod = f"Unable to ban {user.name}\n{e}"
         else:
             msgMod = "Ban successfully done"
+            await msg.channel.send(f"Banned **{user.name}**")
 
         await (await dmChannelUser(msg.author)).send(msgMod)
 
