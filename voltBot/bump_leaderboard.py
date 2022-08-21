@@ -370,12 +370,16 @@ def main() -> None:
         msg = ctx.message
 
         userIdRaw = msg.content.split(" ")[1]
-        if user.isdigit():
+        if userIdRaw.isdigit():
             userId = int(userIdRaw)
         else:
             userId = int(userIdRaw[2:-1])
 
-        user = await msg.guild.fetch_member(userId)
+        try:
+            user = await msg.guild.fetch_member(userId)
+        except:
+            user = await bot.fetch_user(userId)
+
         channel = await dmChannelUser(user)
         banReason = ' '.join(msg.content.split(' ')[2:])
 
@@ -384,9 +388,15 @@ def main() -> None:
             await (await dmChannelUser(msg.author)).send(f"Ban appeal form successfully sent to {user.name}")
         except:
             pass
-            
-        await user.ban(reason = f"{banReason} (ban by {msg.author.name})")
-        await (await dmChannelUser(msg.author)).send("Ban successfully done")
+
+        try:
+            await msg.guild.ban(user, reason = f"{banReason} (ban by {msg.author.name})", delete_message_days = 0)
+        except Exception as e:
+            msgMod = f"Unable to ban {user.name}\n{e}"
+        else:
+            msgMod = "Ban successfully done"
+
+        await (await dmChannelUser(msg.author)).send(msgMod)
 
     @bot.command(name = "local_volt")
     async def local_volt(ctx, countryRole: discord.Role, localVolt: discord.Role):
