@@ -6,6 +6,7 @@ from arrow import get as arrowGet, utcnow
 from emoji import is_emoji
 from nextcord.ext import commands
 from typing import Dict, List, Tuple, Union, Optional, Set
+import numpy as np
 import time
 import requests
 
@@ -284,8 +285,16 @@ async def suggestion(msg):
 
 async def noe(msg):
     if msg.author.id != 845357066263724132:
+        date = msg.created_at
+        dateTup = (date.year, date.month, date.day)
+        np.random.seed(dateTup)
+        lettreInterdite = np.random.randint(0, 25)
+
+        #white list
+        okCharsRaw = "azertyuiopqsdfghjklmwxcvbn1234567890&\"\\'(-_)=~#{[|`^@]}+°^¨$£*µ%!§:/;.,?<>²\n "
+        okChars = {x for i, x in enumerate(okCharsRaw) if i != lettreInterdite}
+
         def toDelete(msg):
-            okChars = " zertyuiopqsdfghjklmwxcvbn1234567890&\"\\'(-_)=~#{[|`^@]}+°^¨$£*µ%!§:/;.,?<>²\n"
             return any(x not in okChars and not is_emoji(x) for x in msg.content.lower())
 
         if toDelete(msg):
