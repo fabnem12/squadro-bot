@@ -197,7 +197,7 @@ async def verifCode(code, channel, message):
     elif "```sh" in code and estAdmin(message.author):
         indexDebut = code.find("```sh\n") + 6
         indexFin = code.rfind("```")
-        code = code[indexDebut:indexFin]
+        code = code[indexDebut:indexFin].replace('"', '\\"')
 
         sautLigne = "\n"
         code += f"```py\ncmds = [{', '.join(str(tuple(ligne.replace(sautLigne, '').split(' '))) for ligne in code.split(sautLigne) if len(ligne) > 1)}]\n"
