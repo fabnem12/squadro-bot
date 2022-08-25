@@ -194,6 +194,16 @@ async def verifCode(code, channel, message):
         code = code[:indexFin] + '"""\nbrainfuck(a)\n```'
 
         retire = "```py"
+    elif "```sh" in code and estAdmin(message.author):
+        indexDebut = code.find("```sh\n") + 6
+        indexFin = code.rfind("```")
+        code = code[indexDebut:indexFin]
+
+        sautLigne = "\n"
+        code += f"```py\ncmds = [{', '.join(str(tuple(ligne.replace(sautLigne, '').split(' '))) for ligne in code.split(sautLigne) if len(ligne) > 1)}]\n"
+        code += "import subprocess\nfor cmd in cmds:\n  output = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]\n  print(output.decode('utf-8'))\n```"
+
+        retire = "```py"
     else:
         retire = None
         safe = False
