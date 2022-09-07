@@ -1,5 +1,5 @@
 import asyncio
-import discord
+import nextcord
 from nextcord.ext import commands
 from typing import Union
 
@@ -8,10 +8,14 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constantes import tokenReact
 
 def main() -> None:
-    bot = commands.Bot(command_prefix=",", help_command=None)
+    intentsBot = nextcord.Intents.default()
+    intentsBot.members = True
+    intentsBot.messages = True
+    intentsBot.message_content = True
+    bot = commands.Bot(command_prefix=",", help_command=None, intents = intentsBot)
 
     @bot.command(name="react")
-    async def react(ctx, *emojis: Union[discord.Emoji, str]):
+    async def react(ctx, *emojis: Union[nextcord.Emoji, str]):
         reference = ctx.message.reference
 
         if reference:
