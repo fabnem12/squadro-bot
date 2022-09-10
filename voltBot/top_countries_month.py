@@ -129,7 +129,10 @@ async def countMessages(guild, bot):
                     if author.bot: continue
             except: #the author left the server, there is no way to know their country roles…
                 try:
-                    author = await bot.fetch_user(author.id)
+                    if author.id in multinationalMembers:
+                        author = await bot.fetch_user(author.id)
+                    else:
+                        continue
                 except:
                     continue
                 else:
@@ -276,7 +279,11 @@ async def countEmotes(guild, bot):
     quit()
 
 def main() -> None:
-    bot = commands.Bot(command_prefix=prefix, help_command=None)
+    intentsBot = discord.Intents.default()
+    intentsBot.members = True
+    intentsBot.messages = True
+    intentsBot.message_content = True
+    bot = commands.Bot(command_prefix=prefix, help_command=None, intents = intentsBot)
 
     @bot.event
     async def on_ready():
