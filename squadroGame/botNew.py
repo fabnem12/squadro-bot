@@ -309,7 +309,7 @@ async def trucsAFaireTournoi(bot):
 ################################################################################
 #MAIN ##########################################################################
 def main():
-    bot = commands.Bot(command_prefix = prefixeBot, help_command = None, intents = discord.Intents.all())
+    bot = commands.Bot(command_prefix = ",", help_command = None, intents = discord.Intents.all())
 
     @bot.event #pour ne pas afficher les messages d'erreur de commande inexistante (typiquement si on utilise une commande du bot squadro qui est gérée par un autre script)
     async def on_command_error(ctx, error):

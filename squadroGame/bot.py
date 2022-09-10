@@ -36,7 +36,7 @@ def main():
 
     cacheSBest = dict()
 
-    bot = commands.Bot(command_prefix=prefixeBot, help_command=None)
+    bot = commands.Bot(command_prefix=prefixeBot, help_command=None, intents = discord.Intents.all())
 
     @bot.event
     async def on_ready():
