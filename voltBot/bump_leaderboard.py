@@ -4,6 +4,7 @@ import pickle
 import os
 from arrow import get as arrowGet, utcnow
 from emoji import is_emoji
+from googletrans import Translator
 from nextcord.ext import commands
 from typing import Dict, List, Tuple, Union, Optional, Set
 import numpy as np
@@ -16,6 +17,8 @@ from constantes import TOKENVOLT as token, prefixVolt as prefix, redFlags
 from utils import stockePID, cheminOutputs as outputsPath
 
 stockePID()
+
+translator = Translator()
 
 #token = "" #bot token
 #prefix = ","
@@ -207,28 +210,27 @@ async def dmChannelUser(user):
         await user.create_dm()
     return user.dm_channel
 
-async def sendReminder(guild):
-    print(REMINDER)
-    for member in REMINDER:
-        user = await guild.fetch_member(member.id)
-        print(user, type(user))
-        print(user.status, user.status != discord.Status.offline)
-        if user.status != discord.Status.offline:
-            dmChannel = await dmChannelUser(user)
-            await dmChannel.send("Bump reminder!")
-
 async def processBumps(msg, recount=False, pourDeFaux=False):
     author = msg.author.id
     if author == bumpBot and len(msg.embeds) != 0:
+        print(msg.created_at)
+        input()
         e = msg.embeds[0]
         txt = e.description
 
-        if len(txt) <= 20: return (0, 0)
-        doneBy = txt[2:20]
-        if not doneBy.isdigit(): return (0, 0)
-        doneBy = int(doneBy) #user id of the member who tried to bump the server
+        print(msg.__dir__(), "interaction" in msg.__dir__())
+        try:
+            member = msg.interaction.user
+            print(member)
+        except AttributeError:
+            print(txt)
+            if len(txt) <= 20: return (0, 0)
+            doneBy = txt[2:20]
+            if not doneBy.isdigit(): return (0, 0)
+            doneBy = int(doneBy) #user id of the member who tried to bump the server
 
-        member = getMember(doneBy)
+            member = getMember(doneBy)
+
         if ":thumbsup:" in txt: #it's a successfull bump!
             if pourDeFaux:
                 return (1, member.id)
@@ -301,8 +303,27 @@ async def noe(msg):
             await msg.channel.send(f"<:bonk:843489770918903819> <@{msg.author.id}>")
             await msg.delete()
 
+async def translateChapter(msg):
+    chapters2threads = {1013394758011453490: (1013394909786558484, "fi"), 1013394781457625118: (1013394916379988019, "fr")}
+    threads2chapters = {j: (i, k) for i, (j, k) in chapters2threads.items()}
+
+    if "­" in msg.content: return #pas la peine de retraduire
+
+    if msg.channel.id in chapters2threads:
+        destChannelId, srcLang = chapters2threads[msg.channel.id]
+        destLang = "en"
+    elif msg.channel.id in threads2chapters:
+        destChannelId, destLang = threads2chapters[msg.channel.id]
+        srcLang = "en"
+    else:
+        return
+
+    res = translator.translate(msg.content, src=srcLang, dest=destLang)
+    
+    destChannel = await msg.guild.fetch_channel(destChannelId)
+    await destChannel.send(res.text + "­")
+
 def main() -> None:
-    #bot = commands.Bot(command_prefix=prefix, help_command=None, intents = discord.Intents.all())
     intentsBot = discord.Intents.default()
     intentsBot.members = True
     intentsBot.messages = True
@@ -339,6 +360,8 @@ def main() -> None:
         await suggestion(msg)
         await processBumps(msg)
         await bot.process_commands(msg)
+
+        await translateChapter(msg)
 
         if msg.channel.id == 1005143874517356594: #no-e-channel
             await noe(msg)
