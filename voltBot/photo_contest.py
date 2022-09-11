@@ -19,8 +19,10 @@ stockePID()
 ADMIN_ID = 619574125622722560
 
 #listOfChannels = [877625594324598875, 877626245582573668, 746208469870182490, 746041800804007988, 568852610648375296, 797238878150590474, 890977089631698964]
-#listOfChannels = [890977089631698964, 889250102596743198, 891337824387866644]
-listOfChannels = [1016642086218514482, 1016642135879077888, 1016642183203393637, 1016642236999540837]
+listOfChannels = [1006929079393595435, 1006929105813524681, 1006929128823455745, 1006929161761329243, 1006929219818893383, 1006929252031139940] #food
+listOfChannels += [1018584397382950912, 1018584459760636158, 1018584496544690256, 1018584558746222662, 1018584608704561237, 1018584642485485669] #art
+listOfChannels += [1018584404269998100, 1018584465515221132, 1018584501628186734, 1018584564425293875, 1018584613779689483, 1018584647262802010] #nature
+listOfChannels += [1018584410758586498, 1018584472859443301, 1018584508209049681, 1018584569257140275, 1018584618733142088, 1018584651989778603]
 
 class Category:
     def __init__(self, name, channelId):
@@ -105,10 +107,10 @@ if "save_photo_contest.p" in os.listdir() and pickle.load(open("save_photo_conte
     globals().update(pickle.load(open("save_photo_contest.p", "rb")))
 else:
     CATEGORIES = {
-        "food": Category("Food", 802946635906547762),
-        "art": Category("Art - Architecture - Monuments", 802946670601568276),
-        "nature": Category("Nature - Landscapes", 803897141453914162),
-        "pets": Category("Pets and wildlife", 1016627464602124338)
+        "food": Category("Food", 1006910791397687326),
+        "art": Category("Art - Architecture - Monuments", 1006910974353223781),
+        "nature": Category("Nature - Landscapes", 1006911088517992578),
+        "pets": Category("Pets and wildlife", 1006911197934796900)
     }
     for categ in set(CATEGORIES.values()):
         CATEGORIES[categ.channelId] = categ
@@ -200,6 +202,7 @@ async def vote_react_add(messageId, user, guild, emojiHash, channel):
             languageChannel = LANGUAGE_CHANNELS[channel.id]
             proposal = languageChannel.msg2vote.get(messageId)
             if proposal and (proposal.author.userId == user.id or user.id == ADMIN_ID or any(x.id == 674583505446895616 for x in user.roles)):
+                #proposal exists and the person who added the reaction is either its author or a mod
                 languageChannel.removeProposal(proposal)
                 await (await channel.fetch_message(messageId)).delete()
 
@@ -306,32 +309,32 @@ def main() -> None:
             elif CONTEST_STATE[1] and (now.hour, now.minute) == (23, 59): #fin des demi-finales
                 await endsemis()
         elif day == 3:
-            if (now.hour, now.minute) == (8, 0):
+            if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "food")
             elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "food")
         elif day == 4:
-            if (now.hour, now.minute) == (8, 0):
+            if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "art")
             elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "art")
         elif day == 5:
-            if (now.hour, now.minute) == (8, 0):
+            if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "nature")
             elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "nature")
         elif day == 6:
-            if (now.hour, now.minute) == (8, 0):
+            if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "pets")
             elif (now.hour, now.minute) == (20, 0):
                 await stopcateg(None, "pets")
         elif day == 7:
-            if (now.hour, now.minute) == (8, 0):
+            if (now.hour, now.minute) == (6, 0):
                 await startgf1(None)
             elif (now.hour, now.minute) == (22, 0):
                 await stopgf1(None)
         elif day == 8:
-            if (now.hour, now.minute) == (8, 0):
+            if (now.hour, now.minute) == (6, 0):
                 await startgf2(None)
             elif (now.hour, now.minute) == (22, 0):
                 await stopgf2(None)
