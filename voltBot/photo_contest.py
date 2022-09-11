@@ -14,17 +14,13 @@ from libvote import Votant, Election
 
 stockePID()
 
-#token = "" #bot token
-#prefix = ","
-print(prefix)
-
 #BOT FOR VOLT'S PHOTO CONTEST
 
 ADMIN_ID = 619574125622722560
 
-listOfChannels = [877625594324598875, 877626245582573668, 746208469870182490, 746041800804007988, 568852610648375296, 797238878150590474, 890977089631698964]
+#listOfChannels = [877625594324598875, 877626245582573668, 746208469870182490, 746041800804007988, 568852610648375296, 797238878150590474, 890977089631698964]
 #listOfChannels = [890977089631698964, 889250102596743198, 891337824387866644]
-#listOfChannels = [802946635906547762, 802946670601568276, 803897141453914162]
+listOfChannels = [1016642086218514482, 1016642135879077888, 1016642183203393637, 1016642236999540837]
 
 class Category:
     def __init__(self, name, channelId):
@@ -61,7 +57,7 @@ class Category:
             self.votes[proposal].remove(human)
 
     def nbPoints(self, proposal):
-        return (len(set(country for human in self.votes[proposal] for country in human.countryRoles)) + len(self.votes[proposal]), (len(self.votes[proposal]), -proposal.submissionTime))
+        return (2 * len(set(country for human in self.votes[proposal] for country in human.countryRoles)) + len(self.votes[proposal]), (len(self.votes[proposal]), -proposal.submissionTime))
     def top3ofCategory(self):
         sortedProposals = sorted(self.votes.keys(), key=self.nbPoints, reverse = True)
         return sortedProposals[:3]
@@ -72,7 +68,7 @@ class LanguageChannel(Category):
         Category.setMsgProposal(self, proposal, messageId)
 
     def top3PerCategory(self):
-        return {name: sorted(filter(lambda x: x.category is categ, self.votes.keys()), key=lambda x: (len(self.votes[x]), -x.submissionTime), reverse = True)[:4] for name, categ in CATEGORIES.items() if isinstance(name, int)}
+        return {name: sorted(filter(lambda x: x.category is categ, self.votes.keys()), key=lambda x: (len(self.votes[x]), -x.submissionTime), reverse = True)[:5] for name, categ in CATEGORIES.items() if isinstance(name, int)}
 
 class Proposal:
     def __init__(self, url, submissionTime, submissionChannel, category):
@@ -109,14 +105,15 @@ if "save_photo_contest.p" in os.listdir() and pickle.load(open("save_photo_conte
     globals().update(pickle.load(open("save_photo_contest.p", "rb")))
 else:
     CATEGORIES = {
-        "food": Category("Food", 889539051659624488),
-        "art": Category("Art - Architecture - Monuments", 889539083561484328),
-        "nature": Category("Nature - Landscapes", 889539111629783042)
+        "food": Category("Food", 802946635906547762),
+        "art": Category("Art - Architecture - Monuments", 802946670601568276),
+        "nature": Category("Nature - Landscapes", 803897141453914162),
+        "pets": Category("Pets and wildlife", 1016627464602124338)
     }
-    CATEGORIES[889539051659624488] = CATEGORIES["food"]
-    CATEGORIES[889539083561484328] = CATEGORIES["art"]
-    CATEGORIES[889539111629783042] = CATEGORIES["nature"]
-    SUPERFINAL = 889539190449131551
+    for categ in set(CATEGORIES.values()):
+        CATEGORIES[categ.channelId] = categ
+
+    SUPERFINAL = 1016628432752357436
     HUMANS = dict() #binds a discord member id with a Human object
 
     LANGUAGE_CHANNELS = dict()
@@ -127,7 +124,7 @@ else:
     save()
 
 def countryRolesUser(user):
-    listRoles = {'Vatican', 'Ukraine', 'United Kingdom', 'Turkey', 'Switzerland', 'Sweden', 'Spain', 'Slovenia', 'Slovakia', 'Serbia', 'San Marino', 'Portugal', 'Russia', 'Romania', 'Poland', 'Norway', 'North Macedonia', 'Netherlands', 'Montenegro', 'Monaco', 'Moldova', 'Malta', 'Luxembourg', 'Lithuania', 'Liechtenstein', 'Latvia', 'Kazakhstan', 'Kosovo', 'Italy', 'Ireland', 'Iceland', 'Hungary', 'Greece', 'Georgia', 'Germany', 'France', 'Finland', 'Estonia', 'Denmark', 'Czechia', 'Cyprus', 'Croatia', 'Bulgaria', 'Bosnia & Herzegovina', 'Belgium', 'Belarus', 'Azerbaijan', 'Austria', 'Andorra', 'Armenia', 'Albania'}
+    listRoles = {'Vatican', 'Ukraine', 'United Kingdom', 'Turkey', 'Switzerland', 'Sweden', 'Spain', 'Slovenia', 'Slovakia', 'Serbia', 'San Marino', 'Portugal', 'Russia', 'Romania', 'Poland', 'Norway', 'North Macedonia', 'Netherlands', 'Montenegro', 'Monaco', 'Moldova', 'Malta', 'Luxembourg', 'Lithuania', 'Liechtenstein', 'Latvia', 'Kazakhstan', 'Kosovo', 'Italy', 'Ireland', 'Iceland', 'Hungary', 'Greece', 'Georgia', 'Germany', 'France', 'Finland', 'Estonia', 'Denmark', 'Czechia', 'Cyprus', 'Croatia', 'Bulgaria', 'Bosnia & Herzegovina', 'Belgium', 'Belarus', 'Azerbaijan', 'Austria', 'Andorra', 'Armenia', 'Albania', 'Asia', 'Africa', 'North America', 'Oceania', 'South America'}
     return set(x.name for x in user.roles if x.name in listRoles)
 
 def getHuman(user):
@@ -135,13 +132,19 @@ def getHuman(user):
         HUMANS[user.id] = Human(user.id, countryRolesUser(user))
     return HUMANS[user.id]
 
+def getCategory(channel):
+    if channel.id in listOfChannels:
+        ret = CATEGORIES.get(channel.parent_id)
+        if ret:
+            return ret
+        else:
+            raise ValueError("Pas une catégorie. Mais ça ne devrait pas arriver")
+
 def getLanguageChannel(channel):
     if channel.id in listOfChannels:
         if channel.id not in LANGUAGE_CHANNELS:
-            LANGUAGE_CHANNELS[channel.id] = LanguageChannel(channel.name, channel.id)
+            LANGUAGE_CHANNELS[channel.id] = LanguageChannel(f"{channel.parent.name}-{channel.name}", channel.id)
         return LANGUAGE_CHANNELS[channel.id]
-    else:
-        return None
 
 async def dmChannelUser(user):
     if user.dm_channel is None:
@@ -153,29 +156,12 @@ async def submit_react_add(messageId, user, guild, emojiHash, channel):
         date, channelId, submittedBy, url, step = msg2submission[messageId]
 
         if submittedBy == user.id:
-            ref = discord.MessageReference(channel_id = channel.id, message_id = messageId)
             msgFrom = await channel.fetch_message(messageId)
 
             if step == 1:
                 emote = str(emojiHash)
                 if emote == "759798224764141628":
-                    msg2submission[messageId] = (date, channelId, submittedBy, url, 2)
-
-                    await msgFrom.edit(content = "Which category fits the most this photo?\n🧀 for Food, 🎨 for Art - Architecture - Monuments 🍂 Nature - Landscapes")
-                    await msgFrom.add_reaction("🧀")
-                    await msgFrom.add_reaction("🎨")
-                    await msgFrom.add_reaction("🍂")
-                elif emote == "807609057380794398":
-                    del msg2submission[messageId]
-                    await msgFrom.delete()
-            elif step == 2:
-                emote = emojiHash
-                if emote == "🧀":
-                    category = CATEGORIES["food"]
-                elif emote == "🎨":
-                    category = CATEGORIES["art"]
-                elif emote == "🍂":
-                    category = CATEGORIES["nature"]
+                    category = getCategory(channel)
                 else:
                     return
 
@@ -197,7 +183,7 @@ async def submit_react_add(messageId, user, guild, emojiHash, channel):
                 save()
 
 async def vote_react_add(messageId, user, guild, emojiHash, channel):
-    return
+    #return
     if emojiHash == "👍":
         if channel.id in LANGUAGE_CHANNELS:
             languageChannel = LANGUAGE_CHANNELS[channel.id]
@@ -209,7 +195,7 @@ async def vote_react_add(messageId, user, guild, emojiHash, channel):
             return
 
         save()
-    elif str(emojiHash) == "807609057380794398": #remove the submission
+    elif str(emojiHash) == "❌": #remove the submission
         if channel.id in LANGUAGE_CHANNELS:
             languageChannel = LANGUAGE_CHANNELS[channel.id]
             proposal = languageChannel.msg2vote.get(messageId)
@@ -296,8 +282,11 @@ async def grand_final_react(messageId, user, guild, emojiHash, channel, remove =
 
 prefix = ","
 def main() -> None:
-    intents = discord.Intents.all()
-    bot = commands.Bot(command_prefix=prefix, help_command=None, intents = intents)
+    intentsBot = discord.Intents.default()
+    intentsBot.members = True
+    intentsBot.messages = True
+    intentsBot.message_content = True
+    bot = commands.Bot(command_prefix=prefix, help_command=None, intents = intentsBot)
 
     @tasks.loop(minutes = 1.0)
     async def autoplanner():
@@ -308,38 +297,43 @@ def main() -> None:
         else:
             day = 0
 
-        if day == 1:
-            if CONTEST_STATE[1] and now.hour == 8 and now.minute == 0:
+        if day == 1: #démarrage des demi-finales
+            if CONTEST_STATE[1] and (now.hour, now.minute) == (8, 0):
                 await startsemis()
-        elif day == 2:
-            if CONTEST_STATE[1] and now.hour == 8 and now.minute == 0:
+        elif day == 2: #rappel des demi-finales (?)
+            if CONTEST_STATE[1] and (now.hour, now.minute) == (8, 0):
                 await recap_semis()
-            elif CONTEST_STATE[1] and now.hour == 23 and now.minute == 59:
+            elif CONTEST_STATE[1] and (now.hour, now.minute) == (23, 59): #fin des demi-finales
                 await endsemis()
         elif day == 3:
-            if now.hour == 8 and now.minute == 0:
+            if (now.hour, now.minute) == (8, 0):
                 await startcateg(None, "food")
-            elif now.hour == 20 and now.minute == 0:
+            elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "food")
         elif day == 4:
-            if now.hour == 8 and now.minute == 0:
+            if (now.hour, now.minute) == (8, 0):
                 await startcateg(None, "art")
-            elif now.hour == 20 and now.minute == 0:
+            elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "art")
         elif day == 5:
-            if now.hour == 8 and now.minute == 0:
+            if (now.hour, now.minute) == (8, 0):
                 await startcateg(None, "nature")
-            elif now.hour == 20 and now.minute == 0:
+            elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "nature")
         elif day == 6:
-            if now.hour == 8 and now.minute == 0:
-                await startgf1(None)
-            elif now.hour == 22 and now.minute == 0:
-                await stopgf1(None)
+            if (now.hour, now.minute) == (8, 0):
+                await startcateg(None, "pets")
+            elif (now.hour, now.minute) == (20, 0):
+                await stopcateg(None, "pets")
         elif day == 7:
-            if now.hour == 8 and now.minute == 0:
+            if (now.hour, now.minute) == (8, 0):
+                await startgf1(None)
+            elif (now.hour, now.minute) == (22, 0):
+                await stopgf1(None)
+        elif day == 8:
+            if (now.hour, now.minute) == (8, 0):
                 await startgf2(None)
-            elif now.hour == 20 and now.minute == 0:
+            elif (now.hour, now.minute) == (22, 0):
                 await stopgf2(None)
 
     @bot.event
@@ -401,7 +395,8 @@ def main() -> None:
 
     @bot.command(name = "eyes")
     async def eyes(ctx):
-        categ = CATEGORIES["art"]
+        print([len(categ.proposals) for categ in LANGUAGE_CHANNELS.values()])
+        categ = CATEGORIES["food"]
         for proposal in categ.proposals:
             await ctx.send(f"<@{proposal.author.userId}> {len(categ.votes[proposal])} {categ.nbPoints(proposal)[0]}")
 
@@ -419,7 +414,6 @@ def main() -> None:
                     if "?" in url:
                         url = url.split("?")[0]
 
-                    human = getHuman(ctx.author)
                     ref = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id)
 
                     async def resendFile(url): #renvoi chez le serveur squadro pour avoir une image quelque part
@@ -439,12 +433,12 @@ def main() -> None:
 
                         return newUrl
 
-                    msgConfirm = await ctx.send("Are you sure that:\n- you took this photo yourself?\n- that it is somewhat related with this channel?\nIf yes, you can confirm the submission with <:eurolike:759798224764141628>. If not, react with <:thonk:807609057380794398>", reference = ref)
+                    msgConfirm = await ctx.send("Are you sure that:\n- you took this photo yourself?\n- the photo somewhat fits the channel and the geographic area of the thread?\nIf yes, you can confirm the submission with <:eurolike:759798224764141628>. If not, react with <:thonk:807609057380794398>", reference = ref)
                     try:
                         msg2submission[msgConfirm.id] = (ctx.message.created_at, ctx.channel.id, ctx.author.id, await resendFile(url), 1)
                     except Exception as e:
                         await msgConfirm.edit(content = "I'm sorry, it seems that this file is too big, I can't handle it :sweat_smile:")
-                        await (await dmChannelUser(bog.get_member(ADMIN_ID))).send(str(e))
+                        await (await dmChannelUser(bot.get_member(ADMIN_ID))).send(str(e))
                     else:
                         await msgConfirm.add_reaction("eurolike:759798224764141628")
                         await msgConfirm.add_reaction("thonk:807609057380794398")
@@ -475,7 +469,7 @@ def main() -> None:
         if ctx is None or ctx.author.id == ADMIN_ID:
             for channelId in listOfChannels:
                 channel = bot.get_channel(channelId)
-                await channel.send(f"**Hey! The photo contest is starting now!**\n\nPlease read the submission rules in <#889538982931755088>.\nYou can upvote **as many proposals as you want**, the 3 photos with most upvotes from each category will reach the finals.\nThe 3 categories are: **food**, **art - architecture - monuments** and **nature - landscapes**.")
+                await channel.send(f"**Hey! The photo contest is starting now!**\n\nPlease read the submission rules in <#889538982931755088>.\nYou can upvote **as many proposals as you want**, the 5 photos with most upvotes from each category will reach the finals.\nThe 4 categories are: **food**, **art - architecture - monuments**, **nature - landscapes** and **pets - wildlife**.\n\nSubmit photos in this thread that are related with the category of its channel and its geographic area.")
 
             CONTEST_STATE[0] = True
             save()
@@ -529,12 +523,14 @@ def main() -> None:
                     categ.setMsgProposal(proposal, msgVote.id)
                     save()
 
-                ref = discord.Reference(channel_id = channel.id, message_id = idFstMsg)
+                ref = discord.MessageReference(channel_id = channel.id, message_id = idFstMsg)
                 await channel.send(f"link to the top of this channel, then just scroll down to see all {len(categ.proposals)} submissions: https://discord.com/channels/567021913210355745/{channel.id}/{idFstMsg}", reference = ref)
 
     @bot.command(name = "stop_categ")
     async def stopcateg(ctx, categname: str):
+        print("ohé")
         if ctx is None or ctx.author.id == ADMIN_ID:
+            print(categname, CATEGORIES.keys())
             if categname in CATEGORIES:
                 categ = CATEGORIES[categname]
                 channel = await bot.fetch_channel(categ.channelId)
@@ -592,9 +588,9 @@ def main() -> None:
     async def startgf1(ctx):
         if ctx is None or ctx.author.id == ADMIN_ID:
             channel = bot.get_channel(SUPERFINAL)
-            msgVote = await channel.send("React with 🧀 to vote for the best photo of food\nReact with 🎨 to vote for the best photo of art-architecture-monuments\nReact with 🍂 to vote for the best photo of nature-landscapes")
+            msgVote = await channel.send("React with 🧀 to vote for the best photo of food\nReact with 🎨 to vote for the best photo of art-architecture-monuments\nReact with 🍂 to vote for the best photo of nature-landscapes\nReact with 🐈 to vote for the best photo of pets-wildlife")
 
-            for nomCateg, emoji in (("food", "🧀"), ("art", "🎨"), ("nature", "🍂")):
+            for nomCateg, emoji in (("food", "🧀"), ("art", "🎨"), ("nature", "🍂"), ("pets", "🐈")):
                 election = Election("RankedPairs")
                 election.commence = True
                 categ = CATEGORIES[nomCateg]
@@ -682,7 +678,7 @@ def main() -> None:
 
             election = Election("RankedPairs")
             election.commence = True
-            for i, nomCateg in enumerate({"food", "art", "nature"}):
+            for i, nomCateg in enumerate({"food", "art", "nature", "pets"}):
                 categ = CATEGORIES[nomCateg]
                 election.candidats.add(categ.winner)
                 election.nom2candidat[f"Photo {i+1} {categ.name}"] = categ.winner
@@ -734,10 +730,6 @@ def main() -> None:
         if ctx.author.id == ADMIN_ID:
             pickle.dump(None, open("save_photo_contest.p", "wb"))
             await ctx.message.add_reaction("👍")
-
-    @bot.command(name = "ayo")
-    async def ayo(ctx):
-        await ctx.send("ayo")
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
