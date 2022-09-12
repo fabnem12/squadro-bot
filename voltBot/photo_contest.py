@@ -168,6 +168,9 @@ async def submit_react_add(messageId, user, guild, emojiHash, channel):
                 emote = str(emojiHash)
                 if emote == "759798224764141628":
                     category = getCategory(channel)
+                elif emote == "❌":
+                    await msgFrom.delete()
+                    await msgSubmit.delete()
                 else:
                     return
 
