@@ -447,7 +447,7 @@ def main() -> None:
                         await msgConfirm.add_reaction("thonk:807609057380794398")
                         save()
                 else:
-                    await ctx.send("You have to post a photo to make a submission. You can check <#889538982931755088> to see how to do it")
+                    await ctx.send("You have to attach a photo to make a submission. You can check <#889538982931755088> to see how to do it")
             else:
                 await ctx.send("Sorry, the submission period hasn't started or is over…")
         else:
@@ -472,7 +472,7 @@ def main() -> None:
         if ctx is None or ctx.author.id == ADMIN_ID:
             for channelId in listOfChannels:
                 channel = await bot.fetch_channel(channelId)
-                await channel.send(f"**Hey! The photo contest is starting now!**\n\nPlease read the submission rules in <#889538982931755088>.\nYou can upvote **as many proposals as you want**, the 5 photos with most upvotes from each category will reach the finals.\nThe 4 categories are: **food**, **art - architecture - monuments**, **nature - landscapes** and **pets - wildlife**.\n\nSubmit photos in this thread that are related with the category of its channel and its geographic area.")
+                await channel.send(f"**Hey! The photo contest is starting now!**\n\nPlease read the submission rules in <#889538982931755088>.\nOne can submit **up to 3 photos** in this thread. You can upvote **as many proposals as you want**, the 5 photos with most upvotes will reach the semi-final.\n\nSubmit photos in this thread that are **related with its geographic area**.")
 
             CONTEST_STATE[0] = True
             save()
@@ -531,9 +531,7 @@ def main() -> None:
 
     @bot.command(name = "stop_categ")
     async def stopcateg(ctx, categname: str):
-        print("ohé")
         if ctx is None or ctx.author.id == ADMIN_ID:
-            print(categname, CATEGORIES.keys())
             if categname in CATEGORIES:
                 categ = CATEGORIES[categname]
                 channel = await bot.fetch_channel(categ.channelId)
