@@ -302,12 +302,12 @@ def main() -> None:
 
         if day == 1: #démarrage des demi-finales
             if CONTEST_STATE[1] and (now.hour, now.minute) == (8, 0):
-                await startsemis()
+                await startsemis(None)
         elif day == 2: #rappel des demi-finales (?)
             if CONTEST_STATE[1] and (now.hour, now.minute) == (8, 0):
-                await recap_semis()
+                await recap_semis(None)
             elif CONTEST_STATE[1] and (now.hour, now.minute) == (23, 59): #fin des demi-finales
-                await endsemis()
+                await endsemis(None)
         elif day == 3:
             if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "food")
@@ -351,7 +351,7 @@ def main() -> None:
                 user = (await guild.fetch_member(payload.user_id)) if guild else (await bot.fetch_user(payload.user_id))
             except:
                 user = (await bot.fetch_user(payload.user_id))
-            channel = bot.get_channel(payload.channel_id)
+            channel = await bot.fetch_channel(payload.channel_id)
 
             partEmoji = payload.emoji
             emojiHash = partEmoji.id if partEmoji.is_custom_emoji() else partEmoji.name
@@ -441,7 +441,7 @@ def main() -> None:
                         msg2submission[msgConfirm.id] = (ctx.message.created_at, ctx.channel.id, ctx.author.id, await resendFile(url), 1)
                     except Exception as e:
                         await msgConfirm.edit(content = "I'm sorry, it seems that this file is too big, I can't handle it :sweat_smile:")
-                        await (await dmChannelUser(bot.get_member(ADMIN_ID))).send(str(e))
+                        await (await dmChannelUser(await bot.fetch_user(ADMIN_ID))).send(str(e))
                     else:
                         await msgConfirm.add_reaction("eurolike:759798224764141628")
                         await msgConfirm.add_reaction("thonk:807609057380794398")
@@ -471,7 +471,7 @@ def main() -> None:
     async def startsemis(ctx = None):
         if ctx is None or ctx.author.id == ADMIN_ID:
             for channelId in listOfChannels:
-                channel = bot.get_channel(channelId)
+                channel = await bot.fetch_channel(channelId)
                 await channel.send(f"**Hey! The photo contest is starting now!**\n\nPlease read the submission rules in <#889538982931755088>.\nYou can upvote **as many proposals as you want**, the 5 photos with most upvotes from each category will reach the finals.\nThe 4 categories are: **food**, **art - architecture - monuments**, **nature - landscapes** and **pets - wildlife**.\n\nSubmit photos in this thread that are related with the category of its channel and its geographic area.")
 
             CONTEST_STATE[0] = True
@@ -481,7 +481,7 @@ def main() -> None:
     async def remind(ctx = None, txt: Optional[str] = None):
         if ctx is None or ctx.author.id == ADMIN_ID:
             for channelObj in LANGUAGE_CHANNELS.values():
-                channel = bot.get_channel(channelObj.channelId)
+                channel = await bot.fetch_channel(channelObj.channelId)
                 idFirstProposal = min(channelObj.msg2vote.keys(), key=lambda x: channelObj.msg2vote[x].submissionTime)
                 newLine = "\n"
 
@@ -491,7 +491,7 @@ def main() -> None:
     async def endsemis(ctx = None):
         if ctx is None or ctx.author.id == ADMIN_ID:
             for key, channel in LANGUAGE_CHANNELS.items():
-                channelObj = bot.get_channel(channel.channelId)
+                channelObj = await bot.fetch_channel(channel.channelId)
 
                 for categname, proposals in channel.top3PerCategory().items():
                     for proposal in proposals:
@@ -511,7 +511,7 @@ def main() -> None:
         if ctx is None or ctx.author.id == ADMIN_ID:
             if categname in CATEGORIES:
                 categ = CATEGORIES[categname]
-                channel = bot.get_channel(categ.channelId)
+                channel = await bot.fetch_channel(categ.channelId)
 
                 await channel.send("**You can upvote as many photos as you want**\n||Upvotes will be converted into points (number of upvotes + number of country roles of the voters)||\n\n**The top 3 photos will reach the <#889539190449131551>**")
 
@@ -567,7 +567,7 @@ def main() -> None:
                 for categ in (y for x, y in CATEGORIES.items() if isinstance(x, str)):
                     affi += f"{sum((x.category is categ for x in channelObj.proposals), 0)} photos for the category {categ.name}\n"
 
-                await (ctx.channel if ctx else bot.get_channel(channelObj.channelId)).send(affi)
+                await (ctx.channel if ctx else await bot.fetch_channel(channelObj.channelId)).send(affi)
 
     @bot.command(name = "fix_gf1")
     async def fix_gf1(ctx, messageId: int):
@@ -590,7 +590,7 @@ def main() -> None:
     @bot.command(name = "start_gf1")
     async def startgf1(ctx):
         if ctx is None or ctx.author.id == ADMIN_ID:
-            channel = bot.get_channel(SUPERFINAL)
+            channel = await bot.fetch_channel(SUPERFINAL)
             msgVote = await channel.send("React with 🧀 to vote for the best photo of food\nReact with 🎨 to vote for the best photo of art-architecture-monuments\nReact with 🍂 to vote for the best photo of nature-landscapes\nReact with 🐈 to vote for the best photo of pets-wildlife")
 
             for nomCateg, emoji in (("food", "🧀"), ("art", "🎨"), ("nature", "🍂"), ("pets", "🐈")):
@@ -610,7 +610,7 @@ def main() -> None:
     @bot.command(name = "stop_gf1")
     async def stopgf1(ctx):
         if ctx is None or ctx.author.id == ADMIN_ID:
-            channel = bot.get_channel(SUPERFINAL)
+            channel = await bot.fetch_channel(SUPERFINAL)
 
             for electionCateg, categ in (x for index, x in GRAND_FINALS.items() if isinstance(index, tuple)):
                 electionCateg.calculVote()
@@ -675,7 +675,7 @@ def main() -> None:
     @bot.command(name = "start_gf2")
     async def startgf2(ctx):
         if ctx is None or ctx.author.id == ADMIN_ID:
-            channel = bot.get_channel(SUPERFINAL)
+            channel = await bot.fetch_channel(SUPERFINAL)
             msgVote = await channel.send("React with 🗳️ to vote for your preferred photo among the winners of the 3 categories")
             await msgVote.add_reaction("🗳️")
 
@@ -693,7 +693,7 @@ def main() -> None:
     @bot.command(name = "stop_gf2")
     async def stopgf2(ctx):
         if ctx is None or ctx.author.id == ADMIN_ID:
-            channel = bot.get_channel(SUPERFINAL)
+            channel = await bot.fetch_channel(SUPERFINAL)
 
             for election, _ in (x for index, x in GRAND_FINALS.items() if isinstance(index, tuple)): #seulement un tour de boucle…
                 election.calculVote()
