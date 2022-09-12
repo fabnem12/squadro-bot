@@ -311,44 +311,44 @@ def main() -> None:
         else:
             day = 0
 
-        if day == 1: #démarrage des demi-finales
+        """if day == 1: #démarrage des demi-finales
             if CONTEST_STATE[1] and (now.hour, now.minute) == (8, 0):
                 await startsemis(None)
         elif day == 2: #rappel des demi-finales
             if CONTEST_STATE[1] and (now.hour, now.minute) == (8, 0):
-                await recap_semis(None)
-        elif day == 3:
+                await recap_semis(None)"""
+        if day == 0:
             if CONTEST_STATE[1] and (now.hour, now.minute) == (0, 0): #fin des candidatures
                 CONTEST_STATE[0] = False
                 save()
             elif (now.hour, now.minute) == (22, 0): #fin des demi-finales
                 await endsemis(None)
-        elif day == 4:
+        elif day == 1:
             if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "food")
             elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "food")
-        elif day == 5:
+        elif day == 2:
             if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "art")
             elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "art")
-        elif day == 6:
+        elif day == 3:
             if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "nature")
             elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "nature")
-        elif day == 7:
+        elif day == 4:
             if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "pets")
             elif (now.hour, now.minute) == (20, 0):
                 await stopcateg(None, "pets")
-        elif day == 8:
+        elif day == 5:
             if (now.hour, now.minute) == (6, 0):
                 await startgf1(None)
             elif (now.hour, now.minute) == (22, 0):
                 await stopgf1(None)
-        elif day == 9:
+        elif day == 6:
             if (now.hour, now.minute) == (6, 0):
                 await startgf2(None)
             elif (now.hour, now.minute) == (22, 0):
