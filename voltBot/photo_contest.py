@@ -155,10 +155,11 @@ async def dmChannelUser(user):
 
 async def submit_react_add(messageId, user, guild, emojiHash, channel):
     if messageId in msg2submission:
-        date, channelId, submittedBy, url, step = msg2submission[messageId]
+        date, submitId, submittedBy, url, step = msg2submission[messageId]
 
         if submittedBy == user.id:
             msgFrom = await channel.fetch_message(messageId)
+            msgSubmit = await channel.fetch_message(submitId)
 
             if step == 1:
                 emote = str(emojiHash)
@@ -168,6 +169,10 @@ async def submit_react_add(messageId, user, guild, emojiHash, channel):
                     return
 
                 await msgFrom.delete()
+                try:
+                    await msgSubmit.delete()
+                except:
+                    pass
 
                 e = discord.Embed(description = f"**You can upvote this photo with 👍**\nCategory: {category.name}")
                 e.set_image(url = url)
@@ -438,7 +443,7 @@ def main() -> None:
 
                     msgConfirm = await ctx.send("Are you sure that:\n- you took this photo yourself?\n- the photo somewhat fits the channel and the geographic area of the thread?\nIf yes, you can confirm the submission with <:eurolike:759798224764141628>. If not, react with <:thonk:807609057380794398>", reference = ref)
                     try:
-                        msg2submission[msgConfirm.id] = (ctx.message.created_at, ctx.channel.id, ctx.author.id, await resendFile(url), 1)
+                        msg2submission[msgConfirm.id] = (ctx.message.created_at, ctx.message.id, ctx.author.id, await resendFile(url), 1)
                     except Exception as e:
                         await msgConfirm.edit(content = "I'm sorry, it seems that this file is too big, I can't handle it :sweat_smile:")
                         await (await dmChannelUser(await bot.fetch_user(ADMIN_ID))).send(str(e))
