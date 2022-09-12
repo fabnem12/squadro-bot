@@ -68,6 +68,9 @@ class LanguageChannel(Category):
     def addProposal(self, proposal, messageId):
         Category.addProposal(self, proposal)
         Category.setMsgProposal(self, proposal, messageId)
+    
+    def nbProposalsPerson(self, author):
+        return sum(x.author is author for x in self.proposals)
 
     def top3PerCategory(self):
         return {name: sorted(filter(lambda x: x.category is categ, self.votes.keys()), key=lambda x: (len(self.votes[x]), -x.submissionTime), reverse = True)[:5] for name, categ in CATEGORIES.items() if isinstance(name, int)}
@@ -424,6 +427,12 @@ def main() -> None:
 
                     ref = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id)
 
+                    human = getHuman(ctx.author)
+                    languageChannel = getLanguageChannel(ctx.channel)
+                    if languageChannel.nbProposalsPerson(human) == 3:
+                        await ctx.send("Sorry, you already submitted 3 photos in this thread, you can't submit more.\nYou can withdraw one of your previous submissions by adding a reaction ❌ to it.", reference = ref)
+                        return
+
                     async def resendFile(url): #renvoi chez le serveur squadro pour avoir une image quelque part
                         import requests
 
@@ -441,7 +450,7 @@ def main() -> None:
 
                         return newUrl
 
-                    msgConfirm = await ctx.send("Are you sure that:\n- you took this photo yourself?\n- the photo somewhat fits the channel and the geographic area of the thread?\nIf yes, you can confirm the submission with <:eurolike:759798224764141628>. If not, react with <:thonk:807609057380794398>", reference = ref)
+                    msgConfirm = await ctx.send("Are you sure that:\n- you took this photo yourself?\n- the photo somewhat fits the channel and the geographic area of the thread?\nIf yes, you can confirm the submission with <:eurolike:759798224764141628>. If not, react with ❌", reference = ref)
                     try:
                         msg2submission[msgConfirm.id] = (ctx.message.created_at, ctx.message.id, ctx.author.id, await resendFile(url), 1)
                     except Exception as e:
@@ -449,7 +458,7 @@ def main() -> None:
                         await (await dmChannelUser(await bot.fetch_user(ADMIN_ID))).send(str(e))
                     else:
                         await msgConfirm.add_reaction("eurolike:759798224764141628")
-                        await msgConfirm.add_reaction("thonk:807609057380794398")
+                        await msgConfirm.add_reaction("❌")
                         save()
                 else:
                     await ctx.send("You have to attach a photo to make a submission. You can check <#889538982931755088> to see how to do it")
