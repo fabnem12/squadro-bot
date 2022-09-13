@@ -285,24 +285,6 @@ async def suggestion(msg):
                 await ideaBox.send(file = discord.File(att.filename))
                 os.remove(att.filename)
 
-async def noe(msg):
-    if msg.author.id != 845357066263724132:
-        date = msg.created_at
-        dateTup = (date.year, date.month, date.day)
-        np.random.seed(dateTup)
-        lettreInterdite = np.random.randint(0, 25)
-
-        #white list
-        okCharsRaw = "azertyuiopqsdfghjklmwxcvbn1234567890&\"\\'(-_)=~#{[|`^@]}+°^¨$£*µ%!§:/;.,?<>²\n "
-        okChars = {x for i, x in enumerate(okCharsRaw) if i != lettreInterdite}
-
-        def toDelete(msg):
-            return any(x not in okChars and not is_emoji(x) for x in msg.content.lower())
-
-        if toDelete(msg):
-            await msg.channel.send(f"<:bonk:843489770918903819> <@{msg.author.id}>")
-            await msg.delete()
-
 async def translateChapter(msg):
     chapters2threads = {1013394758011453490: (1013394909786558484, "fi"), 1013394781457625118: (1013394916379988019, "fr")}
     threads2chapters = {j: (i, k) for i, (j, k) in chapters2threads.items()}
@@ -362,14 +344,6 @@ def main() -> None:
         await bot.process_commands(msg)
 
         await translateChapter(msg)
-
-        if msg.channel.id == 1005143874517356594: #no-e-channel
-            await noe(msg)
-
-    @bot.event
-    async def on_message_edit(_, msg):
-        if msg.channel.id == 1005143874517356594: #no-e-channel
-            await noe(msg)
 
     warnings5 = set()
     @bot.event
