@@ -1,7 +1,9 @@
 import asyncio
 import nextcord as discord
+nextcord = discord
 import os
 import pickle
+from arrow import utcnow, get
 from datetime import datetime, timedelta
 from nextcord.ext import commands, tasks
 from typing import Dict, List, Tuple, Union, Optional, Set
@@ -23,6 +25,8 @@ listOfChannels = [1006929079393595435, 1006929105813524681, 1006929128823455745,
 listOfChannels += [1018584397382950912, 1018584459760636158, 1018584496544690256, 1018584558746222662, 1018584608704561237, 1018584642485485669] #art
 listOfChannels += [1018584404269998100, 1018584465515221132, 1018584501628186734, 1018584564425293875, 1018584613779689483, 1018584647262802010] #nature
 listOfChannels += [1018584410758586498, 1018584472859443301, 1018584508209049681, 1018584569257140275, 1018584618733142088, 1018584651989778603]
+
+reactionsVote = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
 
 class Category:
     def __init__(self, name, channelId):
@@ -62,7 +66,7 @@ class Category:
         return (2 * len(set(country for human in self.votes[proposal] for country in human.countryRoles)) + len(self.votes[proposal]), (len(self.votes[proposal]), -proposal.submissionTime))
     def top3ofCategory(self):
         sortedProposals = sorted(self.votes.keys(), key=self.nbPoints, reverse = True)
-        return sortedProposals[:3]
+        return sortedProposals[:5]
 
 class LanguageChannel(Category):
     def addProposal(self, proposal, messageId):
@@ -242,10 +246,75 @@ async def majDuel(msg, votant, opt1, opt2, election):
     await msg.edit(content = f":arrow_left: {election.candidat2nom[opt1]} or {election.candidat2nom[opt2]} :arrow_right:")
     GRAND_FINALS[msg.id] = (votant, (opt1, opt2))
 
-FLAG_ATTENTE = dict()
+infoVote = dict()
+votes = []
+class ButtonConfirm(nextcord.ui.View):
+    def __init__(self, song, remaining, selectPrec, listSongs):
+        super().__init__(timeout = 3600)
+        self.value = None
+        self.song = song
+        self.remaining = remaining
+        self.selectPrec = selectPrec
+        self.listSongs = listSongs
+
+    @nextcord.ui.button(label = "Confirmer", style = nextcord.ButtonStyle.blurple)
+    async def test(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
+        top = infoVote[interaction.user.id]
+        top[-1] = self.song
+
+        self.selectPrec.stop()
+        self.stop()
+
+        button.disabled=True
+        await interaction.response.edit_message(view=self)
+
+        if self.remaining > 0:
+            await interaction.channel.send(f"Select your #{len(top)+1} preferred photo", view=ViewSelect([(r, e) for r, e in self.listSongs if f"{r} {e}" not in top], self.remaining, self.selectPrec.userId))
+            save()
+        else:
+            await interaction.channel.send(f"**Thanks!**\n\n**Recap of your vote:**\n" + "\n".join(f"**#{i+1}** {e}" for i, e in enumerate(top)))
+            votes.append((interaction.user.name, tuple(top)))
+
+            infoVote[interaction.user.id] = []
+            save()
+
+class ViewSelect(nextcord.ui.View):
+    def __init__(self, listSongs, remaining, userId):
+        super().__init__(timeout = 3600)
+        self.value = None
+        self.select = Select(listSongs, remaining, self)
+        self.remaining = remaining
+        self.userId = userId
+
+        self.add_item(self.select)
+
+class Select(nextcord.ui.Select):
+    def __init__(self, listSongs, remaining, view):
+        options = [discord.SelectOption(label=f"{r} {e}") for r, e in listSongs]
+        super().__init__(placeholder="Pick a photo", max_values=1, min_values=1, options=options)
+        self.remaining = remaining
+        self.parentView = view
+        self.listSongs = listSongs
+
+    async def callback(self, interaction: nextcord.Interaction):
+        infoUser = infoVote[self.parentView.userId]
+        if infoUser != [] and infoUser[-1] is None:
+            del infoUser[-1]
+        num = len(infoUser) + 1
+
+        async for msg in interaction.channel.history(limit = None):
+            if "Confirm" in msg.content and msg.author.bot: #there is one such message
+                await msg.delete()
+
+            break
+
+        if infoUser == [] or infoUser[-1] is not None:
+            infoUser.append(None)
+            await interaction.response.send_message(content=f"Confirm {self.values[0]} as #{num}" + (" (you can still change, using the select field of the previous message)" if num == 1 else ""), view=ButtonConfirm(self.values[0], self.remaining-1, self.parentView, self.listSongs))
+
 async def grand_final_react(messageId, user, guild, emojiHash, channel, remove = False):
     if not remove and (messageId, emojiHash) in GRAND_FINALS:
-        election, categ = GRAND_FINALS[messageId, emojiHash]
+        election, _ = GRAND_FINALS[messageId, emojiHash]
         channel = await dmChannelUser(user)
         userId = user.id
 
@@ -253,46 +322,15 @@ async def grand_final_react(messageId, user, guild, emojiHash, channel, remove =
             await channel.send("The vote is already closed…")
             return
         else:
-            if userId not in FLAG_ATTENTE:
-                FLAG_ATTENTE[userId] = set()
+            infoVote[userId] = []
 
-            while len(FLAG_ATTENTE[userId]) > 0:
-                await asyncio.sleep(0.5)
-
-            FLAG_ATTENTE[userId].add(election)
-
-            votant = election.getVotant(userId, reset = True)
             for nomPhoto, photo in election.nom2candidat.items():
                 e = discord.Embed(description = nomPhoto)
                 e.set_image(url = photo.url)
                 await channel.send(embed = e)
 
-            await channel.send("I'm asking you your preferred photo in 2 or 3 duels to determine your ranking of the photos, please react with ⬅️ and ➡️ accordingly")
-
-            opt1, opt2 = votant.optionAFaire()
-            await ajoutDuel(votant, opt1, opt2, channel, election)
-
-            FLAG_ATTENTE[userId].remove(election)
-
-    elif messageId in GRAND_FINALS: #c'est un message de duel
-        votant, (opt1, opt2) = GRAND_FINALS[messageId]
-
-        if emojiHash in ("⬅️", "➡️"):
-            prefere = opt1 if emojiHash == "⬅️" else opt2
-        votant.ajoutPreference(opt1, opt2, prefere)
-
-        nouvDuel = votant.optionAFaire()
-        if nouvDuel: #on doit faire un nouveau duel pour avoir le classement complet
-            opt1, opt2 = nouvDuel
-            await majDuel(await channel.fetch_message(messageId), votant, opt1, opt2, votant.election)
-        else:
-            classement = votant.calculClassement()
-            affi = "Your ranking is:\n"
-            affi += "\n".join(f"**{index+1}** {votant.election.candidat2nom[opt]}" for index, opt in classement)
-
-            await channel.send(affi)
-            await channel.send("**Your vote has been saved.**\nYou can change your vote by reacting again in <#889539190449131551>")
-            save()
+            songsLoc = [(r, x) for r, (i, x) in zip(reactionsVote, enumerate(election.nom2candidat.keys()))]
+            await channel.send("Select your preferred photo", view=ViewSelect(songsLoc, 5, userId))
 
 prefix = ","
 def main() -> None:
@@ -300,11 +338,10 @@ def main() -> None:
     intentsBot.members = True
     intentsBot.messages = True
     intentsBot.message_content = True
-    bot = commands.Bot(command_prefix=prefix, help_command=None, intents = intentsBot)
+    bot = commands.Bot(command_prefix="T.", help_command=None, intents = intentsBot)
 
     @tasks.loop(minutes = 1.0)
     async def autoplanner():
-        from arrow import utcnow
         now = utcnow().to("Europe/Brussels")
         if CONTEST_STATE[2] != 0:
             day = (now.date() - CONTEST_STATE[2]).days #number of days since the beginning of the contest
@@ -341,7 +378,7 @@ def main() -> None:
         elif day == 4:
             if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "pets")
-            elif (now.hour, now.minute) == (20, 0):
+            elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "pets")
         elif day == 5:
             if (now.hour, now.minute) == (6, 0):
@@ -404,7 +441,7 @@ def main() -> None:
             channel = traitement["channel"]
 
             await vote_react_del(messageId, user, guild, emojiHash, channel)
-            await grand_final_react(messageId, user, guild, emojiHash, channel, remove=True)
+            #await grand_final_react(messageId, user, guild, emojiHash, channel, remove=True)
 
     @bot.command(name = "save")
     async def sauvegarde(ctx):
@@ -476,8 +513,6 @@ def main() -> None:
 
     @bot.command(name = "start_contest")
     async def startcontest(ctx):
-        from arrow import utcnow, get
-
         if ctx is None or ctx.author.id == ADMIN_ID:
             now = utcnow().to("Europe/Brussels")
 
@@ -511,7 +546,7 @@ def main() -> None:
     @bot.command(name = "end_semis")
     async def endsemis(ctx = None):
         if ctx is None or ctx.author.id == ADMIN_ID:
-            for key, channel in LANGUAGE_CHANNELS.items():
+            for channel in LANGUAGE_CHANNELS.value():
                 channelObj = await bot.fetch_channel(channel.channelId)
 
                 for categname, proposals in channel.top3PerCategory().items():
@@ -519,9 +554,13 @@ def main() -> None:
                         CATEGORIES[categname].addProposal(proposal)
 
                         nbVotes = len(channel.votes[proposal])
-                        e = discord.Embed(description = f"Congrats <@{proposal.author.userId}>, your photo has been selected for the semi-finals!\nIt got {nbVotes} upvote{'' if nbVotes == 1 else 's'}")
+                        author = await channelObj.guild.fetch_member(proposal.author.userId)
+                        dmChannel = await dmChannelUser(author)
+
+                        e = discord.Embed(description = f"Congrats, this photo has been selected for the semi-finals!\nIt got {nbVotes} upvote{'' if nbVotes == 1 else 's'}")
                         e.set_image(url = proposal.url)
                         await channelObj.send(embed = e)
+                        await dmChannel.send(embed = e)
 
             CONTEST_STATE[0] = False
             save()
@@ -534,7 +573,7 @@ def main() -> None:
                 categ = CATEGORIES[categname]
                 channel = await bot.fetch_channel(categ.channelId)
 
-                await channel.send("**You can upvote as many photos as you want**\n||Upvotes will be converted into points (number of upvotes + number of country roles of the voters)||\n\n**The top 3 photos will reach the <#889539190449131551>**")
+                await channel.send("**You can upvote as many photos as you want**\n||Upvotes will be converted into points (number of upvotes + number of country roles of the voters)||\n\n**The top 5 photos will reach the <#889539190449131551>**")
 
                 idFstMsg = None
                 for proposal in categ.proposals:
