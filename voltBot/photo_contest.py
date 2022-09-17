@@ -257,7 +257,7 @@ class ButtonConfirm(nextcord.ui.View):
         self.selectPrec = selectPrec
         self.listSongs = listSongs
 
-    @nextcord.ui.button(label = "Confirmer", style = nextcord.ButtonStyle.blurple)
+    @nextcord.ui.button(label = "Confirm", style = nextcord.ButtonStyle.blurple)
     async def test(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
         top = infoVote[interaction.user.id]
         top[-1] = self.song
@@ -268,7 +268,7 @@ class ButtonConfirm(nextcord.ui.View):
         button.disabled=True
         await interaction.response.edit_message(view=self)
 
-        if self.remaining > 0:
+        if min(self.remaining, len(self.listSongs)-len(top)) > 0:
             await interaction.channel.send(f"Select your #{len(top)+1} preferred photo", view=ViewSelect([(r, e) for r, e in self.listSongs if f"{r} {e}" not in top], self.remaining, self.selectPrec.userId))
             save()
         else:
@@ -338,7 +338,7 @@ def main() -> None:
     intentsBot.members = True
     intentsBot.messages = True
     intentsBot.message_content = True
-    bot = commands.Bot(command_prefix="T.", help_command=None, intents = intentsBot)
+    bot = commands.Bot(command_prefix=prefix, help_command=None, intents = intentsBot)
 
     @tasks.loop(minutes = 1.0)
     async def autoplanner():
@@ -450,7 +450,6 @@ def main() -> None:
 
     @bot.command(name = "eyes")
     async def eyes(ctx):
-        print([len(categ.proposals) for categ in LANGUAGE_CHANNELS.values()])
         categ = CATEGORIES["food"]
         for proposal in categ.proposals:
             await ctx.send(f"<@{proposal.author.userId}> {len(categ.votes[proposal])} {categ.nbPoints(proposal)[0]}")
