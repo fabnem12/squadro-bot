@@ -235,17 +235,6 @@ async def vote_react_del(messageId, user, guild, emojiHash, channel):
 
         save()
 
-async def ajoutDuel(votant, opt1, opt2, channel, election): #crée un message permettant de se positionner sur un duel
-    msg = await channel.send(f":arrow_left: {election.candidat2nom[opt1]} or {election.candidat2nom[opt2]} :arrow_right:")
-    await msg.add_reaction("⬅️")
-    await msg.add_reaction("➡️")
-
-    GRAND_FINALS[msg.id] = (votant, (opt1, opt2))
-
-async def majDuel(msg, votant, opt1, opt2, election):
-    await msg.edit(content = f":arrow_left: {election.candidat2nom[opt1]} or {election.candidat2nom[opt2]} :arrow_right:")
-    GRAND_FINALS[msg.id] = (votant, (opt1, opt2))
-
 infoVote = dict()
 votes = []
 class ButtonConfirm(nextcord.ui.View):
