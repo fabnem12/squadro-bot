@@ -238,13 +238,14 @@ async def vote_react_del(messageId, user, guild, emojiHash, channel):
 infoVote = dict()
 votes = []
 class ButtonConfirm(nextcord.ui.View):
-    def __init__(self, song, remaining, selectPrec, listSongs):
+    def __init__(self, song, remaining, selectPrec, listSongs, election: Election):
         super().__init__(timeout = 3600)
         self.value = None
         self.song = song
         self.remaining = remaining
         self.selectPrec = selectPrec
         self.listSongs = listSongs
+        self.election = election
 
     @nextcord.ui.button(label = "Confirm", style = nextcord.ButtonStyle.blurple)
     async def test(self, button: nextcord.ui.Button, interaction: nextcord.Interaction):
@@ -257,33 +258,35 @@ class ButtonConfirm(nextcord.ui.View):
         button.disabled=True
         await interaction.response.edit_message(view=self)
 
-        if min(self.remaining, len(self.listSongs)-len(top)) > 0:
+        if self.remaining > 0 and len(self.listSongs)-len(top) > 0:
             await interaction.channel.send(f"Select your #{len(top)+1} preferred photo", view=ViewSelect([(r, e) for r, e in self.listSongs if f"{r} {e}" not in top], self.remaining, self.selectPrec.userId))
             save()
         else:
             await interaction.channel.send(f"**Thanks!**\n\n**Recap of your vote:**\n" + "\n".join(f"**#{i+1}** {e}" for i, e in enumerate(top)))
             votes.append((interaction.user.name, tuple(top)))
+            votant = self.election.getVotant(interaction.user.id, reset = True)
 
             infoVote[interaction.user.id] = []
             save()
 
 class ViewSelect(nextcord.ui.View):
-    def __init__(self, listSongs, remaining, userId):
+    def __init__(self, listSongs, remaining, userId, election):
         super().__init__(timeout = 3600)
         self.value = None
-        self.select = Select(listSongs, remaining, self)
+        self.select = Select(listSongs, remaining, self, election)
         self.remaining = remaining
         self.userId = userId
 
         self.add_item(self.select)
 
 class Select(nextcord.ui.Select):
-    def __init__(self, listSongs, remaining, view):
+    def __init__(self, listSongs, remaining, view, election):
         options = [discord.SelectOption(label=f"{r} {e}") for r, e in listSongs]
         super().__init__(placeholder="Pick a photo", max_values=1, min_values=1, options=options)
         self.remaining = remaining
         self.parentView = view
         self.listSongs = listSongs
+        self.election = election
 
     async def callback(self, interaction: nextcord.Interaction):
         infoUser = infoVote[self.parentView.userId]
@@ -299,7 +302,7 @@ class Select(nextcord.ui.Select):
 
         if infoUser == [] or infoUser[-1] is not None:
             infoUser.append(None)
-            await interaction.response.send_message(content=f"Confirm {self.values[0]} as #{num}" + (" (you can still change, using the select field of the previous message)" if num == 1 else ""), view=ButtonConfirm(self.values[0], self.remaining-1, self.parentView, self.listSongs))
+            await interaction.response.send_message(content=f"Confirm {self.values[0]} as #{num}" + (" (you can still change, using the select field of the previous message)" if num == 1 else ""), view=ButtonConfirm(self.values[0], self.remaining-1, self.parentView, self.listSongs, self.election))
 
 async def grand_final_react(messageId, user, guild, emojiHash, channel, remove = False):
     if not remove and (messageId, emojiHash) in GRAND_FINALS:
@@ -319,7 +322,7 @@ async def grand_final_react(messageId, user, guild, emojiHash, channel, remove =
                 await channel.send(embed = e)
 
             songsLoc = [(r, x) for r, (i, x) in zip(reactionsVote, enumerate(election.nom2candidat.keys()))]
-            await channel.send("Select your preferred photo", view=ViewSelect(songsLoc, 5, userId))
+            await channel.send("Select your preferred photo", view=ViewSelect(songsLoc, 5, userId, election))
 
 prefix = ","
 def main() -> None:
@@ -337,44 +340,44 @@ def main() -> None:
         else:
             day = 0
 
-        """if day == 1: #démarrage des demi-finales
+        if day == 1: #démarrage des candidatures
             if CONTEST_STATE[1] and (now.hour, now.minute) == (8, 0):
                 await startsemis(None)
         elif day == 2: #rappel des demi-finales
             if CONTEST_STATE[1] and (now.hour, now.minute) == (8, 0):
-                await recap_semis(None)"""
-        if day == 0:
-            if CONTEST_STATE[1] and (now.hour, now.minute) == (0, 0): #fin des candidatures
+                await recap_semis(None)
+        elif day == 3:
+            if CONTEST_STATE[1] and (now.hour, now.minute) == (0, 0): #fin des candidatures, on peut toujours voter
                 CONTEST_STATE[0] = False
                 save()
             elif (now.hour, now.minute) == (22, 0): #fin des demi-finales
                 await endsemis(None)
-        elif day == 1:
+        elif day == 4:
             if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "food")
             elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "food")
-        elif day == 2:
+        elif day == 5:
             if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "art")
             elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "art")
-        elif day == 3:
+        elif day == 6:
             if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "nature")
             elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "nature")
-        elif day == 4:
+        elif day == 7:
             if (now.hour, now.minute) == (6, 0):
                 await startcateg(None, "pets")
             elif (now.hour, now.minute) == (22, 0):
                 await stopcateg(None, "pets")
-        elif day == 5:
+        elif day == 8:
             if (now.hour, now.minute) == (6, 0):
                 await startgf1(None)
             elif (now.hour, now.minute) == (22, 0):
                 await stopgf1(None)
-        elif day == 6:
+        elif day == 9:
             if (now.hour, now.minute) == (6, 0):
                 await startgf2(None)
             elif (now.hour, now.minute) == (22, 0):
