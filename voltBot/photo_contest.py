@@ -63,7 +63,7 @@ class Category:
             self.votes[proposal].remove(human)
 
     def nbPoints(self, proposal):
-        return (2 * len(set(country for human in self.votes[proposal] for country in human.countryRoles)) + len(self.votes[proposal]), (len(self.votes[proposal]), -proposal.submissionTime))
+        return (2 * len(set(country for human in self.votes[proposal] for country in human.countryRoles)) + len(self.votes[proposal]), (len(self.votes[proposal]), proposal.author not in self.votes[proposal], -proposal.submissionTime))
     def top3ofCategory(self):
         sortedProposals = sorted(self.votes.keys(), key=self.nbPoints, reverse = True)
         return sortedProposals[:5]
@@ -77,7 +77,9 @@ class LanguageChannel(Category):
         return sum(x.author is author for x in self.proposals)
 
     def top3PerCategory(self):
-        return {name: sorted(filter(lambda x: x.category is categ, self.votes.keys()), key=lambda x: (len(self.votes[x]), -x.submissionTime), reverse = True)[:5] for name, categ in CATEGORIES.items() if isinstance(name, int)}
+        return {name: sorted(filter(lambda x: x.category is categ, self.votes.keys()), key=lambda x: (len(self.votes[x]), x.author not in self.votes[x], -x.submissionTime), reverse = True)[:5] for name, categ in CATEGORIES.items() if isinstance(name, int)}
+        #tie breaker 1: photos that were not upvoted by their author get the priority
+        #tie breaker 2: photos submitted earlier get the priority
 
 class Proposal:
     def __init__(self, url, submissionTime, submissionChannel, category):
