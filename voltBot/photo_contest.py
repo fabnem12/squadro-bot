@@ -539,7 +539,7 @@ def main() -> None:
     @bot.command(name = "end_semis")
     async def endsemis(ctx = None):
         if ctx is None or ctx.author.id == ADMIN_ID:
-            for channel in LANGUAGE_CHANNELS.value():
+            for channel in LANGUAGE_CHANNELS.values():
                 channelObj = await bot.fetch_channel(channel.channelId)
 
                 for categname, proposals in channel.top3PerCategory().items():
