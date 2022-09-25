@@ -36,6 +36,7 @@ class Category:
         self.votes = dict() #binds a proposal with the set of the voters for it
         self.msg2vote = dict() #binds a discord message id with a proposal
         self.winner = None
+        self.election = None
 
     def addProposal(self, proposal):
         self.proposals.add(proposal)
@@ -91,6 +92,8 @@ class Proposal:
 
     def setAuthor(self, author):
         self.author = author
+    
+    __repr__ = lambda self: self.url
 
     def remove(self):
         self.submissionChannel.removeProposal(self)
@@ -238,15 +241,15 @@ async def vote_react_del(messageId, user, guild, emojiHash, channel):
         save()
 
 infoVote = dict()
-votes = []
 class ButtonConfirm(nextcord.ui.View):
-    def __init__(self, song, remaining, selectPrec, listSongs, election: Election):
+    def __init__(self, song, remaining, selectPrec, listSongs, election: Election, dicoSongs):
         super().__init__(timeout = 3600)
         self.value = None
         self.song = song
         self.remaining = remaining
         self.selectPrec = selectPrec
         self.listSongs = listSongs
+        self.dicoSongs = dicoSongs
         self.election = election
 
     @nextcord.ui.button(label = "Confirm", style = nextcord.ButtonStyle.blurple)
@@ -260,35 +263,45 @@ class ButtonConfirm(nextcord.ui.View):
         button.disabled=True
         await interaction.response.edit_message(view=self)
 
-        if self.remaining > 0 and len(self.listSongs)-len(top) > 0:
-            await interaction.channel.send(f"Select your #{len(top)+1} preferred photo", view=ViewSelect([(r, e) for r, e in self.listSongs if f"{r} {e}" not in top], self.remaining, self.selectPrec.userId))
+        restants = [(r, e, x) for r, e, x in self.listSongs if f"{e}" not in top]
+        if self.remaining > 0 and len(restants) > 0:
+            await interaction.channel.send(f"Select your #{len(top)+1} preferred photo", view=ViewSelect(restants, self.remaining, self.selectPrec.userId, self.election, self.dicoSongs))
             save()
         else:
             await interaction.channel.send(f"**Thanks!**\n\n**Recap of your vote:**\n" + "\n".join(f"**#{i+1}** {e}" for i, e in enumerate(top)))
-            votes.append((interaction.user.name, tuple(top)))
             votant = self.election.getVotant(interaction.user.id, reset = True)
+
+            votant.classements = {self.dicoSongs[e]: i for i, e in enumerate(top)}
+            for i, e in enumerate(top):
+                e = self.dicoSongs[e]
+                for f in top[i+1:]:
+                    f = self.dicoSongs[f]
+
+                    votant.duels[e, f] = e
+                    votant.duels[f, e] = e
 
             infoVote[interaction.user.id] = []
             save()
 
 class ViewSelect(nextcord.ui.View):
-    def __init__(self, listSongs, remaining, userId, election):
+    def __init__(self, listSongs, remaining, userId, election, dicoSongs):
         super().__init__(timeout = 3600)
         self.value = None
-        self.select = Select(listSongs, remaining, self, election)
+        self.select = Select(listSongs, remaining, self, election, dicoSongs)
         self.remaining = remaining
         self.userId = userId
 
         self.add_item(self.select)
 
 class Select(nextcord.ui.Select):
-    def __init__(self, listSongs, remaining, view, election):
-        options = [discord.SelectOption(label=f"{r} {e}") for r, e in listSongs]
+    def __init__(self, listSongs, remaining, view, election, dicoSongs):
+        options = [discord.SelectOption(label=f"{r} {e}") for r, e, _ in listSongs]
         super().__init__(placeholder="Pick a photo", max_values=1, min_values=1, options=options)
         self.remaining = remaining
         self.parentView = view
         self.listSongs = listSongs
         self.election = election
+        self.dicoSongs = dicoSongs
 
     async def callback(self, interaction: nextcord.Interaction):
         infoUser = infoVote[self.parentView.userId]
@@ -304,11 +317,11 @@ class Select(nextcord.ui.Select):
 
         if infoUser == [] or infoUser[-1] is not None:
             infoUser.append(None)
-            await interaction.response.send_message(content=f"Confirm {self.values[0]} as #{num}" + (" (you can still change, using the select field of the previous message)" if num == 1 else ""), view=ButtonConfirm(self.values[0], self.remaining-1, self.parentView, self.listSongs, self.election))
+            await interaction.response.send_message(content=f"Confirm {self.values[0]} as #{num}" + (" (you can still change, using the select field of the previous message)" if num == 1 else ""), view=ButtonConfirm(self.values[0][4:], self.remaining-1, self.parentView, self.listSongs, self.election, self.dicoSongs))
 
 async def grand_final_react(messageId, user, guild, emojiHash, channel, remove = False):
     if not remove and (messageId, emojiHash) in GRAND_FINALS:
-        election, _ = GRAND_FINALS[messageId, emojiHash]
+        election, photos = GRAND_FINALS[messageId, emojiHash]
         channel = await dmChannelUser(user)
         userId = user.id
 
@@ -318,15 +331,15 @@ async def grand_final_react(messageId, user, guild, emojiHash, channel, remove =
         else:
             infoVote[userId] = []
 
-            for nomPhoto, photo in election.nom2candidat.items():
+            for nomPhoto, photo in photos:
                 e = discord.Embed(description = nomPhoto)
                 e.set_image(url = photo.url)
                 await channel.send(embed = e)
 
-            songsLoc = [(r, x) for r, (i, x) in zip(reactionsVote, enumerate(election.nom2candidat.keys()))]
-            await channel.send("Select your preferred photo", view=ViewSelect(songsLoc, 5, userId, election))
+            songsLoc = [(r, nomPhoto, photo) for r, (nomPhoto, photo) in zip(reactionsVote, photos)]
+            await channel.send("Select your preferred photo", view=ViewSelect(songsLoc, 5, userId, election, {e: p for _, e, p in songsLoc}))
 
-prefix = ","
+prefix = "T."
 def main() -> None:
     intentsBot = discord.Intents.default()
     intentsBot.members = True
@@ -617,24 +630,6 @@ def main() -> None:
 
                 await (ctx.channel if ctx else await bot.fetch_channel(channelObj.channelId)).send(affi)
 
-    @bot.command(name = "fix_gf1")
-    async def fix_gf1(ctx, messageId: int):
-        if ctx.author.id == ADMIN_ID:
-            election = Election("RankedPairs")
-            election.commence = True
-            categ = CATEGORIES["food"]
-
-            for i, url in enumerate(["https://cdn.discordapp.com/attachments/847488864713048144/892770346997010463/https--cdn.discordapp.com-attachments-890977089631698964-892770336754499584-image0.jpg", "https://cdn.discordapp.com/attachments/847488864713048144/892690051375464458/https--cdn.discordapp.com-attachments-746041800804007988-892690035818774528-20210714_151509-min.jpg", "https://cdn.discordapp.com/attachments/847488864713048144/892844750087024670/https--cdn.discordapp.com-attachments-890977089631698964-892844732533833798-9YpOgP7RsN2ofOpY2epf_hLq.png"]):
-                photo = [x for x in categ.proposals if x.url == url][0]
-                election.candidats.add(photo)
-                election.nom2candidat[f"Photo {i+1} ({categ.name})"] = photo
-                election.candidat2nom[photo] = f"Photo {i+1} ({categ.name})"
-
-            GRAND_FINALS[messageId, "🧀"] = (election, categ)
-            save()
-
-            await ctx.message.add_reaction("🧀")
-
     @bot.command(name = "start_gf1")
     async def startgf1(ctx):
         if ctx is None or ctx.author.id == ADMIN_ID:
@@ -645,13 +640,23 @@ def main() -> None:
                 election = Election("RankedPairs")
                 election.commence = True
                 categ = CATEGORIES[nomCateg]
+                categ.election = election
 
-                for i, photo in enumerate(categ.top3ofCategory()):
-                    election.candidats.add(photo)
-                    election.nom2candidat[f"Photo {i+1} ({categ.name})"] = photo
-                    election.candidat2nom[photo] = f"Photo {i+1} ({categ.name})"
+                async for msg in channel.history(limit = None, oldest_first = True):
+                    if msg.embeds == []:
+                        continue
 
-                GRAND_FINALS[msgVote.id, emoji] = (election, CATEGORIES[nomCateg])
+                    e = msg.embeds[0]
+                    if nomCateg in e.description.lower():
+                        nomPhoto = e.description.split("\n")[0].replace("*", "")
+                        url = e.image.url
+                        photo = [x for x in categ.proposals if x.url == url][0]
+
+                        election.candidats.add(photo)
+                        election.nom2candidat[nomPhoto] = photo
+                        election.candidat2nom[photo] = nomPhoto
+
+                GRAND_FINALS[msgVote.id, emoji] = (election, list(election.nom2candidat.items()))
                 await msgVote.add_reaction(emoji)
                 save()
 
@@ -660,22 +665,27 @@ def main() -> None:
         if ctx is None or ctx.author.id == ADMIN_ID:
             channel = await bot.fetch_channel(SUPERFINAL)
 
-            for electionCateg, categ in (x for index, x in GRAND_FINALS.items() if isinstance(index, tuple)):
+            for nomCateg in ("food", "art", "nature", "pets"):
+                categ = CATEGORIES[nomCateg]
+                electionCateg = categ.election 
+
                 electionCateg.calculVote()
                 classement = electionCateg.getResultats()
+                
+                if classement == []: continue #pas de résultats pour la catégorie. ne devrait pas arriver…
                 winner = classement[0][0]
                 categ.setWinner(winner)
 
                 await channel.send(f"**Results of the vote for {categ.name}:**")
                 msgs, details, fichiers = electionCateg.affi()
 
-                trophies = ["🥇", "🥈", "🥉"] + [""] * (3-len(classement))
+                trophies = ["🥇", "🥈", "🥉", "", ""]
                 for i, msg in reversed(list(enumerate(msgs))):
                     e = discord.Embed(description = f"{trophies[i]} of the category **{categ.name}**" if i != 0 else f"Winner of the category **{categ.name}** {trophies[i]}")
                     e.set_image(url = classement[i][0].url)
                     await channel.send(msg, embed = e)
 
-                affiDetails = ["Detailed results of the vote:\n"]
+                affiDetails = [""]
                 for classement, votants in details.items():
                     affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants) + "\n"
                     if len(affiCls) + len(affiDetails[-1]) < 2000:
@@ -683,14 +693,8 @@ def main() -> None:
                     else:
                         affiDetails.append(affiCls)
                 for msg in affiDetails:
-                    e = discord.Embed(description = msg)
+                    e = discord.Embed(title = "Detailed results of the vote", description = msg)
                     await channel.send(embed = e)
-                with open("resumeVote1.txt", "w") as f:
-                    f.write("\n".join(affiDetails))
-
-                if fichiers:
-                    for fichier in fichiers:
-                        await channel.send(file = discord.File(fichier))
 
             GRAND_FINALS.clear()
             save()
@@ -724,18 +728,21 @@ def main() -> None:
     async def startgf2(ctx):
         if ctx is None or ctx.author.id == ADMIN_ID:
             channel = await bot.fetch_channel(SUPERFINAL)
-            msgVote = await channel.send("React with 🗳️ to vote for your preferred photo among the winners of the 3 categories")
+            msgVote = await channel.send("React with 🗳️ to vote for your preferred photo among the winners of the 4 categories")
             await msgVote.add_reaction("🗳️")
 
             election = Election("RankedPairs")
             election.commence = True
             for i, nomCateg in enumerate({"food", "art", "nature", "pets"}):
                 categ = CATEGORIES[nomCateg]
-                election.candidats.add(categ.winner)
-                election.nom2candidat[f"Photo {i+1} {categ.name}"] = categ.winner
-                election.candidat2nom[categ.winner] = f"Photo {i+1} {categ.name}"
+                if categ.winner is None: continue
 
-            GRAND_FINALS[msgVote.id, "🗳️"] = (election, categ)
+                election.candidats.add(categ.winner)
+                election.nom2candidat[categ.name] = categ.winner
+                election.candidat2nom[categ.winner] = categ.name
+                categ.election = election
+
+            GRAND_FINALS[msgVote.id, "🗳️"] = (election, list(election.nom2candidat.items()))
             save()
 
     @bot.command(name = "stop_gf2")
@@ -743,36 +750,30 @@ def main() -> None:
         if ctx is None or ctx.author.id == ADMIN_ID:
             channel = await bot.fetch_channel(SUPERFINAL)
 
-            for election, _ in (x for index, x in GRAND_FINALS.items() if isinstance(index, tuple)): #seulement un tour de boucle…
-                election.calculVote()
-                classement = election.getResultats()
-                winner = classement[0][0]
+            election = CATEGORIES["food"].election
+            election.calculVote()
+            classement = election.getResultats()
+            winner = classement[0][0]
 
-                await channel.send(f"**Results of the Grand Final - Part 2:**")
-                msgs, details, fichiers = election.affi()
+            await channel.send(f"**Results of the Grand Final - Part 2:**")
+            msgs, details, fichiers = election.affi()
 
-                trophies = ["🥇", "🥈", "🥉"] + [""] * (3-len(classement))
-                for i, msg in reversed(list(enumerate(msgs))):
-                    e = discord.Embed(description = trophies[i] if i != 0 else f"The winner of the Photo Contest is <@{classement[i][0].author.userId}> {trophies[i]}!\nCongrats :partying_face: :tada:")
-                    e.set_image(url = classement[i][0].url)
-                    await channel.send(msg, embed = e)
+            trophies = ["🥇", "🥈", "🥉"] + [""] * (3-len(classement))
+            for i, msg in reversed(list(enumerate(msgs))):
+                e = discord.Embed(description = f"{trophies[i]} for <@{classement[i][0].author.userId}>" if i != 0 else f"The winner of the Photo Contest is <@{classement[i][0].author.userId}> {trophies[i]}!\nCongrats :partying_face: :tada:")
+                e.set_image(url = classement[i][0].url)
+                await channel.send(msg, embed = e)
 
-                affiDetails = ["Detailed results of the vote:\n"]
-                for classement, votants in details.items():
-                    affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants) + "\n"
-                    if len(affiCls) + len(affiDetails[-1]) < 2000:
-                        affiDetails[-1] += affiCls
-                    else:
-                        affiDetails.append(affiCls)
-                for msg in affiDetails:
-                    e = discord.Embed(description = msg)
-                    await channel.send(embed = e)
-                with open("resumeVote2.txt", "w") as f:
-                    f.write("\n".join(affiDetails))
-
-                if fichiers:
-                    for fichier in fichiers:
-                        await channel.send(file = discord.File(fichier))
+            affiDetails = [""]
+            for classement, votants in details.items():
+                affiCls = " > ".join(classement) + "\n" + " ".join(f'<@{ident}>' for ident in votants) + "\n"
+                if len(affiCls) + len(affiDetails[-1]) < 2000:
+                    affiDetails[-1] += affiCls
+                else:
+                    affiDetails.append(affiCls)
+            for msg in affiDetails:
+                e = discord.Embed(title = "Detailed results of the vote", description = msg)
+                await channel.send(embed = e)
 
             save()
 
