@@ -339,7 +339,7 @@ async def grand_final_react(messageId, user, guild, emojiHash, channel, remove =
             songsLoc = [(r, nomPhoto, photo) for r, (nomPhoto, photo) in zip(reactionsVote, photos)]
             await channel.send("Select your preferred photo", view=ViewSelect(songsLoc, 5, userId, election, {e: p for _, e, p in songsLoc}))
 
-prefix = "T."
+prefix = ","
 def main() -> None:
     intentsBot = discord.Intents.default()
     intentsBot.members = True

@@ -153,6 +153,10 @@ class Election:
 
             for (a, b, ptsA, ptsB, ptsNone) in duels: #on tente d'ajouter les duels dans le graphe des duels, en retirant ceux qui créent un cycle
                 neA, neB = noeuds[a], noeuds[b]
+                if a.submissionTime < b.submissionTime:
+                    ptsA += .1
+                else:
+                    ptsB += .1
 
                 #on tente de mettre une arête du perdant vers le gagnant. à la fin le gagnant de condorcet a alors un degré sortant nul
                 if ptsA > ptsB:
@@ -161,10 +165,12 @@ class Election:
                 elif ptsA < ptsB:
                     gagnant, perdant, ptsWin, ptsLose = b, a, ptsB, ptsA
                     neWin, neLose = neB, neA
-                else: #en cas d'égalité on considère que le duel a été gagné par a et par b (parce qu'un duel n'est affiché que s'il est gagné...)
-                    victoires[a].append((b, ptsA, ptsB, ptsNone))
-                    victoires[b].append((a, ptsB, ptsA, ptsNone))
-                    continue
+                #else: #en cas d'égalité on considère que le duel a été gagné par a et par b (parce qu'un duel n'est affiché que s'il est gagné...)
+                #    victoires[a].append((b, ptsA, ptsB, ptsNone))
+                #    victoires[b].append((a, ptsB, ptsA, ptsNone))
+                #    continue
+                else:
+                    continue #ne peut pas arriver, le tie-breaker est défini ligne 156
 
                 g.ajoutArete(neLose, neWin)
 
@@ -280,9 +286,7 @@ def affiCondorcet(election):
     nbExaequo = 0
     duelsPrec = -1000
     for index, (candidat, duels) in enumerate(election.resultats):
-        if len(duels) == duelsPrec: nbExaequo += 1
-        else: nbExaequo = 0
-        numero = index+1-nbExaequo
+        numero = index+1
 
         msgs.append(f"#**{numero}** {election.candidat2nom[candidat]} won {len(duels)} duels:\n")
         for (perdant, ptsA, ptsB, ptsNone) in duels:
