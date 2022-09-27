@@ -758,7 +758,7 @@ def main() -> None:
             await channel.send(f"**Results of the Grand Final - Part 2:**")
             msgs, details, fichiers = election.affi()
 
-            trophies = ["🥇", "🥈", "🥉"] + [""] * (3-len(classement))
+            trophies = ["🥇", "🥈", "🥉"] + [""]
             for i, msg in reversed(list(enumerate(msgs))):
                 e = discord.Embed(description = f"{trophies[i]} for <@{classement[i][0].author.userId}>" if i != 0 else f"The winner of the Photo Contest is <@{classement[i][0].author.userId}> {trophies[i]}!\nCongrats :partying_face: :tada:")
                 e.set_image(url = classement[i][0].url)
