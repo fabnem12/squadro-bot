@@ -5,10 +5,8 @@ import numpy as np
 import os
 import pickle
 import youtube_dl
-from arrow import get as arrowGet, utcnow
+from arrow import utcnow
 
-import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constantes import TOKEN as token
 from utils import stockePID, cheminOutputs as outputsPath
 
