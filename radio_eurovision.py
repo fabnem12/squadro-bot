@@ -48,7 +48,7 @@ def planning():
 
 
 youtube_dl.utils.bug_reports_message = lambda: ''
-ytdl_format_options = {'format': 'bestaudio/best', 'restrictfilenames': True, 'noplaylist': True, 'nocheckcertificate': True,
+ytdl_format_options = {'format': 'm4a', 'restrictfilenames': True, 'noplaylist': True, 'nocheckcertificate': True,
     'ignoreerrors': True, 'logtostderr': False, 'quiet': True, 'no_warnings': True, 'default_search': 'auto',
     'source_address': '0.0.0.0', 'outtmpl': "outputs" + '/%(title)s.%(ext)s' # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
@@ -81,14 +81,15 @@ def main() -> None:
     intentsBot.members = True
     intentsBot.messages = True
     intentsBot.message_content = True
-    bot = commands.Bot(command_prefix="S.", help_command=None, intents = intentsBot)
+    bot = commands.Bot(command_prefix="T.", help_command=None, intents = intentsBot)
 
     @bot.command(name = "add_track")
     async def addTrack(ctx, url):
         if ctx.author.id != 619574125622722560: return
 
         try:
-            filename, duration = await YTDLSource.from_url(url, loop=bot.loop)
+            async with ctx.channel.typing():
+                filename, duration = await YTDLSource.from_url(url, loop=bot.loop)
         except Exception as e:
             await ctx.send(f"Erreur: {e}")
         else:
