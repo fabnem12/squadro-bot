@@ -318,6 +318,18 @@ def main() -> None:
     @bot.command(name = "u_ok?")
     async def uok(ctx):
         await ctx.send("yeah <:volt_cool_glasses:819137584722345984>")
+    
+    @bot.command(name = "ban_list")
+    async def banlist(ctx):
+        voltServer = bot.get_guild(567021913210355745)
+
+        channel = await voltServer.fetch_channel(567482036919730196)
+        for msgId in (1003715161871372359, 1003715269375570020, 1003715274320662560, 1003715366796664942, 1003715434668904549, 1003715440733855815):
+            msg = await channel.fetch_message(msgId)
+
+            for userId in map(int, msg.content.split("\n")):
+                user = await bot.fetch_user(userId)
+                await voltServer.ban(user, reason = "sus")
 
     @bot.event
     async def on_member_update(before, after):
@@ -341,11 +353,11 @@ def main() -> None:
     async def on_message(msg) -> None:
         await suggestion(msg)
         await processBumps(msg)
+        await autobahn(msg)
         await bot.process_commands(msg)
 
         await translateChapter(msg)
 
-    warnings5 = set()
     @bot.event
     async def on_member_join(member: discord.Member):
         if member.guild.id == 567021913210355745: #volt server
@@ -354,9 +366,6 @@ def main() -> None:
 
             if any(x in member.name.lower() or x in member.name or (member.nick and (x in member.nick.lower() or x in member.nick)) for x in redFlags):
                 await member.ban(reason = "very likely marea alt")
-            elif member.id not in warnings5 and time.time() - member.created_at.timestamp() < 3600:
-                await channelIntro.send(":warning: account created less than 60 minutes ago")
-                warnings5.add(member.id)
 
     @bot.event
     async def on_user_update(before, after):
@@ -370,6 +379,10 @@ def main() -> None:
     @bot.event
     async def on_ready():
         pass
+
+    async def autobahn(msg):
+        if redFlags[0] in msg.content or "moarte jidanilor" in msg.content.lower():
+            await msg.author.ban(reason = "antisemtism / marea")
 
     @bot.command(name = "ban")
     async def bancommand(ctx):
@@ -390,20 +403,18 @@ def main() -> None:
         banReason = ' '.join(msg.content.split(' ')[2:])
 
         try:
-            await channel.send(f"Ban reason: {banReason}\nBan appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
-            await (await dmChannelUser(msg.author)).send(f"Ban appeal form successfully sent to {user.name}")
+            if "octavian" in banReason.lower() or "marea" in banReason.lower():
+                await channel.send(f"Ban reason: {banReason}\nBan appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
+            await ctx.message.add_reaction("👌")
         except:
             pass
 
         try:
             await msg.guild.ban(user, reason = f"{banReason} (ban by {msg.author.name})", delete_message_days = 0)
         except Exception as e:
-            msgMod = f"Unable to ban {user.name}\n{e}"
+            await (await dmChannelUser(msg.author)).send(f"Unable to ban {user.name}\n{e}")
         else:
-            msgMod = "Ban successfully done"
             await msg.channel.send(f"Banned **{user.name}**")
-
-        await (await dmChannelUser(msg.author)).send(msgMod)
 
     @bot.command(name = "local_volt")
     async def local_volt(ctx, countryRole: discord.Role, localVolt: discord.Role):
@@ -713,7 +724,7 @@ def main() -> None:
             await ctx.message.delete()
 
             msg = await ctx.channel.fetch_message(reference.message_id)
-            e = discord.Embed(title = f"Report from #{ctx.channel.name} by @{ctx.author.name}", description = msg.content)
+            e = discord.Embed(title = f"Message reported", description = msg.content)
             e.set_author(name = msg.author.name, icon_url = msg.author.avatar.url)
             e.add_field(name = "Author", value=msg.author.mention, inline=False)
             e.add_field(name = "Channel", value=f"<#{ctx.channel.id}>", inline=False)
@@ -730,7 +741,35 @@ def main() -> None:
 
                 await reportChannel.send(file = discord.File(att.filename), reference = ref)
                 os.remove(att.filename)
+    
+    @bot.command(name='join')
+    async def join(ctx):
+        if not ctx.message.author.voice:
+            await ctx.send("{} is not connected to a voice channel".format(ctx.message.author.name))
+            return
+        else:
+            channel = ctx.message.author.voice.channel
+        await channel.connect()
 
+    @bot.command(name='leave', help='To make the bot leave the voice channel')
+    async def leave(ctx):
+        voice_client = ctx.message.guild.voice_client
+        if voice_client.is_connected():
+            await voice_client.disconnect()
+        else:
+            await ctx.send("The bot is not connected to a voice channel.")
+
+    @bot.command(name='play_song', help='To play song')
+    async def play(ctx):
+        try :
+            server = ctx.message.guild
+            voice_channel = server.voice_client
+
+            async with ctx.typing():
+                voice_channel.play(discord.FFmpegPCMAudio(source="dolce_vita.mp3"))
+            await ctx.send('**Now playing**')
+        except:
+            await ctx.send("The bot is not connected to a voice channel.")
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
