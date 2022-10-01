@@ -2,7 +2,6 @@ import asyncio
 import nextcord as discord
 import pickle
 import os
-from arrow import get as arrowGet, utcnow
 from emoji import is_emoji
 from googletrans import Translator
 from nextcord.ext import commands
