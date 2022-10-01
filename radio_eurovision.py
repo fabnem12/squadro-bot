@@ -81,7 +81,7 @@ def main() -> None:
     intentsBot.members = True
     intentsBot.messages = True
     intentsBot.message_content = True
-    bot = commands.Bot(command_prefix="T.", help_command=None, intents = intentsBot)
+    bot = commands.Bot(command_prefix="S.", help_command=None, intents = intentsBot)
 
     @bot.command(name = "add_track")
     async def addTrack(ctx, url):
@@ -98,10 +98,21 @@ def main() -> None:
             pickle.dump(videos, open("radioEurovision.p", "wb"))
             await ctx.message.add_reaction("👌")
 
+    @bot.command(name="euro")
+    async def joinNorm(ctx):
+        if not ctx.author.voice:
+            await ctx.send("Il faut être connecté dans un salon vocal pour ça !")
+            return
+        else:
+            channel = ctx.author.voice.channel
+        
+        await channel.connect()
+        await play(ctx)
+
     @bot.slash_command(name='eurovision', description='Start the Eurovision radio')
     async def join(interaction):
         if not interaction.user.voice:
-            await interaction.send("You are not connected to a voice channel! Join one", ephemeral=True)
+            await interaction.send("Il faut être connecté dans un salon vocal pour ça !", ephemeral=True)
             return
         else:
             channel = interaction.user.voice.channel
@@ -125,14 +136,18 @@ def main() -> None:
 
         await play(interaction)
 
+    @bot.command(name="fin_euro")
+    async def leaveNorm(ctx):
+        voice_client = ctx.guild.voice_client
+        if voice_client.is_connected():
+            await voice_client.disconnect()
+
     @bot.slash_command(name='leave', description='Disconnect the Eurovision radio')
     async def leave(interaction):
         voice_client = interaction.guild.voice_client
         if voice_client.is_connected():
             await voice_client.disconnect()
-            await interaction.send("Disconnected", ephemeral=True)
-        else:
-            await interaction.message.send("The bot is not connected to a voice channel.", ephemeral=True)
+            await interaction.send("Déconnecté", ephemeral=True)
 
     bot.run(token)
 
