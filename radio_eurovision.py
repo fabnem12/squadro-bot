@@ -82,7 +82,7 @@ def main() -> None:
     intentsBot.members = True
     intentsBot.messages = True
     intentsBot.message_content = True
-    bot = commands.Bot(command_prefix="T.", help_command=None, intents = intentsBot)
+    bot = commands.Bot(command_prefix="S.", help_command=None, intents = intentsBot)
 
     @bot.command(name = "add_track")
     async def addTrack(ctx, url: str, pays: str, annee: int):
