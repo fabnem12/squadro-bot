@@ -154,6 +154,7 @@ def main() -> None:
         url, _ = planning()
 
         del videos[url]
+        os.remove(url)
         pickle.dump(videos, open("radioEurovision.p", "wb"))
         if vraieInteraction:
             await interaction.send("Signalé !", ephemeral = True)
@@ -173,6 +174,11 @@ def main() -> None:
     async def signalerComm(ctx):
         await signaler(ctx, False)
         await ctx.message.add_reaction("👌")
+    
+    @bot.command(name = "kill_bot")
+    async def killBot(ctx):
+        if ctx.author.id == 619574125622722560:
+            quit()
 
     bot.run(token)
 
