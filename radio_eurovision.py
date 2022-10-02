@@ -17,17 +17,18 @@ if os.path.exists("radioEurovision.p"):
 else:
     videos = dict()
 
-def planning():
+def planning(seconde = None):
     #aléa en fonction de la date
     moment = utcnow().to("Europe/Brussels")
-    seconde = moment.hour*3600 + moment.minute*60 + moment.second
+    if seconde is None:
+        seconde = moment.hour*3600 + moment.minute*60 + moment.second
     np.random.seed((moment.year, moment.month, moment.day))
 
     infosVideos = list(videos.items())
 
     #on génère le planning du jour, en s'arrêtant quand on arrive à l'heure actuelle
     track = [np.random.randint(len(infosVideos))]
-    dureeCumulee = infosVideos[track[-1]][1]
+    dureeCumulee = infosVideos[track[-1]][1][0]
 
     while dureeCumulee < seconde:
         numTrack = np.random.randint(len(infosVideos))
@@ -36,13 +37,13 @@ def planning():
         
         #on ajoute la nouvelle chanson à la pile
         track[-1] = numTrack
-        dureeCumulee += infosVideos[numTrack][1]
+        dureeCumulee += infosVideos[numTrack][1][0]
     
     #on a maintenant la chanson en cours
     numTrack = track[-1]
     #mais il est probable que l'on soit à un stade avancé de la vidéo : il faut voir à quel moment de la vidéo on est
     timeLeft = dureeCumulee - seconde
-    startTime = infosVideos[numTrack][1] - timeLeft
+    startTime = infosVideos[numTrack][1][0] - timeLeft
 
     return infosVideos[numTrack][0], f"{startTime//60}:{str(startTime%60).zfill(2)}"
 
@@ -81,10 +82,10 @@ def main() -> None:
     intentsBot.members = True
     intentsBot.messages = True
     intentsBot.message_content = True
-    bot = commands.Bot(command_prefix="S.", help_command=None, intents = intentsBot)
+    bot = commands.Bot(command_prefix="T.", help_command=None, intents = intentsBot)
 
     @bot.command(name = "add_track")
-    async def addTrack(ctx, url):
+    async def addTrack(ctx, url: str, pays: str, annee: int):
         if ctx.author.id != 619574125622722560: return
 
         try:
@@ -93,7 +94,7 @@ def main() -> None:
         except Exception as e:
             await ctx.send(f"Erreur: {e}")
         else:
-            videos[filename] = duration
+            videos[filename] = (duration, pays, annee, url)
 
             pickle.dump(videos, open("radioEurovision.p", "wb"))
             await ctx.message.add_reaction("👌")
@@ -126,10 +127,10 @@ def main() -> None:
         voice_channel = server.voice_client
         if voice_channel is None: return
 
-        url, time = planning()
+        fichier, time = planning()
 
         async with interaction.channel.typing():
-            voice_channel.play(nextcord.FFmpegPCMAudio(source=url, before_options = f"-ss {time}"))
+            voice_channel.play(nextcord.FFmpegPCMAudio(source=fichier, before_options = f"-ss {time}"))
         
         while voice_channel.is_playing():
             await asyncio.sleep(1)
@@ -151,10 +152,10 @@ def main() -> None:
 
     @bot.slash_command(name = "report_track", description = "Signaler qu'un fichier ne marche pas")
     async def signaler(interaction, vraieInteraction = True):
-        url, _ = planning()
+        fichier, _ = planning()
 
-        del videos[url]
-        os.remove(url)
+        del videos[fichier]
+        os.remove(fichier)
         pickle.dump(videos, open("radioEurovision.p", "wb"))
         if vraieInteraction:
             await interaction.send("Signalé !", ephemeral = True)
@@ -168,7 +169,7 @@ def main() -> None:
             return user.dm_channel
         
         moi = await bot.fetch_user(619574125622722560)
-        await dmChannelUser(moi).send("Signalement " + url)
+        await dmChannelUser(moi).send("Signalement " + fichier)
     
     @bot.command(name = "signaler")
     async def signalerComm(ctx):
@@ -179,6 +180,37 @@ def main() -> None:
     async def killBot(ctx):
         if ctx.author.id == 619574125622722560:
             quit()
+
+    @bot.command(name = "affi_planning")
+    async def affiPlanning(ctx):
+        plan = []
+
+        moment = utcnow().to("Europe/Brussels")
+        seconde = 3600*moment.hour + 60*moment.minute + moment.second
+
+        fichier, startTime = planning(seconde)
+        debutPremier = sum(x*i + 60*x*(1-i) for i, x in enumerate(map(int, startTime.split(":"))))
+        plan.append((fichier, 0))
+
+        secondeNext = seconde - debutPremier
+        for _ in range(10):
+            secondeNext += videos[fichier][0] + 1
+
+            fichier, _ = planning(secondeNext)
+            plan.append((fichier, secondeNext - seconde))
+        
+        await ctx.send("\n".join(f"__**Maintenant :** {videos[fichier][1:-1]}__" if temps == 0 else f"**Dans {temps//60}:{str(temps%60).zfill(2)} :** {videos[fichier][1:-1]}" for fichier, temps in plan))
+
+    @bot.slash_command(name = "now", description = "Chanson en cours")
+    async def now(interaction):
+        fichier, avancement = planning()
+        _, pays, annee, url = videos[fichier]
+
+        e = nextcord.Embed(title = f"En train de jouer : {pays} {annee}")
+        e.set_author(name = "Squadro.py", icon_url = bot.user.avatar.url)
+        e.add_field(name = "Lien", value=url, inline=False)
+
+        await interaction.send(embed = e)
 
     bot.run(token)
 
