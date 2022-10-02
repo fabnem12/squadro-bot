@@ -109,7 +109,7 @@ def main() -> None:
         await channel.connect()
         await play(ctx)
 
-    @bot.slash_command(name='eurovision', description='Start the Eurovision radio')
+    @bot.slash_command(name='eurovision', description='Démarrer la radio Eurovision')
     async def join(interaction):
         if not interaction.user.voice:
             await interaction.send("Il faut être connecté dans un salon vocal pour ça !", ephemeral=True)
@@ -118,7 +118,7 @@ def main() -> None:
             channel = interaction.user.voice.channel
         
         await channel.connect()
-        await interaction.send("The bot is playing!", ephemeral=True)
+        await interaction.send("C'est parti !", ephemeral=True)
         await play(interaction)
 
     async def play(interaction):
@@ -142,12 +142,37 @@ def main() -> None:
         if voice_client.is_connected():
             await voice_client.disconnect()
 
-    @bot.slash_command(name='leave', description='Disconnect the Eurovision radio')
+    @bot.slash_command(name='stop_eurovision', description='Déconnecter la radio Eurovision')
     async def leave(interaction):
         voice_client = interaction.guild.voice_client
         if voice_client.is_connected():
             await voice_client.disconnect()
             await interaction.send("Déconnecté", ephemeral=True)
+
+    @bot.slash_command(name = "report_track", description = "Signaler qu'un fichier ne marche pas")
+    async def signaler(interaction, vraieInteraction = True):
+        url, _ = planning()
+
+        del videos[url]
+        pickle.dump(videos, open("radioEurovision.p", "wb"))
+        if vraieInteraction:
+            await interaction.send("Signalé !", ephemeral = True)
+
+        await play(interaction)
+
+        #on le signale à moi
+        async def dmChannelUser(user):
+            if user.dm_channel is None:
+                await user.create_dm()
+            return user.dm_channel
+        
+        moi = await bot.fetch_user(619574125622722560)
+        await dmChannelUser(moi).send("Signalement " + url)
+    
+    @bot.command(name = "signaler")
+    async def signalerComm(ctx):
+        await signaler(ctx, False)
+        await ctx.message.add_reaction("👌")
 
     bot.run(token)
 
