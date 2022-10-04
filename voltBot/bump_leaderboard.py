@@ -311,6 +311,8 @@ def main() -> None:
     intentsBot.message_content = True
     bot = commands.Bot(command_prefix=prefix, help_command=None, intents = intentsBot)
 
+    AUTOMUTE = dict()
+
     def isBotAdmin(user: discord.Member) -> bool:
         return user.guild_permissions.manage_channels or user.id == 619574125622722560
 
@@ -354,6 +356,9 @@ def main() -> None:
         await processBumps(msg)
         await autobahn(msg)
         await bot.process_commands(msg)
+
+        if msg.content.startwith("*mute"):
+            pass #il faudra trouver un moyen de contrer le pb du mute extérieur qui vient après un automute
 
         await translateChapter(msg)
 
@@ -462,6 +467,16 @@ def main() -> None:
             channel = traitement["channel"]
 
             await introreact(messageId, guild, emojiHash, channel, user)
+            await autounmute(messageId, user)
+
+    async def autounmute(messageId, user):
+        if messageId in AUTOMUTE.values():
+            del AUTOMUTE[user.id]
+            dmChannel = await dmChannelUser(user)
+            await dmChannel.send("Alright, you'll get unmuted in 10 minutes")
+
+            await asyncio.sleep(600)
+            await unmute(user)
 
     async def updateInfoMsg(channel: discord.TextChannel): #info msg: the message with the recap of all teams
         if INFOS["INFO_MSG"] is not None: #let's try to update the info msg
@@ -769,6 +784,29 @@ def main() -> None:
             await ctx.send('**Now playing**')
         except:
             await ctx.send("The bot is not connected to a voice channel.")
+    
+    @bot.command(name="mute_me")
+    async def muteme(ctx):
+        guild = ctx.guild or bot.get_guild(567021913210355745)
+        user = await guild.fetch_member(ctx.author.id)
+
+        if 806589642287480842 not in (x.id for x in user.roles): #let's prevent people who got muted for moderation purposes from unmuting themselves
+            await user.add_roles(guild.get_role(806589642287480842)) #mute the person
+
+            dmChannel = await dmChannelUser(user)
+            muteMsg = await dmChannel.send("Add any reaction to this message to unmute yourself (there is a 10-minute waiting period between the moment you add the reaction annd the moment you get unmuted)\nYou will automatically get unmuted in 3 hours")
+            AUTOMUTE[user.id] = muteMsg.id
+
+            await asyncio.sleep(3600*3)
+            await unmute(user)
+    
+    async def unmute(userRaw):
+        guild = await bot.get_guild(567021913210355745)
+        user = await guild.fetch_member(userRaw.id)
+        await user.remove_roles(bot.get_role(806589642287480842))
+
+        dmChannel = await dmChannelUser(user)
+        await dmChannel.send("You got unmuted")
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
