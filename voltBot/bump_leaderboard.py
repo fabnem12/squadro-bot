@@ -357,7 +357,7 @@ def main() -> None:
         await autobahn(msg)
         await bot.process_commands(msg)
 
-        if msg.content.startwith("*mute"):
+        if msg.content.startswith("*mute"):
             pass #il faudra trouver un moyen de contrer le pb du mute extérieur qui vient après un automute
 
         await translateChapter(msg)
@@ -801,7 +801,7 @@ def main() -> None:
             await unmute(user)
     
     async def unmute(userRaw):
-        guild = await bot.get_guild(567021913210355745)
+        guild = bot.get_guild(567021913210355745)
         user = await guild.fetch_member(userRaw.id)
         await user.remove_roles(bot.get_role(806589642287480842))
 
