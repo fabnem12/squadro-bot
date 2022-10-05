@@ -476,6 +476,7 @@ def main() -> None:
             await dmChannel.send("Alright, you'll get unmuted in 10 minutes")
 
             await asyncio.sleep(600)
+            print("ohe")
             await unmute(user)
 
     async def updateInfoMsg(channel: discord.TextChannel): #info msg: the message with the recap of all teams
@@ -794,7 +795,7 @@ def main() -> None:
             await user.add_roles(guild.get_role(806589642287480842)) #mute the person
 
             dmChannel = await dmChannelUser(user)
-            muteMsg = await dmChannel.send("Add any reaction to this message to unmute yourself (there is a 10-minute waiting period between the moment you add the reaction annd the moment you get unmuted)\nYou will automatically get unmuted in 3 hours")
+            muteMsg = await dmChannel.send("Add any reaction to this message to unmute yourself (there is a 10-minute waiting period between the moment you add the reaction and the moment you get unmuted)\nYou will automatically get unmuted in 3 hours")
             AUTOMUTE[user.id] = muteMsg.id
 
             await asyncio.sleep(3600*3)
@@ -803,7 +804,7 @@ def main() -> None:
     async def unmute(userRaw):
         guild = bot.get_guild(567021913210355745)
         user = await guild.fetch_member(userRaw.id)
-        await user.remove_roles(bot.get_role(806589642287480842))
+        await user.remove_roles(guild.get_role(806589642287480842))
 
         dmChannel = await dmChannelUser(user)
         await dmChannel.send("You got unmuted")
