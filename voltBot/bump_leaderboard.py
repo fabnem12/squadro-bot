@@ -476,7 +476,6 @@ def main() -> None:
             await dmChannel.send("Alright, you'll get unmuted in 10 minutes")
 
             await asyncio.sleep(600)
-            print("ohe")
             await unmute(user)
 
     async def updateInfoMsg(channel: discord.TextChannel): #info msg: the message with the recap of all teams
