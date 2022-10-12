@@ -305,7 +305,7 @@ def main() -> None:
     intentsBot.members = True
     intentsBot.messages = True
     intentsBot.message_content = True
-    bot = commands.Bot(command_prefix="T.", help_command=None, intents = intentsBot)
+    bot = commands.Bot(command_prefix=prefix, help_command=None, intents = intentsBot)
 
     AUTOMUTE = dict()
 
