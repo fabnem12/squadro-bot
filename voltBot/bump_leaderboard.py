@@ -661,7 +661,7 @@ def main() -> None:
             except discord.errors.NotFound:
                 return
 
-            if memberNew and any(role.id == 597867859095584778 for role in memberNew.roles):
+            if memberNew and len(memberNew.roles) == 0:
                 await memberNew.ban(reason = "raid - mass ban by fabnem's volt bot")
 
     banFrom = [0]
