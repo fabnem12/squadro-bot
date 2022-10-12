@@ -682,7 +682,7 @@ def main() -> None:
             msg = await ctx.channel.fetch_message(ref.message_id)
 
             await banFromMsg(msgFrom)
-            await banFromMsg(ctx.message)
+            await banFromMsg(msg)
             async for msg in ctx.channel.history(limit = None, before = msg.created_at, after = timestampInit):
                 await banFromMsg(msg)
 
