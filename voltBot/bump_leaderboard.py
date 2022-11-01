@@ -23,7 +23,7 @@ translator = Translator()
 #prefix = ","
 bumpBot = 302050872383242240 #DISBOARD
 botCommandsChannel = (577955068268249098, 899307073525915689, 777966573540474923, 676119576798560316, 567482036919730196, 806213028034510859, 567024817128210433, 765706450500452372, 765232858499252264) #bot-commands
-print(prefix)
+
 class Team: pass
 
 class Member:
@@ -212,17 +212,13 @@ async def dmChannelUser(user):
 async def processBumps(msg, recount=False, pourDeFaux=False):
     author = msg.author.id
     if author == bumpBot and len(msg.embeds) != 0:
-        print(msg.created_at)
         input()
         e = msg.embeds[0]
         txt = e.description
 
-        print(msg.__dir__(), "interaction" in msg.__dir__())
         try:
             member = msg.interaction.user
-            print(member)
         except AttributeError:
-            print(txt)
             if len(txt) <= 20: return (0, 0)
             doneBy = txt[2:20]
             if not doneBy.isdigit(): return (0, 0)
@@ -661,7 +657,7 @@ def main() -> None:
             except discord.errors.NotFound:
                 return
 
-            if memberNew and any(role.id == 597867859095584778 for role in memberNew.roles):
+            if memberNew and len(memberNew.roles) == 1:
                 await memberNew.ban(reason = "raid - mass ban by fabnem's volt bot")
 
     banFrom = [0]
@@ -682,7 +678,7 @@ def main() -> None:
             msg = await ctx.channel.fetch_message(ref.message_id)
 
             await banFromMsg(msgFrom)
-            await banFromMsg(ctx.message)
+            await banFromMsg(msg)
             async for msg in ctx.channel.history(limit = None, before = msg.created_at, after = timestampInit):
                 await banFromMsg(msg)
 
