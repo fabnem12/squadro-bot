@@ -730,31 +730,50 @@ def main() -> None:
 
         os.remove(f"mop_page_{pageNumber}.png")
 
+    @bot.event
+    async def on_message_delete(msg) -> None:
+        async for entry in msg.guild.audit_logs(action=discord.AuditLogAction.message_delete):
+            if msg.author.id == entry.target.id and (await isMod(msg.guild, entry.user.id)):
+                await reportTemp(msg, None)
+            
+            break
+
     @bot.command(name = "report")
-    async def reportTemp(ctx):
-        reference = ctx.message.reference
-        if reference:
-            reportChannel = await ctx.guild.fetch_channel(806219815760166972)
-            await ctx.message.delete()
+    async def reportTemp(ctx, param = ""):
+        reportChannelId = 806219815760166972
+        if param is None:
+            reportChannelId = 1037071502656405584
+            msg = ctx
+        else:
+            reference = ctx.message.reference
+            if reference:
+                await ctx.message.delete()
+                msg = await ctx.channel.fetch_message(reference.message_id)
+            else:
+                return
+            
+        reportChannel = await ctx.guild.fetch_channel(reportChannelId)
+        reporter = ctx.author.id
 
-            msg = await ctx.channel.fetch_message(reference.message_id)
-            e = discord.Embed(title = f"Message reported", description = msg.content)
+        e = discord.Embed(title = f"Message reported", description = msg.content, timestamp = msg.created_at)
+        if msg.author.avatar:
             e.set_author(name = msg.author.name, icon_url = msg.author.avatar.url)
-            e.add_field(name = "Author", value=msg.author.mention, inline=False)
-            e.add_field(name = "Channel", value=f"<#{ctx.channel.id}>", inline=False)
-            e.add_field(name = "Reporter", value=ctx.author.mention, inline=False)
+        e.add_field(name = "Author", value=msg.author.mention, inline=False)
+        e.add_field(name = "Channel", value=f"<#{ctx.channel.id}>", inline=False)
+        e.add_field(name = "Reporter", value=f"<@{reporter}>", inline=False)
+        if param is not None:
             e.add_field(name = "Link to message", value=msg.jump_url)
-            msgReport = await reportChannel.send(embed = e)
+        msgReport = await reportChannel.send(embed = e)
 
-            ref = discord.MessageReference(channel_id = msgReport.channel.id, message_id = msgReport.id)
+        ref = discord.MessageReference(channel_id = msgReport.channel.id, message_id = msgReport.id)
 
-            for att in msg.attachments:
-                r = requests.get(att.url)
-                with open(att.filename, "wb") as outfile:
-                    outfile.write(r.content)
+        for att in msg.attachments:
+            r = requests.get(att.url)
+            with open(att.filename, "wb") as outfile:
+                outfile.write(r.content)
 
-                await reportChannel.send(file = discord.File(att.filename), reference = ref)
-                os.remove(att.filename)
+            await reportChannel.send(file = discord.File(att.filename), reference = ref)
+            os.remove(att.filename)
     
     @bot.command(name='join')
     async def join(ctx):
