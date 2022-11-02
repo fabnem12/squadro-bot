@@ -730,26 +730,27 @@ def main() -> None:
     async def on_message_delete(msg) -> None:
         async for entry in msg.guild.audit_logs(action=discord.AuditLogAction.message_delete):
             if msg.author.id == entry.target.id and (await isMod(msg.guild, entry.user.id)):
-                await reportTemp(msg, None)
+                await reportTemp(msg, entry.user.id)
             
             break
 
     @bot.command(name = "report")
     async def reportTemp(ctx, param = ""):
         reportChannelId = 806219815760166972
-        if param is None:
+        if not isinstance(param, str):
             reportChannelId = 1037071502656405584
             msg = ctx
+            reporter = param
         else:
             reference = ctx.message.reference
             if reference:
                 await ctx.message.delete()
                 msg = await ctx.channel.fetch_message(reference.message_id)
+                reporter = ctx.author.id
             else:
                 return
             
         reportChannel = await ctx.guild.fetch_channel(reportChannelId)
-        reporter = ctx.author.id
 
         e = discord.Embed(title = f"Message reported", description = msg.content, timestamp = msg.created_at)
         if msg.author.avatar:
