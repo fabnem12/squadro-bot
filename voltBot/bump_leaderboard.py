@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import nextcord as discord
 import pickle
 import os
@@ -122,135 +123,10 @@ else:
         TEAMS: Dict[str, Team] = INFOS["TEAMS"]
         REMINDER: List[Member] = INFOS["REMINDER"] if "REMINDER" in INFOS else set()
 
-def messageRank(someone: Union[str, int], isMember: Optional[str] = None, byEfficiency: bool = False) -> str: #if isMember, someone is treated as a discord member id, if not, someone is treated as a team name
-    if isMember:
-        member = getMember(someone, True)
-
-        if member is None:
-            return "This member never attempted to bump the server."
-        else:
-            sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
-            rankedMembers = sorted((x for x in MEMBERS.values() if x.nbBumps >= 15), key=sortFunc, reverse = True)
-
-            try:
-                index = rankedMembers.index(member)
-                return f"__{isMember}__ is **#{index+1}** ({member.nbBumps} bumps, {member.nbBumpAttempts-member.nbBumps} failed attempts, {member.nbBumpAttempts} attempts, efficiency index: {member.efficiency():.2%})"
-            except:
-                return f"__{isMember}__ is not ranked ({member.nbBumps} bumps, {member.nbBumpAttempts-member.nbBumps} failed attemps, {member.nbBumpAttempts} attempts, efficiency index: {member.efficiency():.2%})"
-    else: #someone is a team name
-        team: Optional[Team] = getTeam(someone, True)
-        if team is None:
-            return "This team does not exist."
-        else:
-            sortFunc = lambda x: x.efficiency() if byEfficiency else x.nbBumps()
-            rankedTeams = sorted(TEAMS.values(), key=sortFunc, reverse = True)
-            #nota: team is guaranteed to be in rankedTeams
-            index = rankedTeams.index(team)
-
-            return f"Team '{team.name}' is **#{index+1}** with {team.nbBumps()} bumps."
-
-def computeStats(guild, bot, byEfficiency: bool = False, fromRank: int = 1) -> str:
-    sortFunc = lambda x: x.efficiency() if byEfficiency else (x.nbBumps, x.nbBumpAttempts)
-
-    response = "__**TOP MEMBERS**__\n"
-    rankedMembers = sorted((x for x in MEMBERS.values() if x.nbBumps >= 15), key=sortFunc, reverse = True)
-    for i in range(fromRank-1, min(fromRank+9, len(rankedMembers))):
-        memberObj = rankedMembers[i]
-        info = f"<@{memberObj.id}>"
-
-        if byEfficiency: response += f"**{i+1}** {info}, {memberObj.efficiency():.2%} efficiency ({memberObj.nbBumps} bump{'' if memberObj.nbBumps == 1 else 's'}, {memberObj.nbBumpAttempts} attempt{'' if memberObj.nbBumpAttempts == 1 else 's'})\n"
-        else: response += f"**{i+1}** {info}, {memberObj.nbBumps} bump{'' if memberObj.nbBumps == 1 else 's'}\n"
-    response = response[:-1]
-
-    rankedTeams = sorted(TEAMS.values(), key=lambda x: x.efficiency() if byEfficiency else x.nbBumps(), reverse = True)
-    if rankedTeams != []:
-        response += "\n\n"
-        response += "__**TOP TEAMS**__\n"
-
-        if byEfficiency: response += "\n".join(f"**{i+1}** Team '{team.name}', {team.efficiency():.2%} efficiency." for i, team in zip(range(len(rankedTeams)), rankedTeams))
-        else: response += "\n".join(f"**{i+1}** Team '{team.name}', {team.nbBumps()} bumps" for i, team in zip(range(len(rankedTeams)), rankedTeams))
-
-    return response
-
-def teamsInfo(guild, bot) -> str:
-    response = ""
-    rankedTeams = sorted(TEAMS.values(), key=lambda x: len(x.members), reverse = True)
-    for team in rankedTeams:
-        teamInfo = ""
-
-        if len(team.members) == 0:
-            del TEAMS[team.name]
-            save()
-            continue
-
-        for memberId in team.members:
-            teamInfo += f"<@{memberId}>\n"
-        teamInfo = teamInfo[:-1]
-
-        response += f"**Team '{team.name}'**:\n{teamInfo}"
-        response += "\n\n"
-    if len(response) > 2:
-        response = response[:-2]
-
-    if response == "": response = "."
-
-    return response
-
-def getTeam(teamName: str, ifExistsOnly: bool = False) -> Optional[Team]:
-    if ifExistsOnly:
-        return TEAMS.get(teamName)
-    else:
-        if teamName not in TEAMS:
-            TEAMS[teamName] = Team(teamName)
-        return TEAMS[teamName]
-
 async def dmChannelUser(user):
     if user.dm_channel is None:
         await user.create_dm()
     return user.dm_channel
-
-async def processBumps(msg, recount=False, pourDeFaux=False):
-    author = msg.author.id
-    if author == bumpBot and len(msg.embeds) != 0:
-        input()
-        e = msg.embeds[0]
-        txt = e.description
-
-        try:
-            member = msg.interaction.user
-        except AttributeError:
-            if len(txt) <= 20: return (0, 0)
-            doneBy = txt[2:20]
-            if not doneBy.isdigit(): return (0, 0)
-            doneBy = int(doneBy) #user id of the member who tried to bump the server
-
-            member = getMember(doneBy)
-
-        if ":thumbsup:" in txt: #it's a successfull bump!
-            if pourDeFaux:
-                return (1, member.id)
-            else:
-                if member.id in (180333726306140160, 619574125622722560): #clus or fabnem
-                    await msg.channel.send(f"NONONONONO <@{619574125622722560 if member.id == 180333726306140160 else 180333726306140160}>")
-                    await msg.add_reaction("bonk:843489770918903819")
-                    member.nbBumps = 0
-                else:
-                    member.addBump()
-                    save()
-                    if not recount:
-                        await msg.add_reaction("volt_cool_glasses:819137584722345984")
-
-        elif "wait" in txt: #it's a bump attempt!
-            if pourDeFaux:
-                return (0, member.id)
-            else:
-                member.addFailedBump()
-                save()
-                if not recount: await msg.add_reaction("kekw:732674441577889994" if member.id != 375638655403950080 else "🫂")
-    elif msg.content.startswith("!b dump"):
-        await msg.add_reaction("kekw:732674441577889994")
-
-    return (0, 0)
 
 async def introreact(messageId, guild, emojiHash, channel, user):
     if emojiHash != 712416440099143708:
@@ -349,7 +225,6 @@ def main() -> None:
     @bot.event
     async def on_message(msg) -> None:
         await suggestion(msg)
-        await processBumps(msg)
         await autobahn(msg)
         await bot.process_commands(msg)
 
@@ -375,6 +250,25 @@ def main() -> None:
     @bot.event
     async def on_member_update(before, after):
         await on_member_join(after)
+        await exclusion(before, after)
+    
+    async def exclusion(before, after):
+        if before.guild.id == 567021913210355745 and before.communication_disabled_until is None and after.communication_disabled_until:
+            #let's find the reason
+            async for entry in before.guild.audit_logs(action=discord.AuditLogAction.member_update):
+                reason = entry.reason
+                mod = entry.user
+                time = entry.created_at
+                break
+            
+            modlog = await before.guild.fetch_channel(929466478678405211)
+            e = discord.Embed(title = "time out", timestamp = time, color = 0x502379)
+            e.add_field(name = "User:", value = f"{after}", inline=False)
+            e.add_field(name = "Reason:", value = reason, inline=False)
+            e.add_field(name = "Reponsible moderator:", value = f"{mod}", inline=False)
+            e.set_footer(text = f"ID: {after.id}")
+
+            await modlog.send(embed = e)
 
     @bot.event
     async def on_ready():
@@ -474,91 +368,6 @@ def main() -> None:
             await asyncio.sleep(600)
             await unmute(user)
 
-    async def updateInfoMsg(channel: discord.TextChannel): #info msg: the message with the recap of all teams
-        if INFOS["INFO_MSG"] is not None: #let's try to update the info msg
-            try:
-                infoMsg = await channel.fetch_message(INFOS["INFO_MSG"])
-                await infoMsg.edit(embed = discord.Embed(description = teamsInfo(channel.guild, bot)), content = "")
-                return
-            except:
-                pass
-
-        infoMsg = await channel.send(embed = discord.Embed(description = teamsInfo(channel.guild, bot)))
-        INFOS["INFO_MSG"] = infoMsg.id
-        save()
-
-    @bot.command(name = "join_team")
-    async def join_team(ctx, *, teamName: str) -> None:
-        member = getMember(ctx.author.id)
-        team = getTeam(teamName)
-
-        deletedTeam: Optional[str] = member.joinTeam(team)
-        if deletedTeam:
-            del TEAMS[deletedTeam]
-        save()
-
-        ref = discord.MessageReference(channel_id = ctx.channel.id, message_id = ctx.message.id)
-        await updateInfoMsg(ctx.channel)
-        await ctx.send(f"__{ctx.author.nick or ctx.author.name}__, you successfully joined the team '{teamName}'", reference = ref)
-
-    @bot.command(name = "rank")
-    async def rank(ctx, *, someone: Optional[Union[discord.Member, str]]) -> None:
-        if someone is None: #let's send the author's rank
-            someone = ctx.author.id
-            await ctx.send(messageRank(someone, ctx.author.nick or ctx.author.name))
-        else:
-            if isinstance(someone, discord.Member): #-> it's a ping
-                ident = someone.id
-                isMember = someone.nick or someone.name
-            else: #ident must be a str -> team name
-                ident = someone
-                isMember = None
-            await ctx.send(messageRank(ident, isMember))
-
-    @bot.command(name = "rank_eff")
-    async def rankEff(ctx, someone: Optional[Union[discord.Member, str]]) -> None:
-        if someone is None: #let's send the author's rank
-            someone = ctx.author.id
-            await ctx.send(messageRank(someone, ctx.author.nick or ctx.author.name, True))
-        else:
-            if isinstance(someone, discord.Member): #-> it's a ping
-                ident = someone.id
-                isMember = someone.nick or someone.name
-            else: #ident must be a str -> team name
-                ident = someone
-                isMember = None
-            await ctx.send(messageRank(ident, isMember, True))
-
-    @bot.command(name = "leaderboard")
-    async def stats(ctx, fromRank: int = 1) -> None:
-        await ctx.send(embed = discord.Embed(description = computeStats(ctx.guild, bot, False, fromRank)))
-
-    @bot.command(name = "leaderboard_eff")
-    async def statsEfficiency(ctx, fromRank: int = 1) -> None:
-        await ctx.send(embed = discord.Embed(description = computeStats(ctx.guild, bot, True, fromRank)))
-
-    @bot.command(name = "prerankBump")
-    async def prerank(ctx, teamsToo: Optional[str]):
-        if ctx.author.id == 619574125622722560: #only fabnem can use this command
-            reset(teamsToo is not None)
-
-            await ctx.message.add_reaction("👌")
-            i = 0
-            async for message in ctx.channel.history(limit = None):
-                if True:
-                    await processBumps(message, True)
-                    i += 1
-
-                    if i % 100 == 0: print(i)
-
-    @bot.command(name = "set_nb")
-    async def set_nb(ctx, user: discord.User, nb: int):
-        if ctx.author.id == 619574125622722560:
-            member = getMember(user.id)
-            member.nbBumps = nb
-
-            await ctx.message.add_reaction("👌")
-
     @bot.command(name = "reset")
     async def resetBot(ctx):
         if ctx.author.id == 619574125622722560:
@@ -569,17 +378,6 @@ def main() -> None:
     async def ayo(ctx):
         await ctx.send("ayo")
 
-    @bot.command(name = "add_member_team")
-    async def addMemberTeam(ctx, teamName: str, memberId: int):
-        if isBotAdmin(ctx.author):
-            member = getMember(memberId)
-            team = getTeam(teamName)
-
-            member.joinTeam(team)
-            await updateInfoMsg(ctx.channel)
-
-            await ctx.message.add_reaction("👌")
-
     @bot.command(name = "top_of_month")
     async def topOfMonth(ctx):
         if isBotAdmin(ctx.author):
@@ -588,38 +386,6 @@ def main() -> None:
 
             Popen(["python3", os.path.join(os.path.dirname(__file__), "top_countries_month.py")])
             await ctx.message.add_reaction("👌")
-
-    @bot.command(name = "top_of_year")
-    async def topOfMonth(ctx, year: int):
-        if isBotAdmin(ctx.author):
-            from subprocess import Popen
-            import os
-
-            Popen(["python3", os.path.join(os.path.dirname(__file__), "top_countries_month.py"), "year", "1", "1", f"{year}"])
-            await ctx.message.add_reaction("👌")
-
-    @bot.command(name = "top_bumps_month")
-    async def topBumpsMonth(ctx):
-        points = dict()
-        from datetime import datetime, timedelta
-
-        await ctx.message.add_reaction("👌")
-
-        async for msg in ctx.channel.history(limit = None, after = datetime.now() - timedelta(days = 30)):
-            successfullBumps, authorId = await processBumps(msg, True, True)
-
-            if successfullBumps:
-                if authorId not in points:
-                    points[authorId] = successfullBumps
-                else:
-                    points[authorId] += successfullBumps
-
-        topBumps = sorted(points.items(), key=lambda x: x[1], reverse = True)
-        await ctx.send(embed = discord.Embed(description = "\n".join(f"**#{i+1}** <@{authorId}> with {nbBumps} successfull bumps" for i, (authorId, nbBumps) in enumerate(topBumps))), reference = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id))
-
-    @bot.command(name = "get_fabnem_password")
-    async def lol(ctx):
-        await ctx.message.add_reaction("supersurebuddy:837818104691163146")
 
     @bot.command(name = "read_top_of_month")
     async def topOfMonth(ctx):
@@ -700,6 +466,7 @@ def main() -> None:
                 await ctx.send(f"{nationality} is not a valid country role. Pay attention to the capital letters")
                 return
             else:
+                await ctx.send("…")
                 if not os.path.isfile("multinationals.p"):
                     pickle.dump(dict(), open("multinationals.p", "wb"))
 
@@ -729,7 +496,7 @@ def main() -> None:
     @bot.event
     async def on_message_delete(msg) -> None:
         async for entry in msg.guild.audit_logs(action=discord.AuditLogAction.message_delete):
-            if msg.author.id == entry.target.id and (await isMod(msg.guild, entry.user.id)):
+            if msg.author.id == entry.target.id and (await isMod(msg.guild, entry.user.id) or any(x.id == 1038899815821619270 for x in entry.user.roles)):
                 await reportTemp(msg, entry.user.id)
             
             break
@@ -771,35 +538,6 @@ def main() -> None:
 
             await reportChannel.send(file = discord.File(att.filename), reference = ref)
             os.remove(att.filename)
-    
-    @bot.command(name='join')
-    async def join(ctx):
-        if not ctx.message.author.voice:
-            await ctx.send("{} is not connected to a voice channel".format(ctx.message.author.name))
-            return
-        else:
-            channel = ctx.message.author.voice.channel
-        await channel.connect()
-
-    @bot.command(name='leave', help='To make the bot leave the voice channel')
-    async def leave(ctx):
-        voice_client = ctx.message.guild.voice_client
-        if voice_client.is_connected():
-            await voice_client.disconnect()
-        else:
-            await ctx.send("The bot is not connected to a voice channel.")
-
-    @bot.command(name='play_song', help='To play song')
-    async def play(ctx):
-        try :
-            server = ctx.message.guild
-            voice_channel = server.voice_client
-
-            async with ctx.typing():
-                voice_channel.play(discord.FFmpegPCMAudio(source="dolce_vita.mp3"))
-            await ctx.send('**Now playing**')
-        except:
-            await ctx.send("The bot is not connected to a voice channel.")
     
     @bot.command(name="mute_me")
     async def muteme(ctx):
