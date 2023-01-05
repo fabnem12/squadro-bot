@@ -275,7 +275,7 @@ def main() -> None:
         pass
 
     async def autobahn(msg):
-        if redFlags[0] in msg.content or "moarte jidanilor" in msg.content.lower():
+        if redFlags[0] in msg.content or "jidanilor" in msg.content.lower():
             await msg.author.ban(reason = "antisemtism / marea")
 
     @bot.command(name = "ban")
@@ -309,6 +309,33 @@ def main() -> None:
             await (await dmChannelUser(msg.author)).send(f"Unable to ban {user.name}\n{e}")
         else:
             await msg.channel.send(f"Banned **{user.name}**")
+
+    @bot.command(name = "court")
+    async def courtcommand(ctx, user: discord.Member, *, reason: Optional[str]):
+        if ctx.guild.id != 567021913210355745 or not await isMod(ctx.guild, ctx.author.id): #not on volt server or not a mod of the volt server
+            return
+
+        #create the court thread
+        guildVolt = bot.get_guild(567021913210355745)
+        channelCourt = guildVolt.get_channel(912092404570554388)
+        courtThread = await channelCourt.create_thread(name = f"{user.nick or user.name} court")
+
+        #give the roles "in court" and "muted"
+        roles = [guildVolt.get_role(x) for x in (709532690692571177, 806589642287480842)]
+        await user.add_roles(*roles)
+
+        #ping the mod and the courted user
+        await courtThread.send(f"{user.mention} {ctx.author.mention}")
+
+        #register in modlog
+        modlog = await guildVolt.fetch_channel(929466478678405211)
+        e = discord.Embed(title = "Courting", timestamp = datetime.datetime.fromtimestamp(time.time()), color = 0x502379)
+        e.add_field(name = "User:", value = user.mention, inline=False)
+        e.add_field(name = "Reason:", value = reason, inline=False)
+        e.add_field(name = "Reponsible moderator:", value = ctx.author.mention, inline=False)
+        e.set_footer(text = f"ID: {user.id}")
+
+        await modlog.send(embed = e)
 
     @bot.command(name = "local_volt")
     async def local_volt(ctx, countryRole: discord.Role, localVolt: discord.Role):
@@ -496,7 +523,7 @@ def main() -> None:
     @bot.event
     async def on_message_delete(msg) -> None:
         async for entry in msg.guild.audit_logs(action=discord.AuditLogAction.message_delete):
-            if msg.author.id == entry.target.id and (await isMod(msg.guild, entry.user.id) or any(x.id == 1038899815821619270 for x in entry.user.roles)):
+            if msg.author.id == entry.target.id and abs(entry.created_at.timestamp() - time.time()) < 1 and (await isMod(msg.guild, entry.user.id) or any(x.id == 1038899815821619270 for x in entry.user.roles)):
                 await reportTemp(msg, entry.user.id)
             
             break
@@ -508,6 +535,7 @@ def main() -> None:
             reportChannelId = 1037071502656405584
             msg = ctx
             reporter = param
+            param = None
         else:
             reference = ctx.message.reference
             if reference:
@@ -519,7 +547,7 @@ def main() -> None:
             
         reportChannel = await ctx.guild.fetch_channel(reportChannelId)
 
-        e = discord.Embed(title = f"Message reported", description = msg.content, timestamp = msg.created_at)
+        e = discord.Embed(title = f"Message {'reported' if param is not None else 'deleted by a mod'}", description = msg.content, timestamp = msg.created_at)
         if msg.author.avatar:
             e.set_author(name = msg.author.name, icon_url = msg.author.avatar.url)
         e.add_field(name = "Author", value=msg.author.mention, inline=False)
