@@ -318,7 +318,7 @@ def main() -> None:
         #create the court thread
         guildVolt = bot.get_guild(567021913210355745)
         channelCourt = guildVolt.get_channel(912092404570554388)
-        courtThread = await channelCourt.create_thread(name = f"{user.nick or user.name} court")
+        courtThread = await channelCourt.create_thread(name = f"{user.nick or user.name} court", invitable = False)
 
         #give the roles "in court" and "muted"
         roles = [guildVolt.get_role(x) for x in (709532690692571177, 806589642287480842)]
@@ -330,6 +330,37 @@ def main() -> None:
         #register in modlog
         modlog = await guildVolt.fetch_channel(929466478678405211)
         e = discord.Embed(title = "Courting", timestamp = datetime.datetime.fromtimestamp(time.time()), color = 0x502379)
+        e.add_field(name = "User:", value = user.mention, inline=False)
+        e.add_field(name = "Reason:", value = reason, inline=False)
+        e.add_field(name = "Reponsible moderator:", value = ctx.author.mention, inline=False)
+        e.set_footer(text = f"ID: {user.id}")
+
+        await modlog.send(embed = e)
+    
+    @bot.command(name = "uncourt")
+    async def courtcommand(ctx, user: discord.User, *, reason: Optional[str]):
+        if ctx.guild.id != 567021913210355745 or not await isMod(ctx.guild, ctx.author.id): #not on volt server or not a mod of the volt server
+            return
+
+        #get the court thread
+        guildVolt = bot.get_guild(567021913210355745)
+        courtThread = ctx.channel
+
+        member = await guildVolt.fetch_member(user.id)
+        if member is not None: #the member did not get banned / didn't leave during the courting
+            #remove the roles "in court" and "muted"
+            roles = [guildVolt.get_role(x) for x in (709532690692571177, 806589642287480842)]
+            await member.remove_roles(*roles)
+
+            await courtThread.remove_user(member)
+        
+        #make the bot and the mod leave the thread. the api doesn't let the bot archive the thread manually, it will be done automatically
+        await courtThread.remove_user(ctx.author)
+        await courtThread.leave()
+
+        #register in modlog
+        modlog = await guildVolt.fetch_channel(929466478678405211)
+        e = discord.Embed(title = "Court case closed", timestamp = datetime.datetime.fromtimestamp(time.time()), color = 0x502379)
         e.add_field(name = "User:", value = user.mention, inline=False)
         e.add_field(name = "Reason:", value = reason, inline=False)
         e.add_field(name = "Reponsible moderator:", value = ctx.author.mention, inline=False)
