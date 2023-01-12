@@ -571,6 +571,31 @@ def main() -> None:
             CONTEST_STATE[0] = False
             save()
             if ctx: await ctx.message.add_reaction("👍")
+    
+    @bot.command(name = "affi_auteurs")
+    async def affi_auteurs(ctx):
+        if ctx.author.id == ADMIN_ID:
+            users = dict()
+            for channel in list(LANGUAGE_CHANNELS.values()) + list(set(CATEGORIES.values())):
+                channelObj = await bot.fetch_channel(channel.channelId)
+
+                async for msg in channelObj.history(limit = None):
+                    if msg.id in channel.msg2vote:
+                        proposal = channel.msg2vote[msg.id]
+
+                        if proposal.author.userId not in users:
+                            try:
+                                user = await channelObj.guild.fetch_member(proposal.author.userId)
+                            except:
+                                user = await bot.fetch_user(proposal.author.userId)
+                            
+                            users[proposal.author.userId] = user
+                        else:
+                            user = users[proposal.author.userId]
+
+                        msg.embeds[0].set_author(name = user.name, icon_url = user.avatar.url)
+                        await msg.edit(embed = msg.embeds[0])
+                        print(user)
 
     @bot.command(name = "start_categ")
     async def startcateg(ctx, categname: str):
