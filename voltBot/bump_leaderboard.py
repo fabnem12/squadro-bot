@@ -318,7 +318,7 @@ def main() -> None:
         #create the court thread
         guildVolt = bot.get_guild(567021913210355745)
         channelCourt = guildVolt.get_channel(912092404570554388)
-        courtThread = await channelCourt.create_thread(name = f"{user.nick or user.name} court", invitable = False)
+        courtThread = await channelCourt.create_thread(name = f"{user.nick or user.name} court")
 
         #give the roles "in court" and "muted"
         roles = [guildVolt.get_role(x) for x in (709532690692571177, 806589642287480842)]
