@@ -180,7 +180,7 @@ async def countMessages(guild, bot):
             else:
                 topChannel[author.id] += msgLength
 
-    for channel in filter((lambda x: "logs" not in x.name), guild.text_channels): #let's read all the channels
+    for channel in filter((lambda x: "logs" not in x.name), guild.text_channels + sum([x.threads for x in guild.forum_channels], [])): #let's read all the channels
         try: #discord raises Forbidden error if the bot is not allowed to read messages in "channel"
             await readChannel(channel)
 
