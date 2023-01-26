@@ -424,6 +424,7 @@ def main() -> None:
     @bot.command(name = "purge_volt")
     async def purgevolt(ctx):
         guild = ctx.guild
+        await ctx.message.add_reaction("👌")
         volters2purge = await volters_unmentioned(ctx) #[await guild.fetch_member(698840251136999484)]
 
         import pickle 
