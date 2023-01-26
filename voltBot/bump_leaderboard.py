@@ -368,6 +368,87 @@ def main() -> None:
 
         await modlog.send(embed = e)
 
+    @bot.command(name = "volters2check")
+    async def volters_unmentioned(ctx):
+        guild = ctx.guild
+        volterRole = guild.get_role(588818733410287636)
+        membersVerification = guild.get_channel(823668568729976832)
+
+        listMentioned = set()
+        i = 0
+        async for msg in membersVerification.history(limit = None):
+            txt = msg.content
+            while "<@" in txt:
+                index = txt.index("<@") + 2
+
+                indexEnd = txt.index(">", index)
+                try:
+                    convert = lambda x: int("".join(filter(lambda t: t.isdigit(), x)))
+                    idUser = convert(txt[index:indexEnd])
+
+                    listMentioned.add(idUser)
+                    txt = txt[indexEnd:]
+                except Exception as e:
+                    print(msg.content, msg.id)
+                    print(e)
+                    continue
+
+            i += 1
+            if i % 100 == 0: print(i)
+        
+        print(len(listMentioned))
+
+        listMissing = []
+        listPurge = []
+        thirtyDays = 30 * 24 * 3600
+
+        for volter in volterRole.members:
+            if volter.id in listMentioned: continue
+
+            #check whether their last message is from less than 30 days ago
+            recent = False
+            async for msg in volter.history():
+                timestampLastMsg = msg.created_at.timestamp()
+                sinceThen = time.time() - timestampLastMsg
+                recent = sinceThen < thirtyDays
+                break
+
+            if recent:
+                listMissing.append(volter.id)
+            else:
+                listPurge.append(volter)
+        
+        await ctx.send(f"{len(listMentioned)} mentioned users in #members-verifications, {len(listMissing)} members with the volter role and no mention among those who were active recently. {len(listPurge)} in the purge list")
+        return listPurge
+
+    @bot.command(name = "purge_volt")
+    async def purgevolt(ctx):
+        guild = ctx.guild
+        volters2purge = await volters_unmentioned(ctx) #[await guild.fetch_member(698840251136999484)]
+
+        import pickle 
+        pickle.dump([x.id for x in volters2purge], open("volters2purge.p", "wb"))
+        nonTrivialRoles = {788405177198968872, 814865008893624371, 696000349315661925, 722445962361962617, 1031219811952377876, 833427094490578954, 588818733410287636}
+        above = {x for x in guild.roles if x > guild.get_role(845419797118189629)}
+        roles2remove = [x for x in guild.roles if (x.name.startswith("Volt ") and "Discord" not in x.name) or x.id in nonTrivialRoles or x in above]
+
+        for member in volters2purge:
+            if any(x in above for x in member.roles):
+                await ctx.send(f"<@{member.id}> has a too high role, MVE Team and/or Developer Team")
+            
+            print(member.id, member, roles2remove)
+            try:
+                await member.remove_roles(*roles2remove)
+            except Exception as e:
+                print(e)
+                await ctx.send(f"Error: {e}\nFor {member}")
+            
+            try:
+                await (await dmChannelUser(member)).send("Hello!\n\n**I'm a moderation bot active on the Volt Europa server**. For security reasons, the moderation team has decided to verify volters again.\n**If you are still interested in having access to volters-only channels on the server, __please get in touch with one of the team members__**. Visit the server https://discord.com/channels/567021913210355745/567027773001039893 and send a Direct Message to any of the online members of the Volt Discord Team (check the top right corner of the screen on a laptop, swipe right on a mobile phone).")
+                await ctx.send(f"Successfully sent the DM to <@{member.id}>")
+            except:
+                await ctx.send(f"Unable to DM <@{member.id}>")
+
     @bot.command(name = "local_volt")
     async def local_volt(ctx, countryRole: discord.Role, localVolt: discord.Role):
         from math import ceil
