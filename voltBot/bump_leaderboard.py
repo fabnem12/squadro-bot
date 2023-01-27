@@ -370,6 +370,8 @@ def main() -> None:
 
     @bot.command(name = "volters2check")
     async def volters_unmentioned(ctx):
+        return 
+        
         guild = ctx.guild
         volterRole = guild.get_role(588818733410287636)
         membersVerification = guild.get_channel(823668568729976832)
@@ -423,6 +425,8 @@ def main() -> None:
 
     @bot.command(name = "purge_volt")
     async def purgevolt(ctx):
+        return
+
         guild = ctx.guild
         await ctx.message.add_reaction("👌")
         volters2purge = await volters_unmentioned(ctx) #[await guild.fetch_member(698840251136999484)]
