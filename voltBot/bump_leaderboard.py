@@ -427,11 +427,9 @@ def main() -> None:
         await ctx.message.add_reaction("👌")
         volters2purge = await volters_unmentioned(ctx) #[await guild.fetch_member(698840251136999484)]
 
-        import pickle 
-        pickle.dump([x.id for x in volters2purge], open("volters2purge.p", "wb"))
         nonTrivialRoles = {788405177198968872, 814865008893624371, 696000349315661925, 722445962361962617, 1031219811952377876, 833427094490578954, 588818733410287636}
         above = {x for x in guild.roles if x > guild.get_role(845419797118189629)}
-        roles2remove = [x for x in guild.roles if (x.name.startswith("Volt ") and "Discord" not in x.name) or x.id in nonTrivialRoles or x in above]
+        roles2remove = [x for x in guild.roles if x not in above and ((x.name.startswith("Volt ") and "Discord" not in x.name and "Bot" not in x.name) or x.id in nonTrivialRoles)]
 
         for member in volters2purge:
             if any(x in above for x in member.roles):
@@ -439,7 +437,8 @@ def main() -> None:
             
             print(member.id, member, roles2remove)
             try:
-                await member.remove_roles(*roles2remove)
+                await member.remove_roles(*list(filter(lambda x: x in member.roles, roles2remove)))
+                   
             except Exception as e:
                 print(e)
                 await ctx.send(f"Error: {e}\nFor {member}")
