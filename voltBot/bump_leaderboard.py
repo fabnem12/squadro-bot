@@ -643,6 +643,28 @@ def main() -> None:
                 await reportTemp(msg, entry.user.id)
             
             break
+    
+    @bot.command(name = "submit") #submissions for the writting contest
+    async def submit(ctx):
+        if ctx.channel.id not in (1064316565140553818, 567482036919730196): return
+
+        submitChannel = await ctx.guild.fetch_channel(1064317461001932820)
+        msg = ctx.message
+        msgSubmission = await submitChannel.send(f"**Submission by {ctx.author.mention}:**\n{msg.content[8:]}")
+
+        for att in msg.attachments:
+            r = requests.get(att.url)
+            with open(att.filename, "wb") as outfile:
+                outfile.write(r.content)
+
+            await submitChannel.send(file = discord.File(att.filename), reference = discord.MessageReference(channel_id = 1064317461001932820, message_id = msgSubmission.id))
+            os.remove(att.filename)
+        
+        await ctx.message.delete()
+        dmChannel = await dmChannelUser(ctx.author)
+
+        await dmChannel.send("**Your submission has been registered!**\nIf you want to withdraw it, get in touch with one of the mods (Volt Discord Team).")
+
 
     @bot.command(name = "report")
     async def reportTemp(ctx, param = ""):
