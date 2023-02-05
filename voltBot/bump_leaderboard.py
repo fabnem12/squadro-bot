@@ -719,6 +719,19 @@ def main() -> None:
 
             await asyncio.sleep(3600*3)
             await unmute(user)
+
+    @bot.command(name = "kick_new")
+    async def kick_new(ctx):
+        if ctx.author.id != 619574125622722560: return
+
+        roleNew = ctx.guild.get_role(597867859095584778)
+        roleCommunity = ctx.guild.get_role(596511307209900053)
+        for member in roleNew.members:
+            if roleCommunity in member.roles:
+                await ctx.send(f"User {member.mention} has both roles New and Community")
+            else:
+                await member.kick(reason = "inactive / didn't send an introduction message")
+                await ctx.send(f"{member.mention} kicked for having the role New")
     
     async def unmute(userRaw):
         guild = bot.get_guild(567021913210355745)
