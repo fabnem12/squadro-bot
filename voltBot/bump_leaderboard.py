@@ -730,8 +730,12 @@ def main() -> None:
             if roleCommunity in member.roles:
                 await ctx.send(f"User {member.mention} has both roles New and Community")
             else:
-                await member.kick(reason = "inactive / didn't send an introduction message")
-                await ctx.send(f"{member.mention} kicked for having the role New")
+                try:
+                    await member.kick(reason = "inactive / didn't send an introduction message")
+                except Exception as e:
+                    await ctx.send(f"Unable to kick {member.mention}, error: {e}")
+                else:
+                    await ctx.send(f"{member.mention} kicked for having the role New")
     
     async def unmute(userRaw):
         guild = bot.get_guild(567021913210355745)
