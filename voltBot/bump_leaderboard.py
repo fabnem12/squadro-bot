@@ -164,22 +164,17 @@ def main() -> None:
     bot = commands.Bot(command_prefix=prefix, help_command=None, intents = intentsBot)
 
     AUTOMUTE = dict()
+    drapeau2roles = dict()
 
     def isBotAdmin(user: discord.Member) -> bool:
         return user.guild_permissions.manage_channels or user.id == 619574125622722560
     
-    @bot.command(name = "ban_list")
-    async def banlist(ctx):
-        voltServer = bot.get_guild(567021913210355745)
-
-        channel = await voltServer.fetch_channel(567482036919730196)
-        for msgId in (1003715161871372359, 1003715269375570020, 1003715274320662560, 1003715366796664942, 1003715434668904549, 1003715440733855815):
-            msg = await channel.fetch_message(msgId)
-
-            for userId in map(int, msg.content.split("\n")):
-                user = await bot.fetch_user(userId)
-                await voltServer.ban(user, reason = "sus")
-
+    @bot.command(name = "flag2roles")
+    async def flag2roles(ctx, flag: str, *roles: discord.Role):
+        drapeau2roles[flag] = tuple(x.id for x in roles)
+        pickle.dump(drapeau2roles, open("drapeau2roles.p", "wb"))
+        await ctx.message.add_reaction("👌")
+        
     @bot.event
     async def on_member_update(before, after):
         countries = {'Vatican', 'Ukraine', 'United Kingdom', 'Turkey', 'Switzerland', 'Sweden', 'Spain', 'Slovenia', 'Slovakia', 'Serbia', 'San Marino', 'Portugal', 'Russia', 'Romania', 'Poland', 'Norway', 'North Macedonia', 'Netherlands', 'Montenegro', 'Monaco', 'Moldova', 'Malta', 'Luxembourg', 'Lithuania', 'Liechtenstein', 'Latvia', 'Kazakhstan', 'Kosovo', 'Italy', 'Ireland', 'Iceland', 'Hungary', 'Greece', 'Georgia', 'Germany', 'France', 'Finland', 'Estonia', 'Denmark', 'Czechia', 'Cyprus', 'Croatia', 'Bulgaria', 'Bosnia & Herzegovina', 'Belgium', 'Belarus', 'Azerbaijan', 'Austria', 'Andorra', 'Armenia', 'Albania', 'Asia', 'Africa', 'North America', 'Oceania', 'South America'}
