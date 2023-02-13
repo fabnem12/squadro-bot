@@ -156,26 +156,6 @@ async def suggestion(msg):
                 await ideaBox.send(file = discord.File(att.filename))
                 os.remove(att.filename)
 
-async def translateChapter(msg):
-    chapters2threads = {1013394758011453490: (1013394909786558484, "fi"), 1013394781457625118: (1013394916379988019, "fr")}
-    threads2chapters = {j: (i, k) for i, (j, k) in chapters2threads.items()}
-
-    if "­" in msg.content: return #pas la peine de retraduire
-
-    if msg.channel.id in chapters2threads:
-        destChannelId, srcLang = chapters2threads[msg.channel.id]
-        destLang = "en"
-    elif msg.channel.id in threads2chapters:
-        destChannelId, destLang = threads2chapters[msg.channel.id]
-        srcLang = "en"
-    else:
-        return
-
-    res = translator.translate(msg.content, src=srcLang, dest=destLang)
-    
-    destChannel = await msg.guild.fetch_channel(destChannelId)
-    await destChannel.send(res.text + "­")
-
 def main() -> None:
     intentsBot = discord.Intents.default()
     intentsBot.members = True
@@ -187,10 +167,6 @@ def main() -> None:
 
     def isBotAdmin(user: discord.Member) -> bool:
         return user.guild_permissions.manage_channels or user.id == 619574125622722560
-
-    @bot.command(name = "u_ok?")
-    async def uok(ctx):
-        await ctx.send("yeah <:volt_cool_glasses:819137584722345984>")
     
     @bot.command(name = "ban_list")
     async def banlist(ctx):
@@ -231,25 +207,9 @@ def main() -> None:
         if msg.content.startswith("*mute"):
             pass #il faudra trouver un moyen de contrer le pb du mute extérieur qui vient après un automute
 
-        await translateChapter(msg)
-
-    @bot.event
-    async def on_member_join(member: discord.Member):
-        if member.guild.id == 567021913210355745: #volt server
-            guild = bot.get_guild(567021913210355745)
-            channelIntro = await guild.fetch_channel(567024817128210433)
-
-            if any(x in member.name.lower() or x in member.name or (member.nick and (x in member.nick.lower() or x in member.nick)) for x in redFlags):
-                await member.ban(reason = "very likely marea alt")
-
-    @bot.event
-    async def on_user_update(before, after):
-        if 567021913210355745 in (x.id for x in after.mutual_guilds):
-            await on_member_join(after)
-
     @bot.event
     async def on_member_update(before, after):
-        await on_member_join(after)
+        #await on_member_join(after)
         await exclusion(before, after)
     
     async def exclusion(before, after):
@@ -269,10 +229,6 @@ def main() -> None:
             e.set_footer(text = f"ID: {after.id}")
 
             await modlog.send(embed = e)
-
-    @bot.event
-    async def on_ready():
-        pass
 
     async def autobahn(msg):
         if redFlags[0] in msg.content or "jidanilor" in msg.content.lower():
@@ -368,111 +324,6 @@ def main() -> None:
 
         await modlog.send(embed = e)
 
-    @bot.command(name = "volters2check")
-    async def volters_unmentioned(ctx):
-        return 
-        
-        guild = ctx.guild
-        volterRole = guild.get_role(588818733410287636)
-        membersVerification = guild.get_channel(823668568729976832)
-
-        listMentioned = set()
-        i = 0
-        async for msg in membersVerification.history(limit = None):
-            txt = msg.content
-            while "<@" in txt:
-                index = txt.index("<@") + 2
-
-                indexEnd = txt.index(">", index)
-                try:
-                    convert = lambda x: int("".join(filter(lambda t: t.isdigit(), x)))
-                    idUser = convert(txt[index:indexEnd])
-
-                    listMentioned.add(idUser)
-                    txt = txt[indexEnd:]
-                except Exception as e:
-                    print(msg.content, msg.id)
-                    print(e)
-                    continue
-
-            i += 1
-            if i % 100 == 0: print(i)
-        
-        print(len(listMentioned))
-
-        listMissing = []
-        listPurge = []
-        thirtyDays = 30 * 24 * 3600
-
-        for volter in volterRole.members:
-            if volter.id in listMentioned: continue
-
-            #check whether their last message is from less than 30 days ago
-            recent = False
-            async for msg in volter.history():
-                timestampLastMsg = msg.created_at.timestamp()
-                sinceThen = time.time() - timestampLastMsg
-                recent = sinceThen < thirtyDays
-                break
-
-            if recent:
-                listMissing.append(volter.id)
-            else:
-                listPurge.append(volter)
-        
-        await ctx.send(f"{len(listMentioned)} mentioned users in #members-verifications, {len(listMissing)} members with the volter role and no mention among those who were active recently. {len(listPurge)} in the purge list")
-        return listPurge
-
-    @bot.command(name = "purge_volt")
-    async def purgevolt(ctx):
-        return
-
-        guild = ctx.guild
-        await ctx.message.add_reaction("👌")
-        volters2purge = await volters_unmentioned(ctx) #[await guild.fetch_member(698840251136999484)]
-
-        nonTrivialRoles = {788405177198968872, 814865008893624371, 696000349315661925, 722445962361962617, 1031219811952377876, 833427094490578954, 588818733410287636}
-        above = {x for x in guild.roles if x > guild.get_role(845419797118189629)}
-        roles2remove = [x for x in guild.roles if x not in above and ((x.name.startswith("Volt ") and "Discord" not in x.name and "Bot" not in x.name) or x.id in nonTrivialRoles)]
-
-        for member in volters2purge:
-            if any(x in above for x in member.roles):
-                await ctx.send(f"<@{member.id}> has a too high role, MVE Team and/or Developer Team")
-            
-            print(member.id, member, roles2remove)
-            try:
-                await member.remove_roles(*list(filter(lambda x: x in member.roles, roles2remove)))
-                   
-            except Exception as e:
-                print(e)
-                await ctx.send(f"Error: {e}\nFor {member}")
-            
-            try:
-                await (await dmChannelUser(member)).send("Hello!\n\n**I'm a moderation bot active on the Volt Europa server**. For security reasons, the moderation team has decided to verify volters again.\n**If you are still interested in having access to volters-only channels on the server, __please get in touch with one of the team members__**. Visit the server https://discord.com/channels/567021913210355745/567027773001039893 and send a Direct Message to any of the online members of the Volt Discord Team (check the top right corner of the screen on a laptop, swipe right on a mobile phone).")
-                await ctx.send(f"Successfully sent the DM to <@{member.id}>")
-            except:
-                await ctx.send(f"Unable to DM <@{member.id}>")
-
-    @bot.command(name = "local_volt")
-    async def local_volt(ctx, countryRole: discord.Role, localVolt: discord.Role):
-        from math import ceil
-        volter = 588818733410287636
-
-        await ctx.send(f"Country role: {countryRole.name}, local Volt Role: {localVolt.name}")
-
-        output = ""
-        count = 0
-        for member in ctx.guild.members:
-            roles = {x.id for x in member.roles}
-            if volter in roles and countryRole.id in roles and localVolt.id not in roles:
-                output += str(member) + "\n"
-                count += 1
-                await member.add_roles(localVolt)
-
-        await ctx.send(f"{count} members were granted the role {localVolt.name}")
-        for i in range(ceil(len(output) / 2000)):
-            await ctx.send(f"{output[2000*i:2000*(i+1)]}")
-
     async def traitementRawReact(payload):
         if payload.user_id != bot.user.id: #sinon, on est dans le cas d'une réaction en dm
             messageId = payload.message_id
@@ -501,21 +352,6 @@ def main() -> None:
 
             await introreact(messageId, guild, emojiHash, channel, user)
             await autounmute(messageId, user)
-
-    async def autounmute(messageId, user):
-        if messageId in AUTOMUTE.values():
-            del AUTOMUTE[user.id]
-            dmChannel = await dmChannelUser(user)
-            await dmChannel.send("Alright, you'll get unmuted in 10 minutes")
-
-            await asyncio.sleep(600)
-            await unmute(user)
-
-    @bot.command(name = "reset")
-    async def resetBot(ctx):
-        if ctx.author.id == 619574125622722560:
-            await ctx.message.add_reaction("👌")
-            reset()
 
     @bot.command(name = "ayo")
     async def ayo(ctx):
@@ -600,44 +436,18 @@ def main() -> None:
             await ctx.message.add_reaction("👌")
             quit()
 
-    @bot.command(name = "save_nat")
-    async def save_nat(ctx, user: discord.Member, *, nationality: str):
-        if (await isMod(ctx.guild, ctx.author.id)):
-            countries = {'Vatican', 'Ukraine', 'United Kingdom', 'Turkey', 'Switzerland', 'Sweden', 'Spain', 'Slovenia', 'Slovakia', 'Serbia', 'San Marino', 'Portugal', 'Russia', 'Romania', 'Poland', 'Norway', 'North Macedonia', 'Netherlands', 'Montenegro', 'Monaco', 'Moldova', 'Malta', 'Luxembourg', 'Lithuania', 'Liechtenstein', 'Latvia', 'Kazakhstan', 'Kosovo', 'Italy', 'Ireland', 'Iceland', 'Hungary', 'Greece', 'Georgia', 'Germany', 'France', 'Finland', 'Estonia', 'Denmark', 'Czechia', 'Cyprus', 'Croatia', 'Bulgaria', 'Bosnia & Herzegovina', 'Belgium', 'Belarus', 'Azerbaijan', 'Austria', 'Andorra', 'Armenia', 'Albania', 'Asia', 'Africa', 'North America', 'Oceania', 'South America'}
-
-            if nationality not in countries:
-                await ctx.send(f"{nationality} is not a valid country role. Pay attention to the capital letters")
-                return
-            else:
-                await ctx.send("…")
-                if not os.path.isfile("multinationals.p"):
-                    pickle.dump(dict(), open("multinationals.p", "wb"))
-
-                multinationalMembers = pickle.load(open("multinationals.p", "rb"))
-                multinationalMembers[user.id] = nationality
-                pickle.dump(multinationalMembers, open("multinationals.p", "wb"))
-
-                await ctx.send(f"{user.nick or user.name} is registered as {nationality}", reference = discord.MessageReference(message_id = ctx.message.id, channel_id = ctx.channel.id))
-
-                await ctx.message.add_reaction("👌")
-
-    @bot.command(name = "see_nat")
-    async def see_nat(ctx):
-        if (await isMod(ctx.guild, ctx.author.id)):
-            multinationalMembers = pickle.load(open("multinationals.p", "rb"))
-
-            await ctx.send("\n".join(f"<@{idUser}>: {nat}" for idUser, nat in multinationalMembers.items()))
-
-    @bot.command(name = "mop")
-    async def mop(ctx, pageNumber: int):
-        os.system(f"convert -density 200 {os.path.join(os.path.dirname(__file__), 'volt_mop.pdf')}[{pageNumber}] mop_page_{pageNumber}.png")
-        ref = discord.MessageReference(channel_id = ctx.channel.id, message_id = ctx.message.id)
-        await ctx.send(file=discord.File(f"mop_page_{pageNumber}.png"), reference = ref)
-
-        os.remove(f"mop_page_{pageNumber}.png")
-
     @bot.event
     async def on_message_delete(msg) -> None:
+        #resend the attachments of deleted messages in #deleted-edited-messages
+        deletedMsgChannel = await msg.guild.fetch_channel(982242792422146098)
+        for att in msg.attachments:
+            r = requests.get(att.url)
+            with open(att.filename, "wb") as outfile:
+                outfile.write(r.content)
+
+            await deletedMsgChannel.send(f"Attachment to message with ID {msg.id}", file = discord.File(att.filename))
+            os.remove(att.filename)
+
         async for entry in msg.guild.audit_logs(action=discord.AuditLogAction.message_delete):
             if msg.author.id == entry.target.id and abs(entry.created_at.timestamp() - time.time()) < 1 and (await isMod(msg.guild, entry.user.id) or any(x.id == 1038899815821619270 for x in entry.user.roles)):
                 await reportTemp(msg, entry.user.id)
@@ -719,23 +529,6 @@ def main() -> None:
 
             await asyncio.sleep(3600*3)
             await unmute(user)
-
-    @bot.command(name = "kick_new")
-    async def kick_new(ctx):
-        if ctx.author.id != 619574125622722560: return
-
-        roleNew = ctx.guild.get_role(597867859095584778)
-        roleCommunity = ctx.guild.get_role(596511307209900053)
-        for member in roleNew.members:
-            if roleCommunity in member.roles:
-                await ctx.send(f"User {member.mention} has both roles New and Community")
-            else:
-                try:
-                    await member.kick(reason = "inactive / didn't send an introduction message")
-                except Exception as e:
-                    await ctx.send(f"Unable to kick {member.mention}, error: {e}")
-                else:
-                    await ctx.send(f"{member.mention} kicked for having the role New")
     
     async def unmute(userRaw):
         guild = bot.get_guild(567021913210355745)
@@ -744,6 +537,15 @@ def main() -> None:
 
         dmChannel = await dmChannelUser(user)
         await dmChannel.send("You got unmuted")
+
+    async def autounmute(messageId, user):
+        if messageId in AUTOMUTE.values():
+            del AUTOMUTE[user.id]
+            dmChannel = await dmChannelUser(user)
+            await dmChannel.send("Alright, you'll get unmuted in 10 minutes")
+
+            await asyncio.sleep(600)
+            await unmute(user)
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
