@@ -13,8 +13,8 @@ from utils import stockePID, cheminOutputs as outputsPath
 stockePID()
 
 try:
-    if "vote_writting.p" in os.listdir():
-        JURY, infoVote, votes, authors, songs = pickle.load(open("vote_writting.p", "rb"))
+    if "vote_writing.p" in os.listdir():
+        JURY, infoVote, votes, authors, songs = pickle.load(open("vote_writing.p", "rb"))
     else:
         raise Exception
 except:
@@ -23,13 +23,13 @@ except:
     authors = [559123511411474454, 781906288069312552, 527268161213431810]
     songs = ["Volt A Vision of the Future", "Flash", "The Purple Portal"]
         
-    timeClickVote = dict()
     JURY = {}
 
 reactionsVote = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
 "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹", "🇺", "🇻", "🇼", "🇽", "🇾", "🇿"]
 reactionsVote = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
 msgVote = [0]
+timeClickVote = dict()
 
 numberVotesJury = 6
 numberMaxVotesPublic = 3
@@ -42,7 +42,7 @@ async def dmChannelUser(user):
     return user.dm_channel
 
 def save():
-    pickle.dump((JURY, infoVote, votes, authors, songs), open("vote_writting.p", "wb"))
+    pickle.dump((JURY, infoVote, votes, authors, songs), open("vote_writing.p", "wb"))
 
 def countVotes():
     jury = dict()
@@ -50,9 +50,10 @@ def countVotes():
     teleDetails = dict()
 
     pointsTele = lambda rang: 3-rang
+    pointsJury = lambda top: tuple((e, 3-i) for i, e in enumerate(top))
     votesLoc = {i: x for i, x in enumerate(votes)}
     
-    #let's keep only the last 3 votes of non-contestants
+    #let's keep only the last 1 votes of non-contestants
     nbVotesNonContestant = dict()
     for i, (username, isJury, _) in reversed(list(enumerate(votes.copy()))):
         if not isJury:
@@ -60,15 +61,11 @@ def countVotes():
                 nbVotesNonContestant[username] = 1
             else:
                 nbVotesNonContestant[username] += 1
-                if nbVotesNonContestant[username] > 3:
+                if nbVotesNonContestant[username] > 1:
                     del votesLoc[i]
 
     for (username, isJury, top) in votesLoc.values():
-        if not isJury:
-            teleDetails[username] = tuple(top)
-            for i, e in enumerate(top):
-                if e is None: break
-                tele[e] += pointsTele(i)
+        jury[username] = pointsJury(top)
 
     #tele
     def hare(votes, nbPoints):
@@ -89,10 +86,14 @@ def countVotes():
 
         printF("Id;Username;Points")
 
+        #jury
+        for juror, recap in jury.items():
+            for (song, points) in recap:
+                printF(f"{idSong(song)};{juror};{points}")
+
         #tele
-        nbPointsTeleBrut = sum(tele.values())
-        for (song, points) in hare(tele, nbPointsTeleBrut).items():
-            printF(f"{idSong(song)};public;{points}")
+        for song in (1, 2, 3):
+            printF(f"{song};public;0")
 
 class ButtonConfirm(nextcord.ui.View):
     def __init__(self, song, remaining, selectPrec, listSongs):
