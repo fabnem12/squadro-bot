@@ -29,7 +29,7 @@ authors = [1, 2, 3]
 reactionsVote = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
 "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹", "🇺", "🇻", "🇼", "🇽", "🇾", "🇿"]
 reactionsVote = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
-msgVote = [0]
+msgVote = [1076811174311645184]
 timeClickVote = dict()
 
 numberVotesJury = 6
@@ -223,10 +223,6 @@ def main():
         if ctx.author.id in (619574125622722560,):
             countVotes()
             await ctx.message.add_reaction("🗳️")
-            
-            if ctx.author.id == 180333726306140160:
-                msgVote[0] = None
-                await get_votes(ctx)
     
     @bot.command(name = "get_votes")
     async def get_votes(ctx):
