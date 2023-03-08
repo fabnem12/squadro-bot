@@ -184,8 +184,9 @@ async def countMessages(guild, bot):
         try: #discord raises Forbidden error if the bot is not allowed to read messages in "channel"
             await readChannel(channel)
 
-            for thread in channel.threads:
-                await readChannel(thread)
+            if hasattr(channel, "threads"):
+                for thread in channel.threads:
+                    await readChannel(thread)
         except Exception as e:
             print(e)
 
