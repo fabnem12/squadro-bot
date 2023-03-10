@@ -350,7 +350,7 @@ def main() -> None:
 
     @bot.command(name = "ayo")
     async def ayo(ctx):
-        if not isMod(ctx.guild, ctx.author.id) and ctx.channel.id != 577955068268249098:
+        if not (await isMod(ctx.guild, ctx.author.id)) and ctx.channel.id != 577955068268249098:
             return 
         
         await ctx.send("ayo")
