@@ -350,10 +350,13 @@ def main() -> None:
 
     @bot.command(name = "ayo")
     async def ayo(ctx):
+        if not isMod(ctx.guild, ctx.author.id) and ctx.channel.id != 577955068268249098:
+            return 
+        
         await ctx.send("ayo")
 
     @bot.command(name = "top_of_month")
-    async def topOfMonth(ctx):
+    async def topOfMonth(ctx, args):
         if isBotAdmin(ctx.author):
             from subprocess import Popen
             import os
