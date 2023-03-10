@@ -4,7 +4,6 @@ import nextcord as discord
 import pickle
 import os
 from emoji import is_emoji
-from googletrans import Translator
 from nextcord.ext import commands
 from typing import Dict, List, Tuple, Union, Optional, Set
 import numpy as np
@@ -17,8 +16,6 @@ from constantes import TOKENVOLT as token, prefixVolt as prefix, redFlags
 from utils import stockePID, cheminOutputs as outputsPath
 
 stockePID()
-
-translator = Translator()
 
 #token = "" #bot token
 #prefix = ","
@@ -348,9 +345,10 @@ def main() -> None:
             await introreact(messageId, guild, emojiHash, channel, user)
             await autounmute(messageId, user)
 
-    @bot.command(name = "ayo")
+    @bot.command(name = "ayo2")
     async def ayo(ctx):
         if not (await isMod(ctx.guild, ctx.author.id)) and ctx.channel.id != 577955068268249098:
+            print("héhé")
             return 
         
         await ctx.send("ayo")
