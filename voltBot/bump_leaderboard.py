@@ -294,7 +294,11 @@ def main() -> None:
         guildVolt = bot.get_guild(567021913210355745)
         courtThread = ctx.channel
 
-        member = await guildVolt.fetch_member(user.id)
+        try:
+            member = await guildVolt.fetch_member(user.id)
+        except discord.errors.NotFound:
+            member = None
+
         if member is not None: #the member did not get banned / didn't leave during the courting
             #remove the roles "in court" and "muted"
             roles = [guildVolt.get_role(x) for x in (709532690692571177, 806589642287480842)]
