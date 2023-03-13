@@ -284,6 +284,7 @@ def main() -> None:
         e.set_footer(text = f"ID: {user.id}")
 
         await modlog.send(embed = e)
+        await courtThread.send(embed = e)
     
     @bot.command(name = "uncourt")
     async def courtcommand(ctx, user: discord.User, *, reason: Optional[str]):
