@@ -164,13 +164,14 @@ def main() -> None:
     drapeau2roles = dict()
 
     def isBotAdmin(user: discord.Member) -> bool:
-        return user.guild_permissions.manage_channels or user.id == 619574125622722560
+        return user.id == 619574125622722560
     
     @bot.command(name = "flag2roles")
     async def flag2roles(ctx, flag: str, *roles: discord.Role):
-        drapeau2roles[flag] = tuple(x.id for x in roles)
-        pickle.dump(drapeau2roles, open("drapeau2roles.p", "wb"))
-        await ctx.message.add_reaction("👌")
+        if ctx.author.id == 619574125622722560: #only fabnem can use this command
+            drapeau2roles[flag] = tuple(x.id for x in roles)
+            pickle.dump(drapeau2roles, open("drapeau2roles.p", "wb"))
+            await ctx.message.add_reaction("👌")
         
     @bot.event
     async def on_member_update(before, after):
@@ -353,10 +354,9 @@ def main() -> None:
             await introreact(messageId, guild, emojiHash, channel, user)
             await autounmute(messageId, user)
 
-    @bot.command(name = "ayo2")
+    @bot.command(name = "ayo")
     async def ayo(ctx):
         if not (await isMod(ctx.guild, ctx.author.id)) and ctx.channel.id != 577955068268249098:
-            print("héhé")
             return 
         
         await ctx.send("ayo")
@@ -457,28 +457,6 @@ def main() -> None:
                 await reportTemp(msg, entry.user.id)
             
             break
-    
-    @bot.command(name = "submit") #submissions for the writting contest
-    async def submit(ctx):
-        if ctx.channel.id not in (1064316565140553818, 567482036919730196): return
-
-        submitChannel = await ctx.guild.fetch_channel(1064317461001932820)
-        msg = ctx.message
-        msgSubmission = await submitChannel.send(f"**Submission by {ctx.author.mention}:**\n{msg.content[8:]}")
-
-        for att in msg.attachments:
-            r = requests.get(att.url)
-            with open(att.filename, "wb") as outfile:
-                outfile.write(r.content)
-
-            await submitChannel.send(file = discord.File(att.filename), reference = discord.MessageReference(channel_id = 1064317461001932820, message_id = msgSubmission.id))
-            os.remove(att.filename)
-        
-        await ctx.message.delete()
-        dmChannel = await dmChannelUser(ctx.author)
-
-        await dmChannel.send("**Your submission has been registered!**\nIf you want to withdraw it, get in touch with one of the mods (Volt Discord Team).")
-
 
     @bot.command(name = "report")
     async def reportTemp(ctx, param = ""):
@@ -521,6 +499,8 @@ def main() -> None:
     
     @bot.command(name="mute_me")
     async def muteme(ctx):
+        return 
+    
         guild = ctx.guild or bot.get_guild(567021913210355745)
         user = await guild.fetch_member(ctx.author.id)
 
