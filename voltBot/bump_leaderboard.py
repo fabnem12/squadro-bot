@@ -230,6 +230,9 @@ def main() -> None:
     async def bancommand(ctx):
         msg = ctx.message
 
+        if ctx.guild.id != 567021913210355745 or not await isMod(ctx.guild, ctx.author.id): #not on volt server or not a mod of the volt server
+            return
+
         userIdRaw = msg.content.split(" ")[1]
         if userIdRaw.isdigit():
             userId = int(userIdRaw)
@@ -393,7 +396,7 @@ def main() -> None:
 
     async def isMod(guild, memberId):
         member = await guild.fetch_member(memberId)
-        return any(role.id in (674583505446895616, 858692593104715817) for role in member.roles)
+        return any(role.id in (674583505446895616, 858692593104715817, 567023540193198080) for role in member.roles)
 
     async def banFromMsg(msg):
         if msg.author.id == 282859044593598464: #the message is from ProBot -> introduction message
