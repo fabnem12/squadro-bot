@@ -224,6 +224,8 @@ def main() -> None:
             await modlog.send(embed = e)
 
     async def autobahn(msg):
+        if msg.author.bot: return
+
         if redFlags[0] in msg.content or "jidanilor" in msg.content.lower():
             await msg.author.ban(reason = "antisemtism / marea")
 
@@ -247,6 +249,7 @@ def main() -> None:
 
         channel = await dmChannelUser(user)
         banReason = ' '.join(msg.content.split(' ')[2:])
+        if banReason == "": banReason = "no reason given"
 
         try:
             if "octavian" in banReason.lower() or "marea" in banReason.lower():
