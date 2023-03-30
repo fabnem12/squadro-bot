@@ -827,6 +827,22 @@ def main(idsTraites = set(range(10))):
                 f.write(r.content)
 
             await ctx.message.add_reaction("👌")
+    
+    @bot.command(name = "upload_file")
+    async def upload_file(ctx):
+        if estAdmin(ctx.author):
+            import requests
+
+            def downloadFile(url, nomFichier):
+                cheminSave = os.path.join(cheminOutputs, nomFichier)
+                r = requests.get(url)
+                with open(cheminSave, "wb") as f:
+                    f.write(r.content)
+            
+            for file in ctx.message.attachments:
+                downloadFile(file.url, file.filename)
+        
+            await ctx.message.add_reaction("👌")
 
     return bot, TOKEN
 
