@@ -18,7 +18,7 @@ from utils import stockePID, cheminOutputs as outputsPath
 stockePID()
 
 #token = "" #bot token
-#prefix = ","
+#prefix = ";"
 bumpBot = 302050872383242240 #DISBOARD
 botCommandsChannel = (577955068268249098, 899307073525915689, 777966573540474923, 676119576798560316, 567482036919730196, 806213028034510859, 567024817128210433, 765706450500452372, 765232858499252264) #bot-commands
 
@@ -480,11 +480,29 @@ def main() -> None:
             
         reportChannel = await ctx.guild.fetch_channel(reportChannelId)
 
-        e = discord.Embed(title = f"Message {'reported' if param is not None else 'deleted by a mod'}", description = msg.content, timestamp = msg.created_at)
-        if msg.author.avatar:
-            e.set_author(name = msg.author.name, icon_url = msg.author.avatar.url)
-        e.add_field(name = "Author", value=msg.author.mention, inline=False)
-        e.add_field(name = "Channel", value=f"<#{ctx.channel.id}>", inline=False)
+        content = msg.content
+        author = msg.author
+        channelName = ctx.channel.mention
+
+        if author.id == 1086220502831480833 and msg.channel.id == 982242792422146098: #in deleted-edited messages
+            embed = msg.embeds[0]
+            content = embed.description
+            
+            author = ctx.guild.get_member_named(embed.author.name)
+
+            if author is None and embed.author.icon_url: #ne devrait pas servir mais peut-être…
+                authorId = int(embed.author.icon_url.split("/")[4])
+                author = await ctx.guild.fetch_member(authorId)
+
+            channelName = "in".join(embed.title.split("in")[1:])
+
+            return
+
+        e = discord.Embed(title = f"Message {'reported' if param is not None else 'deleted by a mod'}", description = content, timestamp = msg.created_at)
+        if author.avatar:
+            e.set_author(name = author.name, icon_url = author.avatar.url)
+        e.add_field(name = "Author", value=author.mention, inline=False)
+        e.add_field(name = "Channel", value=channelName, inline=False)
         e.add_field(name = "Reporter", value=f"<@{reporter}>", inline=False)
         if param is not None:
             e.add_field(name = "Link to message", value=msg.jump_url)
@@ -533,6 +551,18 @@ def main() -> None:
 
             await asyncio.sleep(600)
             await unmute(user)
+    
+    @bot.command(name = "obscr")
+    async def obscr(ctx, user: discord.Member, *, reason: str):
+        guild = ctx.guild
+        if guild.id != 567021913210355745 or not await isMod(guild, ctx.author.id): #not on volt server or not a mod of the volt server
+            return
+    
+        await user.add_roles(guild.get_role(635295454841667593)) #obscr
+        channel = await guild.fetch_channel(823143913904668713) #obscr_reasons
+        await channel.send(f"Name:{user.name}#{user.discriminator}\nID:{user.id}\nPing:{user.mention}\nReason:{reason}\nObscr by:{ctx.author.mention}")
+
+        await ctx.message.add_reaction("👌")
 
     loop = asyncio.get_event_loop()
     loop.create_task(bot.start(token))
