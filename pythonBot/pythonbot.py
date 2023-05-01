@@ -235,7 +235,7 @@ async def verifCode(code, channel, message):
                     #et on voit s'il y en a qui ne sont pas autorisés
                     globModules = dict()
                     try:
-                        for ligne in (x for x in code.split("\n") if "import" in x and "\"" not in x and "'" not in x):
+                        for ligne in (x for x in code.split("\n") if "import" in x and "\"" not in x and "'" not in x and ";)" not in x:
                             exec(ligne, globModules)
                     except Exception as e: #import invalide, on dit stop
                         await channel.send("Erreur : {}".format(e))
