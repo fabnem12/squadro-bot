@@ -8,32 +8,29 @@ nextcord = discord
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constantes import tokenFVB as token, prefixVolt as prefix, redFlags
-from utils import stockePID, cheminOutputs as outputsPath
-
-stockePID()
+from utils import cheminOutputs as outputsPath
 
 try:
     if "vote_music.p" in os.listdir():
-        JURY, infoVote, votes, authors, songs = pickle.load(open("vote_music.p", "rb"))
+        JURY, infoVote, votes, songs, msgVote = pickle.load(open("vote_music.p", "rb"))
     else:
         raise Exception
 except:
-    JURY = {619574125622722560, 803869544414183434, 584661378657419264, 178629368678055937, 834846994098683924}
+    JURY = set()
     #JURY = {619574125622722560}
     infoVote = {k: [] for k in JURY}
     votes = []
-    authors = [619574125622722560, 803869544414183434, 584661378657419264, 803869544414183434, 619574125622722560, 178629368678055937, 834846994098683924, 803869544414183434, 584661378657419264]
-    songs = ["Du hast den Farbfilm vergessen", "Dinner Outside", "My song", "Kalimba", "Vesoul", "Wheels of the Beat", "I get around", "Dreams Of Night", "Skyfall"]
+    msgVote = [0]
+    songs = ["Norway", "Malta", "Serbia", "Latvia", "Portugal", "Ireland", "Croatia", "Switzerland", "Israel", "Moldova", "Sweden", "Azerbaijan", "Czechia", "Netherlands", "Finland"]
     
 timeClickVote = dict()
-JURY = {619574125622722560, 803869544414183434, 584661378657419264, 178629368678055937, 834846994098683924}
+#JURY = set()
 
 reactionsVote = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
 "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹", "🇺", "🇻", "🇼", "🇽", "🇾", "🇿"]
-reactionsVote = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
-msgVote = [0]
+#reactionsVote = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
 
-numberVotesJury = 6
+numberVotesJury = 10
 numberMaxVotesPublic = 3
 numberMinVotesPublic = 3
 
@@ -44,14 +41,15 @@ async def dmChannelUser(user):
     return user.dm_channel
 
 def save():
-    pickle.dump((JURY, infoVote, votes, authors, songs), open("vote_music.p", "wb"))
+    pickle.dump((JURY, infoVote, votes, songs, msgVote), open("vote_music.p", "wb"))
 
 def countVotes():
     jury = dict()
     tele = {e: 0 for e in songs}
     teleDetails = dict()
 
-    pointsJury = lambda top: tuple((e, 12 - i*2) for i, e in enumerate(top))
+    calPointsJury = lambda i: 12 if i == 0 else 10 if i == 1 else 10-i
+    pointsJury = lambda top: tuple((e, calPointsJury(i)) for i, e in enumerate(top)) #tuple((e, 12 - i*2) for i, e in enumerate(top))
     pointsTele = lambda rang: 3-rang
     
     votesLoc = {i: x for i, x in enumerate(votes)}
@@ -76,7 +74,7 @@ def countVotes():
                 if e is None: break
                 tele[e] += pointsTele(i)
 
-    nbPointsJury = 42 * len(jury)
+    nbPointsJury = 58 * len(jury)
 
     #tele
     def hare(votes, nbPoints):
@@ -104,7 +102,7 @@ def countVotes():
 
         #tele
         nbPointsTeleBrut = sum(tele.values())
-        for (song, points) in hare(tele, max(min(nbPointsJury, 4*nbPointsTeleBrut),  3*42)).items():
+        for (song, points) in hare(tele, max(min(nbPointsJury, 4*nbPointsTeleBrut),  3*58)).items():
             printF(f"{idSong(song)};public;{points}")
 
 class ButtonConfirm(nextcord.ui.View):
@@ -173,9 +171,9 @@ async def vote(user, jury: bool):
     channel = await dmChannelUser(user)
 
     infoVote[user.id] = []
-    songsLoc = [(r, x) for r, (i, x) in zip(reactionsVote, enumerate(songs)) if authors[i] != user.id]
+    songsLoc = [(r, x) for r, (i, x) in zip(reactionsVote, enumerate(songs))]
     await channel.send("__**List of songs**__\n\n" + "\n".join(f"- {r} **{e}**" for r, e in songsLoc))
-    commandMessage = await channel.send("Select the #1 song you prefer", view=ViewSelect(songsLoc, 6 if jury else 3, user.id))
+    commandMessage = await channel.send("Select the #1 song you prefer", view=ViewSelect(songsLoc, 10 if jury else 3, user.id))
 
 async def react_vote(messageId, user, guild, emojiHash, channel):
     if user.bot: return
@@ -184,6 +182,7 @@ async def react_vote(messageId, user, guild, emojiHash, channel):
         infoVote[user.id] = []
 
     if emojiHash == "🗳️" and messageId == msgVote[0] and infoVote[user.id] == []:
+        print(JURY)
         await vote(user, jury=user.id in JURY)
         timeClickVote[user.id]= time.time()
 
@@ -224,8 +223,8 @@ def main():
     @bot.command(name = "vote")
     async def voteCommand(ctx):
         if ctx.author.id == 619574125622722560:
-            for i in range(len(songs) // 10 + 1):
-                await ctx.send(f"__**Submissions**__", files=[discord.File(f"data_contest/{e}_recap.mp3", filename=f"{e.replace(' ', '_')}.mp3") for e in songs[10*i:10*i+10]])
+            #for i in range(len(songs) // 10 + 1):
+            #    await ctx.send(f"__**Submissions**__", files=[discord.File(f"data_contest/{e}_recap.mp3", filename=f"{e.replace(' ', '_')}.mp3") for e in songs[10*i:10*i+10]])
 
             msg = await ctx.send("React with 🗳️ to vote")
             await msg.add_reaction("🗳️")
@@ -234,25 +233,26 @@ def main():
 
     @bot.command(name = "count")
     async def countCommand(ctx):
-        if ctx.author.id in (619574125622722560, 180333726306140160):
+        if ctx.author.id in (619574125622722560,):
             countVotes()
             await ctx.message.add_reaction("🗳️")
             
-            if ctx.author.id == 180333726306140160:
+            if ctx.author.id == 619574125622722560:
                 msgVote[0] = None
                 await get_votes(ctx)
 
     @bot.command(name = "find_jurors")
     async def find_jurors(ctx):
-        guild = bot.get_guild(567021913210355745)
-        channel = await guild.fetch_channel(973607562710769674)
-        msg = await channel.fetch_message(974728503973007420)
-        users = []
+        guild = bot.get_guild(1101800526200447016)
+        channel = await guild.fetch_channel(1101915250971902012)
+        msg = await channel.fetch_message(1105170411676766288)
+        
+        users = set()
         for reac in msg.reactions:
-            users += [x.id for x in await reac.users().flatten()]
+            users |= {x.id for x in await reac.users().flatten()}
 
-        #JURY.clear()
-        #JURY.update(users)
+        JURY.clear()
+        JURY.update(users)
         print(JURY)
 
         save()

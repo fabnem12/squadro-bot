@@ -99,7 +99,7 @@ nbFramesAnim = 50
 #graphic functions
 def getAvatar(infobox: Infobox, size: int):
     if infobox.photoImage is None:
-        img = Image.open(f"data_contest/{infobox.userAvatar}").resize((size, size), Image.ANTIALIAS)
+        img = Image.open(f"data_contest/{infobox.userAvatar}").resize((size, size), Image.LANCZOS)
         infobox.photoImage = ImageTk.PhotoImage(img)
     return infobox.photoImage
 
