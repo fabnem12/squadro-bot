@@ -21,13 +21,14 @@ except:
     infoVote = {k: [] for k in JURY}
     votes = []
     msgVote = [0]
-    songs = ["Norway", "Malta", "Serbia", "Latvia", "Portugal", "Ireland", "Croatia", "Switzerland", "Israel", "Moldova", "Sweden", "Azerbaijan", "Czechia", "Netherlands", "Finland"]
+    songs = ["Austria", "Portugal", "Switzerland", "Poland", "Serbia", "France", "Cyprus", "Spain", "Sweden", "Albania", "Italy", "Estonia", "Finland", "Czechia", "Australia", "Belgium", "Armenia", "Moldova", "Ukraine", "Norway", "Germany", "Lithuania", "Israel", "Slovenia", "Croatia", "United Kingdom"]
     
 timeClickVote = dict()
 #JURY = set()
 
 reactionsVote = ["🇦", "🇧", "🇨", "🇩", "🇪", "🇫", "🇬", "🇭", "🇮", "🇯",
 "🇰", "🇱", "🇲", "🇳", "🇴", "🇵", "🇶", "🇷", "🇸", "🇹", "🇺", "🇻", "🇼", "🇽", "🇾", "🇿"]
+songsLoc = [(r, x) for r, (i, x) in zip(reactionsVote, enumerate(songs))]
 #reactionsVote = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"]
 
 numberVotesJury = 10
@@ -102,12 +103,12 @@ def countVotes():
 
         #tele
         nbPointsTeleBrut = sum(tele.values())
-        for (song, points) in hare(tele, max(min(nbPointsJury, 4*nbPointsTeleBrut),  3*58)).items():
+        for (song, points) in hare(tele, min(nbPointsJury, 4*nbPointsTeleBrut)).items():
             printF(f"{idSong(song)};public;{points}")
 
 class ButtonConfirm(nextcord.ui.View):
     def __init__(self, song, remaining, selectPrec, listSongs):
-        super().__init__(timeout = 3600)
+        super().__init__(timeout = 300)
         self.value = None
         self.song = song
         self.remaining = remaining
@@ -135,15 +136,45 @@ class ButtonConfirm(nextcord.ui.View):
             infoVote[interaction.user.id] = []
             save()
 
-class ViewSelect(nextcord.ui.View):
-    def __init__(self, listSongs, remaining, userId):
-        super().__init__(timeout = 3600)
-        self.value = None
-        self.select = Select(listSongs, remaining, self)
-        self.remaining = remaining
-        self.userId = userId
+def ViewSelect(listSongs, remaining, userId):
+    if len(songs) <= 25 or songs[0] in infoVote[userId]:
+        class Aux(nextcord.ui.View):
+            def __init__(self, listSongs, remaining, userId):
+                super().__init__(timeout = 3600)
+                self.value = None
+                self.select = Select(listSongs[-25:], remaining, self)
+                self.remaining = remaining
+                self.userId = userId
 
-        self.add_item(self.select)
+                self.add_item(self.select)
+    
+    else:
+        class Aux(nextcord.ui.View):
+            def __init__(self, listSongs, remaining, userId):
+                super().__init__(timeout = 3600)
+                self.value = None
+                self.select = Select(listSongs[-25:], remaining, self)
+                self.remaining = remaining
+                self.userId = userId
+
+                self.add_item(self.select)
+        
+            @discord.ui.button(label=songs[0], style=discord.ButtonStyle.primary, emoji=reactionsVote[0], disabled=songs[0] in infoVote[userId])
+            async def button_callback(self, button, interaction):
+                num = len(infoVote[userId]) + 1
+
+                async for msg in interaction.channel.history(limit = None):
+                    if "Confirm" in msg.content and msg.author.bot: #there is one such message
+                        await msg.delete()
+                    
+                    break
+
+                infoUser = infoVote[self.userId]
+                if infoUser == [] or infoUser[-1] is not None:
+                    infoUser.append(None)
+                    await interaction.response.send_message(content=f"Confirm {songs[0]} as #{num}" + " (you can still select another song thanks to the previous message)", view=ButtonConfirm(songs[0], self.remaining-1, self, songsLoc))
+
+    return Aux(listSongs, remaining, userId)
 
 class Select(nextcord.ui.Select):
     def __init__(self, listSongs, remaining, view):
@@ -171,14 +202,13 @@ async def vote(user, jury: bool):
     channel = await dmChannelUser(user)
 
     infoVote[user.id] = []
-    songsLoc = [(r, x) for r, (i, x) in zip(reactionsVote, enumerate(songs))]
     await channel.send("__**List of songs**__\n\n" + "\n".join(f"- {r} **{e}**" for r, e in songsLoc))
     commandMessage = await channel.send("Select the #1 song you prefer", view=ViewSelect(songsLoc, 10 if jury else 3, user.id))
 
 async def react_vote(messageId, user, guild, emojiHash, channel):
     if user.bot: return
 
-    if (user.id in timeClickVote and time.time() - timeClickVote[user.id] > 300) or user.id not in timeClickVote:
+    if (user.id in timeClickVote and time.time() - timeClickVote[user.id] > 60) or user.id not in timeClickVote:
         infoVote[user.id] = []
 
     if emojiHash == "🗳️" and messageId == msgVote[0] and infoVote[user.id] == []:
@@ -226,7 +256,8 @@ def main():
             #for i in range(len(songs) // 10 + 1):
             #    await ctx.send(f"__**Submissions**__", files=[discord.File(f"data_contest/{e}_recap.mp3", filename=f"{e.replace(' ', '_')}.mp3") for e in songs[10*i:10*i+10]])
 
-            msg = await ctx.send("React with 🗳️ to vote")
+            await ctx.send("Volt-Jurors:\n" + " ".join(f'<@{x}>' for x in JURY))
+            msg = await ctx.send("**React with 🗳️ to vote**\n\nVolt-jurors have to provide a full top 10 (if you vote again, only the latest vote counts).\nNon Volt-jurors have to provide a full top 3, but they can vote up to 5 times!")
             await msg.add_reaction("🗳️")
 
             msgVote[0] = msg.id
@@ -243,9 +274,9 @@ def main():
 
     @bot.command(name = "find_jurors")
     async def find_jurors(ctx):
-        guild = bot.get_guild(1101800526200447016)
-        channel = await guild.fetch_channel(1101915250971902012)
-        msg = await channel.fetch_message(1105170411676766288)
+        guild = bot.get_guild(567021913210355745)
+        channel = await guild.fetch_channel(1105385075769614417)
+        msg = await channel.fetch_message(1106829055677964298)
         
         users = set()
         for reac in msg.reactions:

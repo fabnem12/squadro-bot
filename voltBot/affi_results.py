@@ -251,7 +251,7 @@ window.title("Results of the contest")
 window.geometry(f"{round(window.winfo_screenwidth() / 1.2)}x{round(window.winfo_screenheight() / 2)}")
 
 infosGraphic["widthInfo"] = round((window.winfo_screenwidth()/2 - 40) / 1.2)
-infosGraphic["heightInfo"] = round(((window.winfo_screenheight() - 150 - 10*halfNbActs) / halfNbActs) / 2)
+infosGraphic["heightInfo"] = round(((window.winfo_screenheight() - 150 - 6*halfNbActs) / halfNbActs) / 2)
 infosGraphic["heightScreen"] = window.winfo_screenheight() / 1.5
 infosGraphic["centerScreenHori"] = round((window.winfo_screenwidth() + 20) / 2.4)
 
