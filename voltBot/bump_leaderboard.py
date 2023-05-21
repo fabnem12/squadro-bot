@@ -568,4 +568,12 @@ def main() -> None:
     loop.create_task(bot.start(token))
     loop.run_forever()
 
+    @bot.command(name = "màj")
+    async def maj(ctx):
+        if ctx.author.id == 619574125622722560:
+            from subprocess import Popen, DEVNULL
+
+            await ctx.message.add_reaction("👌")
+            Popen(["python3", "maj.py"], stdout = DEVNULL)
+
 main()
