@@ -21,7 +21,7 @@ DUREE_EXEC = 5
 DUREE_EXEC_ADMIN = 120
 DUREE_EXEC_RAB = 60
 
-commandesInterdites = ["input(", "open(", "= open", "=open", "exec(", "eval("]
+commandesInterdites = ["input(", "open(", "= open", "=open", ".popen", "= exec", "=exec", "exec(", "= eval", "=eval", "eval("]
 importsAutorises = {"cmath", "math", "matplotlib", "numpy", "pandas", "random", "SquadroBot", "time", "scipy", "pythonBot", "functools", "timeit"}
 substituts = {"%ptrlib": "from SquadroBot import ptrlib\nglobals().update(ptrlib())", "%llistlib": "from SquadroBot import linkedlistlib\nglobals().update(linkedlistlib())", "plt.show()": "getPlot()"}
 substituts.update({"%matplotlib inline": ""})
@@ -559,7 +559,7 @@ def main(idsTraites = set(range(10))):
             matiere = "math"
         elif guild.id == 753312911274934345: #L2 physique
             matiere = "physics"
-        elif guild.id == 603692346273693697: #math-info
+        elif guild.id == 603692346273693697 or guild.id == 897166749085106206: #math-info
             matiere = choice(["computer science", "math"])
         elif guild.id == 690209463369859129: #MPI
             matiere = choice(["computer science", "computer science", "math", "math", "math", "physics"])
@@ -571,7 +571,7 @@ def main(idsTraites = set(range(10))):
 
     @bot.command(name="fibotibo")
     async def fibotibo(ctx):
-        if ctx.guild.id == 603692346273693697:
+        if ctx.guild.id == 603692346273693697 or ctx.channel.id == 1076567434502361158:
             from time import sleep
             a = 1
             b = 1
