@@ -516,23 +516,6 @@ def main() -> None:
             await asyncio.sleep(600)
             await unmute(user)
     
-    @bot.command(name = "purge_log")
-    async def purge_log(ctx):
-        guild = ctx.guild
-
-        if await isMod(guild, ctx.author.id):
-            channel = await guild.fetch_channel(982242792422146098) #deleted-edited-messages
-
-            await ctx.message.add_reaction("👌")
-
-            import datetime
-            now = datetime.datetime.now()
-            oneDay = datetime.timedelta(hours=24)
-            
-            async for msg in channel.history(limit = None, before = now - oneDay):
-                print(msg.created_at)
-                await msg.delete()
-    
     @bot.command(name = "obscr")
     async def obscr(ctx, user: discord.Member, *, reason: str):
         guild = ctx.guild
