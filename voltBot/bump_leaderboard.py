@@ -229,42 +229,6 @@ def main() -> None:
         if redFlags[0] in msg.content or "jidanilor" in msg.content.lower():
             await msg.author.ban(reason = "antisemtism / marea")
 
-    @bot.command(name = "ban")
-    async def bancommand(ctx):
-        msg = ctx.message
-
-        if ctx.guild.id != 567021913210355745 or not await isMod(ctx.guild, ctx.author.id): #not on volt server or not a mod of the volt server
-            return
-
-        userIdRaw = msg.content.split(" ")[1]
-        if userIdRaw.isdigit():
-            userId = int(userIdRaw)
-        else:
-            userId = int(userIdRaw[2:-1])
-
-        try:
-            user = await msg.guild.fetch_member(userId)
-        except:
-            user = await bot.fetch_user(userId)
-
-        channel = await dmChannelUser(user)
-        banReason = ' '.join(msg.content.split(' ')[2:])
-        if banReason == "": banReason = "no reason given"
-
-        try:
-            if "octavian" in banReason.lower() or "marea" in banReason.lower():
-                await channel.send(f"Ban reason: {banReason}\nBan appeal form: https://docs.google.com/forms/d/189lUm5ONdJHcI4C8QB4ml__2aAnygmxbCETrBMVhos0. Your discord id (asked in the form) is `{userId}`.")
-            await ctx.message.add_reaction("👌")
-        except:
-            pass
-
-        try:
-            await msg.guild.ban(user, reason = f"{banReason} (ban by {msg.author.name})", delete_message_days = 0)
-        except Exception as e:
-            await (await dmChannelUser(msg.author)).send(f"Unable to ban {user.name}\n{e}")
-        else:
-            await msg.channel.send(f"Banned **{user.name}**")
-
     @bot.command(name = "court")
     async def courtcommand(ctx, user: discord.Member, *, reason: Optional[str]):
         if ctx.guild.id != 567021913210355745 or not await isMod(ctx.guild, ctx.author.id): #not on volt server or not a mod of the volt server
@@ -551,6 +515,23 @@ def main() -> None:
 
             await asyncio.sleep(600)
             await unmute(user)
+    
+    @bot.command(name = "purge_log")
+    async def purge_log(ctx):
+        guild = ctx.guild
+
+        if await isMod(guild, ctx.author.id):
+            channel = await guild.fetch_channel(982242792422146098) #deleted-edited-messages
+
+            await ctx.message.add_reaction("👌")
+
+            import datetime
+            now = datetime.datetime.now()
+            oneDay = datetime.timedelta(hours=24)
+            
+            async for msg in channel.history(limit = None, before = now - oneDay):
+                print(msg.created_at)
+                await msg.delete()
     
     @bot.command(name = "obscr")
     async def obscr(ctx, user: discord.Member, *, reason: str):
