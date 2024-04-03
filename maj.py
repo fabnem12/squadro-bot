@@ -15,7 +15,7 @@ def killBot():
                 if psutil.pid_exists(pid):
                     psutil.Process(pid).terminate()
 
-listeScripts = ["pythonBot/pythonbot.py", "discordUtils/discordutils.py", "voltBot/bump_leaderboard.py", "radio_eurovision.py"]
+listeScripts = ["pythonBot/pythonbot.py", "discordUtils/discordutils.py", "radio_eurovision.py"]
 
 killBot()
 
